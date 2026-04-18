@@ -1,0 +1,794 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-18 22:04+0000\n"
+"PO-Revision-Date: 2026-04-17 15:26+0000\n"
+"Last-Translator: \n"
+"Language-Team: Danish\n"
+"Language: da\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: templates/base/layout.html:13
+msgid "Zero-knowledge secret sharing"
+msgstr "Intet kendskab hemmeligheds deling"
+
+#: templates/base/layout.html:27 templates/whispers/about.html:4
+msgid "About"
+msgstr "Om"
+
+#: templates/base/layout.html:47
+msgid "Sign out"
+msgstr "Log ud"
+
+#: templates/base/layout.html:64
+msgid "Your whisper is safe with us."
+msgstr "Din whisper er sikker hos os."
+
+#: templates/whispers/about.html:9
+msgid "About psst-secret"
+msgstr "Om psst-secret"
+
+#: templates/whispers/about.html:10
+msgid ""
+"A privacy focused app for sharing secrets securely. We call them whispers."
+msgstr ""
+"En privatlivsfokuseret app til at dele hemmeligheder sikkert. Vi kalder dem "
+"whispers."
+
+#: templates/whispers/about.html:15
+msgid "How It Works"
+msgstr "Sådan virker det"
+
+#: templates/whispers/about.html:17
+msgid ""
+"psst-secret ensures that <strong class=\"text-white\">your whispers never "
+"exist in plaintext on our server</strong>. All encryption and decryption "
+"happens entirely in your browser using the <a href=\"https://developer."
+"mozilla.org/en-US/docs/Web/API/Web_Crypto_API\" class=\"text-brand-400 "
+"underline hover:text-brand-300\" target=\"_blank\">Web Crypto API</a>."
+msgstr ""
+"psst-secret sikrer, at <strong class=\"text-white\">dine whispers aldrig "
+"findes i klartekst på vores server</strong>. Al kryptering og dekryptering "
+"foregår udelukkende i din browser ved hjælp af <a href=\"https://developer."
+"mozilla.org/en-US/docs/Web/API/Web_Crypto_API\" class=\"text-brand-400 "
+"underline hover:text-brand-300\" target=\"_blank\">Web Crypto API</a>."
+
+#: templates/whispers/about.html:21
+msgid "Creating a Whisper"
+msgstr "Opret en whisper"
+
+#: templates/whispers/about.html:23
+msgid "You type your whisper in the browser"
+msgstr "Du skriver din whisper i browseren"
+
+#: templates/whispers/about.html:24
+msgid ""
+"A random <strong class=\"text-gray-200\">AES-256-GCM</strong> key is "
+"generated client-side"
+msgstr ""
+"En tilfældig <strong class=\"text-gray-200\">AES-256-GCM</strong>-nøgle "
+"genereres på klientsiden"
+
+#: templates/whispers/about.html:25
+msgid "Your whisper is encrypted in-browser"
+msgstr "Din whisper krypteres i browseren"
+
+#: templates/whispers/about.html:26
+msgid "Only the <em>ciphertext</em> is sent to the server"
+msgstr "Kun <em>ciphertext</em> sendes til serveren"
+
+#: templates/whispers/about.html:27
+msgid ""
+"The decryption key is placed in the URL fragment (<code class=\"text-"
+"brand-300\">#key</code>)"
+msgstr ""
+"Dekrypteringsnøglen placeres i URL-fragmentet (<code class=\"text-"
+"brand-300\">#key</code>)"
+
+#: templates/whispers/about.html:31
+msgid "Viewing a Whisper"
+msgstr "Se en whisper"
+
+#: templates/whispers/about.html:33
+msgid "You open the shared link"
+msgstr "Du åbner det delte link"
+
+#: templates/whispers/about.html:34
+msgid "The server returns the ciphertext"
+msgstr "Serveren returnerer ciphertext"
+
+#: templates/whispers/about.html:35
+msgid "The key from the URL fragment decrypts it in-browser"
+msgstr "Nøglen fra URL-fragmentet dekrypterer den i browseren"
+
+#: templates/whispers/about.html:36
+msgid "You see the plaintext — the server never does"
+msgstr "Du ser klartekst — det gør serveren aldrig"
+
+#: templates/whispers/about.html:45
+msgid "Why the URL Fragment?"
+msgstr "Hvorfor URL-fragmentet?"
+
+#: templates/whispers/about.html:47
+msgid ""
+"The decryption key is stored after the <code class='bg-gray-900 px-1.5 "
+"py-0.5 rounded text-brand-300'>#</code> in the URL. Per the HTTP "
+"specification, <strong class='text-white'>the URL fragment is never sent to "
+"the server</strong> — it's processed only by the browser. This means:"
+msgstr ""
+"Dekrypteringsnøglen gemmes efter <code class='bg-gray-900 px-1.5 py-0.5 "
+"rounded text-brand-300'>#</code> i URL'en. Ifølge HTTP-specifikationen "
+"<strong class='text-white'>sendes URL-fragmentet aldrig til serveren</"
+"strong> — det behandles kun af browseren. Det betyder:"
+
+#: templates/whispers/about.html:49
+msgid "The server never receives the decryption key"
+msgstr "Serveren modtager aldrig dekrypteringsnøglen"
+
+#: templates/whispers/about.html:50
+msgid "The key doesn't appear in server logs or analytics"
+msgstr "Nøglen fremgår ikke af serverlogs eller analyseværktøjer"
+
+#: templates/whispers/about.html:51
+msgid "Even if the server is compromised, your whispers remain encrypted"
+msgstr "Selv hvis serveren kompromitteres, forbliver dine whispers krypterede"
+
+#: templates/whispers/about.html:58
+msgid "Password Protection"
+msgstr "Adgangskodebeskyttelse"
+
+#: templates/whispers/about.html:60
+msgid ""
+"Optionally, you can set a password when creating a whisper. When a password "
+"is used:"
+msgstr ""
+"Du kan valgfrit angive en adgangskode, når du opretter en whisper. Når der "
+"bruges en adgangskode:"
+
+#: templates/whispers/about.html:62
+msgid ""
+"The encryption key is derived from your password using <strong class=\"text-"
+"gray-200\">PBKDF2</strong> (600,000 iterations, SHA-256)"
+msgstr ""
+"Krypteringsnøglen udledes af din adgangskode ved hjælp af <strong "
+"class=\"text-gray-200\">PBKDF2</strong> (600.000 iterationer, SHA-256)"
+
+#: templates/whispers/about.html:63
+msgid ""
+"A random <strong class=\"text-gray-200\">salt</strong> is generated and "
+"stored on the server (useless without the password)"
+msgstr ""
+"Der genereres en tilfældig <strong class=\"text-gray-200\">salt</strong>, "
+"som gemmes på serveren (ubrugelig uden adgangskoden)"
+
+#: templates/whispers/about.html:64
+msgid ""
+"The URL contains <em>no key fragment</em> — only the password holder can "
+"decrypt"
+msgstr ""
+"URL'en indeholder <em>intet nøglefragment</em> — kun den, der kender "
+"adgangskoden, kan dekryptere"
+
+#: templates/whispers/about.html:65
+msgid "This provides an extra layer of security for highly sensitive data"
+msgstr "Det giver et ekstra sikkerhedslag til meget følsomme data"
+
+#: templates/whispers/about.html:72
+msgid "Security Features"
+msgstr "Sikkerhedsfunktioner"
+
+#: templates/whispers/about.html:75
+msgid "Burn After Reading"
+msgstr "Slet efter læsning"
+
+#: templates/whispers/about.html:76
+msgid ""
+"Whispers marked as burn-after-read are <strong class=\"text-"
+"gray-300\">permanently erased from memory</strong> the moment they are "
+"viewed — not just flagged, but gone."
+msgstr ""
+"Whispers markeret til sletning efter læsning bliver <strong class=\"text-"
+"gray-300\">permanent slettet fra hukommelsen</strong> i det øjeblik, de "
+"bliver vist — ikke bare markeret, men væk."
+
+#: templates/whispers/about.html:79
+msgid "Auto-Expiry"
+msgstr "Automatisk udløb"
+
+#: templates/whispers/about.html:80
+msgid ""
+"All whispers require an expiration time (5 minutes to 1 month). Expired "
+"whispers are automatically evicted from Redis via TTL and continuously "
+"purged by a background process."
+msgstr ""
+"Alle whispers kræver en udløbstid (5 minutter til 1 måned). Udløbne whispers "
+"fjernes automatisk fra Redis via TTL og ryddes løbende af en baggrundsproces."
+
+#: templates/whispers/about.html:84
+msgid ""
+"Industry-standard authenticated encryption. Provides both confidentiality "
+"and integrity — any tampering with the ciphertext is detected."
+msgstr ""
+"Industristandard autentificeret kryptering. Giver både fortrolighed og "
+"integritet — enhver manipulering af ciphertext opdages."
+
+#: templates/whispers/about.html:87
+msgid "Zero Knowledge"
+msgstr "Intet kendskab"
+
+#: templates/whispers/about.html:88
+msgid ""
+"The server stores only ciphertext, IV, and optional salt — and only in "
+"volatile memory (Redis). It has no ability to decrypt your data, even under "
+"compulsion."
+msgstr ""
+"Serveren gemmer kun ciphertext, IV og eventuel salt — og kun i flygtig "
+"hukommelse (Redis). Den har ingen mulighed for at dekryptere dine data, selv "
+"under tvang."
+
+#: templates/whispers/about.html:95
+msgid "What the Server Stores"
+msgstr "Hvad serveren gemmer"
+
+#: templates/whispers/about.html:98
+msgid "Redis (in-memory only — never touches disk)"
+msgstr "Redis (kun i hukommelsen — skriver aldrig til disk)"
+
+#: templates/whispers/about.html:102 templates/whispers/about.html:118
+msgid "Field"
+msgstr "Felt"
+
+#: templates/whispers/about.html:103 templates/whispers/about.html:119
+msgid "Purpose"
+msgstr "Formål"
+
+#: templates/whispers/about.html:107
+msgid "Your encrypted data (useless without the key)"
+msgstr "Dine krypterede data (ubrugelige uden nøglen)"
+
+#: templates/whispers/about.html:108
+msgid "Random initialization vector for AES-GCM"
+msgstr "Tilfældig initialiseringsvektor til AES-GCM"
+
+#: templates/whispers/about.html:109
+msgid "PBKDF2 salt (only if password-protected)"
+msgstr "PBKDF2-salt (kun hvis adgangskodebeskyttet)"
+
+#: templates/whispers/about.html:114
+msgid "PostgreSQL (metadata only)"
+msgstr "PostgreSQL (kun metadata)"
+
+#: templates/whispers/about.html:123
+msgid "When the whisper will be auto-deleted"
+msgstr "Hvornår whisperen slettes automatisk"
+
+#: templates/whispers/about.html:124
+msgid "Whether to delete on first view"
+msgstr "Om den skal slettes ved første visning"
+
+#: templates/whispers/about.html:125
+msgid "Send or receive"
+msgstr "Send eller modtag"
+
+#: templates/whispers/about.html:126
+msgid "IP/CIDR restriction"
+msgstr "IP/CIDR-begrænsning"
+
+#: templates/whispers/about.html:130
+msgid ""
+"The server does <strong>not</strong> store: plaintext, encryption keys, "
+"passwords, or any identifying information. Encrypted data lives only in "
+"volatile memory and is lost if Redis restarts."
+msgstr ""
+"Serveren gemmer <strong>ikke</strong>: klartekst, krypteringsnøgler, "
+"adgangskoder eller identificerende oplysninger. Krypterede data findes kun i "
+"flygtig hukommelse og går tabt, hvis Redis genstarter."
+
+#: templates/whispers/about.html:136
+msgid "Tech Stack"
+msgstr "Teknologistak"
+
+#: templates/whispers/about.html:150
+msgid "Create a whisper"
+msgstr "Opret en whisper"
+
+#: templates/whispers/burned.html:4
+msgid "Whisper Burned"
+msgstr "Whisper brændt"
+
+#: templates/whispers/burned.html:9
+msgid "This whisper has been burned"
+msgstr "Denne whisper er brændt"
+
+#: templates/whispers/burned.html:10
+msgid ""
+"This was a burn-after-reading whisper and has already been viewed. It no "
+"longer exists."
+msgstr ""
+"Dette var en whisper med sletning efter læsning og den er allerede blevet "
+"vist. Den findes ikke længere."
+
+#: templates/whispers/burned.html:12 templates/whispers/expired.html:12
+msgid "Create a new whisper"
+msgstr "Opret en ny whisper"
+
+#: templates/whispers/create.html:4
+msgid "New Whisper"
+msgstr "Ny whisper"
+
+#: templates/whispers/create.html:9
+msgid "Share a whisper"
+msgstr "Del en whisper"
+
+#: templates/whispers/create.html:10
+msgid ""
+"Your content is encrypted in your browser before it reaches our server. We "
+"never see your plaintext."
+msgstr ""
+"Dit indhold krypteres i din browser, før det når vores server. Vi ser aldrig "
+"din klartekst."
+
+#: templates/whispers/create.html:17
+msgid "Send"
+msgstr "Send"
+
+#: templates/whispers/create.html:21
+msgid "Receive"
+msgstr "Modtag"
+
+#: templates/whispers/create.html:30 templates/whispers/submit.html:18
+msgid "Text"
+msgstr "Tekst"
+
+#: templates/whispers/create.html:34 templates/whispers/submit.html:22
+msgid "File"
+msgstr "Fil"
+
+#: templates/whispers/create.html:40 templates/whispers/submit.html:28
+msgid "Whisper content"
+msgstr "Whisper-indhold"
+
+#: templates/whispers/create.html:43
+msgid "Type your whisper here…"
+msgstr "Skriv din whisper her…"
+
+#: templates/whispers/create.html:48 templates/whispers/submit.html:36
+msgid "Whisper file"
+msgstr "Whisper-fil"
+
+#: templates/whispers/create.html:55 templates/whispers/submit.html:43
+msgid "Click to select a file or drag & drop"
+msgstr "Klik for at vælge en fil eller træk og slip"
+
+#: templates/whispers/create.html:56 templates/whispers/submit.html:44
+msgid "Any file type supported."
+msgstr "Alle filtyper understøttes."
+
+#: templates/whispers/create.html:56 templates/whispers/submit.html:44
+#, python-format
+msgid "Max upload size: %(max_size)s"
+msgstr "Maks. uploadstørrelse: %(max_size)s"
+
+#: templates/whispers/create.html:62 templates/whispers/submit.html:50
+msgid "Remove"
+msgstr "Fjern"
+
+#: templates/whispers/create.html:69
+msgid "Receive mode"
+msgstr "Modtag-tilstand"
+
+#: templates/whispers/create.html:69
+msgid "create a request for someone to send you a whisper."
+msgstr "opret en forespørgsel, så nogen kan sende dig en whisper."
+
+#: templates/whispers/create.html:70
+msgid ""
+"You'll get two links: a <strong>submit link</strong> to share with the "
+"sender, and a <strong>view link</strong> for you to retrieve the whisper "
+"once it's been submitted."
+msgstr ""
+"Du får to links: et <strong>indsend-link</strong> til at dele med afsenderen "
+"og et <strong>visningslink</strong> til at hente whisperen, når den er "
+"blevet indsendt."
+
+#: templates/whispers/create.html:77
+msgid "Expires after"
+msgstr "Udløber efter"
+
+#: templates/whispers/create.html:80
+msgid "5 Minutes"
+msgstr "5 minutter"
+
+#: templates/whispers/create.html:81
+msgid "1 Hour"
+msgstr "1 time"
+
+#: templates/whispers/create.html:82
+msgid "1 Day"
+msgstr "1 dag"
+
+#: templates/whispers/create.html:83
+msgid "1 Week"
+msgstr "1 uge"
+
+#: templates/whispers/create.html:84
+msgid "1 Month"
+msgstr "1 måned"
+
+#: templates/whispers/create.html:93
+msgid "Burn after reading"
+msgstr "Slet efter læsning"
+
+#: templates/whispers/create.html:97
+msgid ""
+"When enabled, the whisper will be permanently deleted after being viewed "
+"once. The recipient gets one chance to see it."
+msgstr ""
+"Når det er aktiveret, slettes whisperen permanent efter at være blevet vist "
+"én gang. Modtageren får én chance for at se den."
+
+#: templates/whispers/create.html:105
+msgid "Encrypt & Share"
+msgstr "Krypter og del"
+
+#: templates/whispers/create.html:108
+msgid "Create Request"
+msgstr "Opret forespørgsel"
+
+#: templates/whispers/create.html:115
+msgid "Advanced Options"
+msgstr "Avancerede indstillinger"
+
+#: templates/whispers/create.html:120 templates/whispers/login.html:38
+#: templates/whispers/submit.html:58
+msgid "Password"
+msgstr "Adgangskode"
+
+#: templates/whispers/create.html:121 templates/whispers/create.html:131
+msgid "optional"
+msgstr "valgfrit"
+
+#: templates/whispers/create.html:125
+msgid "Extra protection…"
+msgstr "Ekstra beskyttelse…"
+
+#: templates/whispers/create.html:126
+msgid ""
+"Adds an extra layer of encryption. The recipient will need this password in "
+"addition to the link to decrypt the psst."
+msgstr ""
+"Tilføjer et ekstra lag kryptering. Modtageren skal bruge denne adgangskode "
+"ud over linket for at dekryptere en whisper."
+
+#: templates/whispers/create.html:130
+msgid "Restrict by IP"
+msgstr "Begræns efter IP"
+
+#: templates/whispers/create.html:135
+msgid "e.g. 203.0.113.5 or 10.0.0.0/24"
+msgstr "fx 203.0.113.5 eller 10.0.0.0/24"
+
+#: templates/whispers/create.html:136
+msgid ""
+"Only this IP/CIDR will be able to <strong>view</strong> the whisper. A bare "
+"IP is treated as /32."
+msgstr ""
+"Kun denne IP/CIDR kan <strong>se</strong> whisperen. En enkelt IP behandles "
+"som /32."
+
+#: templates/whispers/create.html:137
+msgid ""
+"Only this IP/CIDR will be able to <strong>submit</strong> a whisper. A bare "
+"IP is treated as /32."
+msgstr ""
+"Kun denne IP/CIDR kan <strong>indsende</strong> en whisper. En enkelt IP "
+"behandles som /32."
+
+#: templates/whispers/create.html:144
+msgid "Require authentication to view"
+msgstr "Kræv autentificering for at se"
+
+#: templates/whispers/create.html:148
+msgid "The person viewing this whisper must be signed in."
+msgstr "Personen der ser whisper skal være logget ind."
+
+#: templates/whispers/create.html:156
+msgid "Require authentication to submit"
+msgstr "Kræv autentificering for at sende"
+
+#: templates/whispers/create.html:160
+msgid "The person submitting a whisper to this request must be signed in."
+msgstr "Personen der sender en whisper skal være logget ind."
+
+#: templates/whispers/create.html:174
+msgid "Whisper created!"
+msgstr "Whisper oprettet!"
+
+#: templates/whispers/create.html:175
+msgid ""
+"Share this link. The decryption key is in the URL fragment and is "
+"<strong>never sent to the server</strong>."
+msgstr ""
+"Del dette link. Dekrypteringsnøglen ligger i URL-fragmentet og bliver "
+"<strong>aldrig sendt til serveren</strong>."
+
+#: templates/whispers/create.html:181 templates/whispers/create.html:211
+#: templates/whispers/create.html:222 templates/whispers/view.html:42
+msgid "Copy"
+msgstr "Kopiér"
+
+#: templates/whispers/create.html:185
+msgid ""
+"This whisper is password-protected. The recipient will need the password to "
+"decrypt it."
+msgstr ""
+"Denne whisper er adgangskodebeskyttet. Modtageren skal bruge adgangskoden "
+"for at dekryptere den."
+
+#: templates/whispers/create.html:188
+msgid "This whisper will be destroyed after being viewed once."
+msgstr "Denne whisper bliver slettet, når den er blevet vist én gang."
+
+#: templates/whispers/create.html:193 templates/whispers/create.html:237
+msgid "Create another whisper"
+msgstr "Opret en anden whisper"
+
+#: templates/whispers/create.html:200
+msgid "Request created!"
+msgstr "Forespørgsel oprettet!"
+
+#: templates/whispers/create.html:201
+msgid ""
+"Share the <strong>submit link</strong> with the person who should send you a "
+"whisper. Use the <strong>view link</strong> to retrieve it once they've "
+"submitted."
+msgstr ""
+"Del <strong>indsend-linket</strong> med personen, der skal sende dig en "
+"whisper. Brug <strong>visningslinket</strong> til at hente den, når den er "
+"blevet indsendt."
+
+#: templates/whispers/create.html:205
+msgid "Submit link — share this with the sender"
+msgstr "Indsend-link — del dette med afsenderen"
+
+#: templates/whispers/create.html:216
+msgid "View link — for you to retrieve the whisper"
+msgstr "Visningslink — til at hente whisperen"
+
+#: templates/whispers/create.html:229
+msgid ""
+"This request is password-protected. Share the password separately with the "
+"sender."
+msgstr ""
+"Denne forespørgsel er adgangskodebeskyttet. Del adgangskoden separat med "
+"afsenderen."
+
+#: templates/whispers/create.html:232
+msgid "The whisper will be destroyed after you view it once."
+msgstr "Whisperen bliver slettet, efter du har set den én gang."
+
+#: templates/whispers/expired.html:4
+msgid "Whisper Expired"
+msgstr "Whisper udløbet"
+
+#: templates/whispers/expired.html:9
+msgid "This whisper has expired"
+msgstr "Denne whisper er udløbet"
+
+#: templates/whispers/expired.html:10
+msgid ""
+"The whisper you're looking for has passed its expiration time and has been "
+"permanently deleted."
+msgstr ""
+"Whisperen, du leder efter, har overskredet sin udløbstid og er blevet "
+"slettet permanent."
+
+#: templates/whispers/forbidden.html:4
+msgid "Access Denied"
+msgstr "Adgang nægtet"
+
+#: templates/whispers/forbidden.html:9
+msgid "Access denied"
+msgstr "Adgang nægtet"
+
+#: templates/whispers/forbidden.html:10
+msgid "Your IP address is not allowed to access this whisper."
+msgstr "Din IP-adresse har ikke adgang til denne whisper."
+
+#: templates/whispers/forbidden.html:12 templates/whispers/submitted.html:12
+msgid "Create your own whisper"
+msgstr "Opret din egen whisper"
+
+#: templates/whispers/login.html:4 templates/whispers/login.html:45
+msgid "Sign in"
+msgstr "Login"
+
+#: templates/whispers/login.html:17
+msgid "Sign in to continue"
+msgstr "Login for at fortsætte"
+
+#: templates/whispers/login.html:32
+msgid "Username"
+msgstr ""
+
+#: templates/whispers/login.html:35
+msgid "Enter username…"
+msgstr "Indtast brugernavn..."
+
+#: templates/whispers/login.html:41 templates/whispers/view.html:15
+msgid "Enter password…"
+msgstr "Indtast adgangskode…"
+
+#: templates/whispers/login.html:55
+msgid "or"
+msgstr "eller"
+
+#: templates/whispers/login.html:65
+msgid "Sign in with"
+msgstr "Login med"
+
+#: templates/whispers/login.html:72
+#, fuzzy
+#| msgid "No sign-in providers configured."
+msgid "No sign-in methods configured."
+msgstr "Ingen login ubydere konfigureret"
+
+#: templates/whispers/pending.html:4
+msgid "Waiting for Whisper"
+msgstr "Venter på whisper"
+
+#: templates/whispers/pending.html:9
+msgid "Waiting for whisper…"
+msgstr "Venter på whisper…"
+
+#: templates/whispers/pending.html:10
+msgid ""
+"The whisper hasn't been submitted yet. This page will automatically refresh."
+msgstr ""
+"Whisperen er ikke blevet indsendt endnu. Denne side opdateres automatisk."
+
+#: templates/whispers/pending.html:12
+#, python-format
+msgid "This request expires at %(expires_at)s."
+msgstr "Denne forespørgsel udløber %(expires_at)s."
+
+#: templates/whispers/pending.html:15
+msgid "← Back to home"
+msgstr "← Tilbage til forsiden"
+
+#: templates/whispers/submit.html:4 templates/whispers/submit.html:9
+msgid "Submit a Whisper"
+msgstr "Indsend en whisper"
+
+#: templates/whispers/submit.html:10
+msgid ""
+"Someone has requested you share a whisper with them. Your content is "
+"encrypted in your browser before it reaches our server."
+msgstr ""
+"Nogen har bedt dig om at dele en whisper med dem. Dit indhold krypteres i "
+"din browser, før det når vores server."
+
+#: templates/whispers/submit.html:31
+msgid "Enter the whisper here…"
+msgstr "Skriv whisperen her…"
+
+#: templates/whispers/submit.html:58
+msgid "required"
+msgstr "påkrævet"
+
+#: templates/whispers/submit.html:61
+msgid "Enter the password…"
+msgstr "Indtast adgangskoden…"
+
+#: templates/whispers/submit.html:62
+msgid ""
+"The requester has set a password. You must enter it to encrypt your whisper."
+msgstr ""
+"Anmoderen har angivet en adgangskode. Du skal indtaste den for at kryptere "
+"din whisper."
+
+#: templates/whispers/submit.html:68
+msgid ""
+"This whisper will be destroyed after being viewed once by the requester."
+msgstr ""
+"Denne whisper bliver slettet, efter at den er blevet vist én gang af "
+"anmoderen."
+
+#: templates/whispers/submit.html:75
+msgid "Encrypt & Submit"
+msgstr "Krypter og indsend"
+
+#: templates/whispers/submit.html:83
+msgid "Whisper submitted!"
+msgstr "Whisper indsendt!"
+
+#: templates/whispers/submit.html:84
+msgid ""
+"Your encrypted whisper has been submitted. The requester can now view it."
+msgstr "Din krypterede whisper er blevet indsendt. Anmoderen kan nu se den."
+
+#: templates/whispers/submit.html:87
+msgid "← Create your own whisper"
+msgstr "← Opret din egen whisper"
+
+#: templates/whispers/submitted.html:4
+msgid "Already Submitted"
+msgstr "Allerede indsendt"
+
+#: templates/whispers/submitted.html:9
+msgid "Whisper already submitted"
+msgstr "Whisper allerede indsendt"
+
+#: templates/whispers/submitted.html:10
+msgid ""
+"A whisper has already been submitted for this request. Each request can only "
+"receive one submission."
+msgstr ""
+"Der er allerede indsendt en whisper til denne forespørgsel. Hver "
+"forespørgsel kan kun modtage én indsendelse."
+
+#: templates/whispers/view.html:4
+msgid "View Whisper"
+msgstr "Se whisper"
+
+#: templates/whispers/view.html:11
+msgid "Password Required"
+msgstr "Adgangskode påkrævet"
+
+#: templates/whispers/view.html:12
+msgid "This whisper is password-protected. Enter the password to decrypt."
+msgstr ""
+"Denne whisper er adgangskodebeskyttet. Indtast adgangskoden for at "
+"dekryptere."
+
+#: templates/whispers/view.html:18
+msgid "Decrypt"
+msgstr "Dekrypter"
+
+#: templates/whispers/view.html:26
+msgid "Decrypting…"
+msgstr "Dekrypterer…"
+
+#: templates/whispers/view.html:33
+msgid "This whisper has been burned — it can never be viewed again."
+msgstr "Denne whisper er brændt — den kan aldrig vises igen."
+
+#: templates/whispers/view.html:39
+msgid "Decrypted Whisper"
+msgstr "Dekrypteret whisper"
+
+#: templates/whispers/view.html:50 templates/whispers/view.html:73
+#: templates/whispers/view.html:84
+msgid "← Create a new whisper"
+msgstr "← Opret en ny whisper"
+
+#: templates/whispers/view.html:58
+msgid ""
+"This whisper has been burned — it can never be viewed again. Download it now."
+msgstr "Denne whisper er brændt — den kan aldrig vises igen. Download den nu."
+
+#: templates/whispers/view.html:64
+msgid "Decrypted File"
+msgstr "Dekrypteret fil"
+
+#: templates/whispers/view.html:68
+msgid "Download File"
+msgstr "Download fil"
+
+#: templates/whispers/view.html:80
+msgid "Decryption Failed"
+msgstr "Dekryptering mislykkedes"
+
+#: templates/whispers/view.html:81
+msgid "The link may be incomplete or the whisper may have been tampered with."
+msgstr ""
+"Linket kan være ufuldstændigt, eller whisperen kan være blevet manipuleret."

@@ -1,0 +1,67 @@
+{% extends "base/base.html" %}
+{% load i18n whispers_extras %}
+
+{% block layout %}
+<div class="min-h-full flex flex-col">
+    <!-- Nav -->
+    <nav class="border-b border-gray-800 bg-gray-900/50 backdrop-blur">
+        <div class="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+            <a href="{% url 'whispers:create' %}" class="flex items-center gap-2 text-xl font-bold text-brand-400 hover:text-brand-300 transition">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                psst-secret
+            </a>
+            <span class="text-xs text-gray-500">{% trans "Zero-knowledge secret sharing" %}</span>
+            <div class="flex items-center gap-4">
+                <form action="{% url 'set_language' %}" method="post" class="flex items-center">
+                    {% csrf_token %}
+                    <input name="next" type="hidden" value="{{ request.path }}">
+                    {% get_current_language as LANGUAGE_CODE %}
+                    {% get_available_languages as LANGUAGES %}
+                    <select name="language" onchange="this.form.submit()"
+                        class="bg-gray-800 border border-gray-700 text-gray-300 text-xs rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-brand-500 cursor-pointer">
+                        {% for lang_code, lang_name in LANGUAGES %}
+                        <option value="{{ lang_code }}" {% if lang_code == LANGUAGE_CODE %}selected{% endif %}>{{ lang_name | capfirst }}</option>
+                        {% endfor %}
+                    </select>
+                </form>
+                <a href="{% url 'whispers:about' %}" class="text-sm text-gray-400 hover:text-brand-300 transition">{% trans "About" %}</a>
+                {% settings_value "ENABLE_AUTH" as auth_enabled %}
+                {% if auth_enabled and user.is_authenticated %}
+                <!-- Profile menu -->
+                <div class="relative" x-data="{ open: false }">
+                    <button @click="open = !open" @click.outside="open = false"
+                        class="flex items-center justify-center w-8 h-8 rounded-full bg-brand-600 text-white text-xs font-bold uppercase hover:bg-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-400 transition"
+                        title="{{ user.get_full_name|default:user.username }}">
+                        {{ user.get_full_name|make_list|first|default:user.username|make_list|first }}
+                    </button>
+                    <div x-show="open" x-transition
+                        class="absolute right-0 mt-2 w-56 rounded-lg border border-gray-700 bg-gray-800 shadow-xl z-50">
+                        <div class="px-4 py-3 border-b border-gray-700">
+                            <p class="text-sm font-medium text-white truncate">{{ user.get_full_name|default:user.username }}</p>
+                            <p class="text-xs text-gray-400 truncate">{{ user.email }}</p>
+                        </div>
+                        <form method="post" action="{% url 'account_logout' %}">
+                            {% csrf_token %}
+                            <button type="submit"
+                                class="w-full text-left px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition rounded-b-lg">
+                                {% trans "Sign out" %}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- Content -->
+    <main class="flex-1 max-w-4xl w-full mx-auto px-4 py-10">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-gray-800 py-4 text-center text-xs text-gray-600">
+        psst-secret &mdash; {% trans "Your whisper is safe with us." %} <br>
+    </footer>
+</div>
+{% endblock %}

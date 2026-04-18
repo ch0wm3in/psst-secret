@@ -1,0 +1,166 @@
+{% extends "base/layout.html" %}
+{% load i18n whispers_extras %}
+
+{% block title %}psst-secret — {% trans "Submit a Whisper" %}{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div>
+        <h1 class="text-2xl font-bold text-white">{% trans "Submit a Whisper" %}</h1>
+        <p class="mt-1 text-sm text-gray-400">{% trans "Someone has requested you share a whisper with them. Your content is encrypted in your browser before it reaches our server." %}</p>
+    </div>
+
+    <div id="submit-form" class="space-y-4">
+        <!-- Mode toggle -->
+        <div class="flex gap-2">
+            <button id="tab-text" onclick="switchMode('text')"
+                class="px-4 py-1.5 rounded-lg text-sm font-medium bg-brand-600 text-white transition">
+                📝 {% trans "Text" %}
+            </button>
+            <button id="tab-file" onclick="switchMode('file')"
+                class="px-4 py-1.5 rounded-lg text-sm font-medium bg-gray-800 text-gray-400 hover:text-white transition">
+                📎 {% trans "File" %}
+            </button>
+        </div>
+
+        <!-- Text input -->
+        <div id="text-mode">
+            <label for="whisper" class="block text-sm font-medium text-gray-300 mb-1">{% trans "Whisper content" %}</label>
+            <textarea id="whisper" rows="8"
+                class="w-full rounded-lg bg-gray-800 border border-gray-700 text-gray-100 px-4 py-3 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent font-mono text-sm resize-y"
+                placeholder="{% trans "Enter the whisper here…" %}"></textarea>
+        </div>
+
+        <!-- File input -->
+        <div id="file-mode" class="hidden">
+            <label for="file-input" class="block text-sm font-medium text-gray-300 mb-1">{% trans "Whisper file" %}</label>
+            <div id="file-drop-zone"
+                class="w-full rounded-lg bg-gray-800 border-2 border-dashed border-gray-600 hover:border-brand-500 px-4 py-10 text-center transition cursor-pointer"
+                onclick="document.getElementById('file-input').click()">
+                <input type="file" id="file-input" class="hidden" onchange="onFileSelected()">
+                <div id="file-placeholder" class="space-y-2">
+                    <div class="text-3xl">📁</div>
+                    <p class="text-sm text-gray-400">{% trans "Click to select a file or drag & drop" %}</p>
+                    <p class="text-xs text-gray-500">{% settings_value "DATA_UPLOAD_MAX_MEMORY_SIZE" as max_size %}{% trans "Any file type supported." %} {% blocktrans with max_size=max_size|filesizeformat %}Max upload size: {{ max_size }}{% endblocktrans %}</p>
+                </div>
+                <div id="file-info" class="hidden space-y-1">
+                    <div class="text-3xl">📄</div>
+                    <p id="file-name" class="text-sm text-brand-300 font-medium"></p>
+                    <p id="file-size" class="text-xs text-gray-500"></p>
+                    <button onclick="event.stopPropagation(); clearFile()" class="text-xs text-red-400 hover:text-red-300 underline mt-1">{% trans "Remove" %}</button>
+                </div>
+            </div>
+        </div>
+
+        {% if salt %}
+        <!-- Password required -->
+        <div>
+            <label for="password" class="block text-sm font-medium text-gray-300 mb-1">{% trans "Password" %} <span class="text-amber-400">({% trans "required" %})</span></label>
+            <input type="password" id="password" autocomplete="off"
+                class="w-full rounded-lg bg-gray-800 border border-gray-700 text-gray-100 px-3 py-2 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                placeholder="{% trans "Enter the password…" %}">
+            <p class="mt-1 text-xs text-gray-500">{% trans "The requester has set a password. You must enter it to encrypt your whisper." %}</p>
+        </div>
+        {% endif %}
+
+        {% if burn_after_read %}
+        <div class="rounded-lg bg-amber-900/30 border border-amber-700 px-4 py-3 text-sm text-amber-300">
+            🔥 {% trans "This whisper will be destroyed after being viewed once by the requester." %}
+        </div>
+        {% endif %}
+
+        <div class="flex items-end">
+            <button id="submit-btn" onclick="handleSubmit()"
+                class="px-6 py-2 rounded-lg bg-brand-600 hover:bg-brand-500 text-white font-semibold transition focus:outline-none focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 focus:ring-offset-gray-950">
+                🔒 {% trans "Encrypt & Submit" %}
+            </button>
+        </div>
+    </div>
+
+    <!-- Success -->
+    <div id="submit-success" class="hidden space-y-4">
+        <div class="rounded-lg bg-gray-800 border border-gray-700 p-6 space-y-3">
+            <h2 class="text-lg font-semibold text-brand-400">✅ {% trans "Whisper submitted!" %}</h2>
+            <p class="text-sm text-gray-400">{% trans "Your encrypted whisper has been submitted. The requester can now view it." %}</p>
+        </div>
+        <a href="{% url 'whispers:create' %}" class="inline-block text-sm text-brand-400 hover:text-brand-300 underline transition">
+            {% trans "← Create your own whisper" %}
+        </a>
+    </div>
+
+    <!-- Error -->
+    <div id="error" class="hidden rounded-lg bg-red-900/30 border border-red-800 p-4 text-red-300 text-sm"></div>
+</div>
+
+<!-- Embedded request data (auto-escaped by json_script) -->
+{{ request_data|json_script:"request-data" }}
+
+{% csrf_token %}
+{% load static %}
+<script src="{% static 'js/crypto.js' %}"></script>
+<script>
+    const requestData = JSON.parse(document.getElementById("request-data").textContent);
+    const keyB64 = window.location.hash.substring(1);
+</script>
+{% endblock %}
+
+{% block extra_head %}
+<script>
+    function switchMode(mode) {
+        const textMode = document.getElementById('text-mode');
+        const fileMode = document.getElementById('file-mode');
+        const tabText = document.getElementById('tab-text');
+        const tabFile = document.getElementById('tab-file');
+        if (mode === 'file') {
+            textMode.classList.add('hidden');
+            fileMode.classList.remove('hidden');
+            tabFile.className = tabFile.className.replace('bg-gray-800 text-gray-400', 'bg-brand-600 text-white');
+            tabText.className = tabText.className.replace('bg-brand-600 text-white', 'bg-gray-800 text-gray-400');
+        } else {
+            fileMode.classList.add('hidden');
+            textMode.classList.remove('hidden');
+            tabText.className = tabText.className.replace('bg-gray-800 text-gray-400', 'bg-brand-600 text-white');
+            tabFile.className = tabFile.className.replace('bg-brand-600 text-white', 'bg-gray-800 text-gray-400');
+        }
+    }
+
+    function onFileSelected() {
+        const fileEl = document.getElementById('file-input');
+        if (fileEl.files.length > 0) {
+            const file = fileEl.files[0];
+            document.getElementById('file-name').textContent = file.name;
+            document.getElementById('file-size').textContent = formatSize(file.size);
+            document.getElementById('file-placeholder').classList.add('hidden');
+            document.getElementById('file-info').classList.remove('hidden');
+        }
+    }
+
+    function clearFile() {
+        document.getElementById('file-input').value = '';
+        document.getElementById('file-placeholder').classList.remove('hidden');
+        document.getElementById('file-info').classList.add('hidden');
+    }
+
+    function formatSize(bytes) {
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+        return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+
+    // Drag and drop
+    document.addEventListener('DOMContentLoaded', () => {
+        const zone = document.getElementById('file-drop-zone');
+        if (!zone) return;
+        ['dragenter', 'dragover'].forEach(e => zone.addEventListener(e, ev => { ev.preventDefault(); zone.classList.add('border-brand-400'); }));
+        ['dragleave', 'drop'].forEach(e => zone.addEventListener(e, ev => { ev.preventDefault(); zone.classList.remove('border-brand-400'); }));
+        zone.addEventListener('drop', ev => {
+            const files = ev.dataTransfer.files;
+            if (files.length > 0) {
+                document.getElementById('file-input').files = files;
+                switchMode('file');
+                onFileSelected();
+            }
+        });
+    });
+</script>
+{% endblock %}

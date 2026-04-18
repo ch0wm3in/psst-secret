@@ -1,0 +1,198 @@
+{% extends "base/layout.html" %}
+{% load i18n %}
+
+{% block title %}psst-secret — {% trans "View Whisper" %}{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Password prompt (shown when paste is password-protected) -->
+    <div id="password-prompt" class="hidden space-y-4">
+        <div class="rounded-lg bg-gray-800 border border-gray-700 p-6 space-y-4">
+            <h2 class="text-lg font-semibold text-brand-400">🔑 {% trans "Password Required" %}</h2>
+            <p class="text-sm text-gray-400">{% trans "This whisper is password-protected. Enter the password to decrypt." %}</p>
+            <input type="password" id="view-password" autocomplete="off"
+                class="w-full rounded-lg bg-gray-900 border border-gray-600 text-gray-100 px-3 py-2 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                placeholder="{% trans "Enter password…" %}">
+            <button onclick="decryptWithPassword()"
+                class="px-6 py-2 rounded-lg bg-brand-600 hover:bg-brand-500 text-white font-semibold transition">
+                {% trans "Decrypt" %}
+            </button>
+        </div>
+    </div>
+
+    <!-- Decrypting spinner -->
+    <div id="decrypting" class="hidden text-center py-12 space-y-3">
+        <div class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-brand-400 border-r-transparent"></div>
+        <p class="text-gray-400">{% trans "Decrypting…" %}</p>
+    </div>
+
+    <!-- Decrypted content (text) -->
+    <div id="decrypted-container" class="hidden space-y-4">
+        {% if burn_after_read %}
+        <div class="rounded-lg bg-amber-900/30 border border-amber-700 px-4 py-3 text-sm text-amber-300">
+            🔥 {% trans "This whisper has been burned — it can never be viewed again." %}
+        </div>
+        {% endif %}
+
+        <div>
+            <div class="flex items-center justify-between mb-2">
+                <h1 class="text-xl font-bold text-white">{% trans "Decrypted Whisper" %}</h1>
+                <button onclick="copyContent()"
+                    class="text-xs px-3 py-1 rounded bg-gray-700 hover:bg-gray-600 text-gray-300 transition">
+                    {% trans "Copy" %}
+                </button>
+            </div>
+            <pre id="decrypted-content"
+                class="w-full rounded-lg bg-gray-800 border border-gray-700 text-gray-100 px-4 py-4 font-mono text-sm whitespace-pre-wrap break-words max-h-[60vh] overflow-y-auto"></pre>
+        </div>
+
+        <a href="{% url 'whispers:create' %}" class="inline-block text-sm text-brand-400 hover:text-brand-300 underline transition">
+            {% trans "← Create a new whisper" %}
+        </a>
+    </div>
+
+    <!-- Decrypted content (file) -->
+    <div id="file-container" class="hidden space-y-4">
+        {% if burn_after_read %}
+        <div class="rounded-lg bg-amber-900/30 border border-amber-700 px-4 py-3 text-sm text-amber-300">
+            🔥 {% trans "This whisper has been burned — it can never be viewed again. Download it now." %}
+        </div>
+        {% endif %}
+
+        <div class="rounded-lg bg-gray-800 border border-gray-700 p-6 text-center space-y-4">
+            <div class="text-5xl">📄</div>
+            <h1 class="text-xl font-bold text-white">{% trans "Decrypted File" %}</h1>
+            <p id="file-meta" class="text-sm text-gray-400"></p>
+            <button id="download-btn" onclick="downloadFile()"
+                class="px-6 py-2 rounded-lg bg-brand-600 hover:bg-brand-500 text-white font-semibold transition">
+                ⬇️ {% trans "Download File" %}
+            </button>
+        </div>
+
+        <a href="{% url 'whispers:create' %}" class="inline-block text-sm text-brand-400 hover:text-brand-300 underline transition">
+            {% trans "← Create a new whisper" %}
+        </a>
+    </div>
+
+    <!-- Error -->
+    <div id="error" class="hidden space-y-4">
+        <div class="rounded-lg bg-red-900/30 border border-red-800 p-6 text-center space-y-2">
+            <h2 class="text-lg font-semibold text-red-400">{% trans "Decryption Failed" %}</h2>
+            <p id="error-message" class="text-sm text-red-300">{% trans "The link may be incomplete or the whisper may have been tampered with." %}</p>
+        </div>
+        <a href="{% url 'whispers:create' %}" class="inline-block text-sm text-brand-400 hover:text-brand-300 underline transition">
+            {% trans "← Create a new whisper" %}
+        </a>
+    </div>
+</div>
+
+<!-- Embedded encrypted data (server-rendered, auto-escaped by json_script) -->
+{{ paste_data|json_script:"paste-data" }}
+
+{% load static %}
+<script src="{% static 'js/crypto.js' %}"></script>
+<script>
+    const pasteData = JSON.parse(document.getElementById("paste-data").textContent);
+    const keyB64 = window.location.hash.substring(1);
+    const isPasswordProtected = !!pasteData.salt;
+
+    // Store decrypted file data for download
+    let decryptedFileData = null;
+
+    (async () => {
+        if (isPasswordProtected) {
+            document.getElementById("password-prompt").classList.remove("hidden");
+            return;
+        }
+
+        if (!keyB64) {
+            showError("No decryption key found in URL. The link may be incomplete.");
+            return;
+        }
+
+        document.getElementById("decrypting").classList.remove("hidden");
+        try {
+            const plaintext = await decryptContent(pasteData.ciphertext, pasteData.iv, keyB64);
+            handleDecrypted(plaintext);
+        } catch (e) {
+            showError("Decryption failed. The link may be incomplete or corrupted.");
+        }
+    })();
+
+    async function decryptWithPassword() {
+        const password = document.getElementById("view-password").value;
+        if (!password) return;
+
+        document.getElementById("password-prompt").classList.add("hidden");
+        document.getElementById("decrypting").classList.remove("hidden");
+
+        try {
+            const plaintext = await decryptContent(
+                pasteData.ciphertext, pasteData.iv, null, password, pasteData.salt
+            );
+            handleDecrypted(plaintext);
+        } catch (e) {
+            showError("Wrong password or corrupted data.");
+        }
+    }
+
+    function handleDecrypted(plaintext) {
+        try {
+            const envelope = JSON.parse(plaintext);
+            if (envelope.type === 'file') {
+                showFile(envelope);
+            } else if (envelope.type === 'text') {
+                showText(envelope.content);
+            } else {
+                // Unknown envelope, show as raw text
+                showText(plaintext);
+            }
+        } catch (e) {
+            // Not JSON — legacy plain text paste
+            showText(plaintext);
+        }
+    }
+
+    function showText(text) {
+        document.getElementById("decrypted-content").textContent = text;
+        document.getElementById("decrypting").classList.add("hidden");
+        document.getElementById("decrypted-container").classList.remove("hidden");
+    }
+
+    function showFile(envelope) {
+        decryptedFileData = envelope;
+        const size = Math.round(atob(envelope.data).length);
+        let sizeStr = size < 1024 ? size + ' B' : size < 1024*1024 ? (size/1024).toFixed(1) + ' KB' : (size/(1024*1024)).toFixed(1) + ' MB';
+        document.getElementById("file-meta").textContent = envelope.filename + ' (' + sizeStr + ')';
+        document.getElementById("decrypting").classList.add("hidden");
+        document.getElementById("file-container").classList.remove("hidden");
+    }
+
+    function downloadFile() {
+        if (!decryptedFileData) return;
+        const binary = atob(decryptedFileData.data);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+        const blob = new Blob([bytes], { type: decryptedFileData.mimetype });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = decryptedFileData.filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    function showError(msg) {
+        document.getElementById("decrypting").classList.add("hidden");
+        document.getElementById("password-prompt").classList.add("hidden");
+        document.getElementById("error").classList.remove("hidden");
+        document.getElementById("error-message").textContent = msg;
+    }
+
+    function copyContent() {
+        navigator.clipboard.writeText(document.getElementById("decrypted-content").textContent);
+    }
+</script>
+{% endblock %}
