@@ -1,0 +1,359 @@
+{% extends "base/layout.html" %}
+{% load i18n whispers_extras %}
+
+{% block title %}psst-secret — {% trans "New Whisper" %}{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div>
+        <h1 class="text-2xl font-bold text-white">{% trans "Share a whisper" %}</h1>
+        <p class="mt-1 text-sm text-gray-400">{% trans "Your content is encrypted in your browser before it reaches our server. We never see your plaintext." %}</p>
+    </div>
+
+    <!-- Send / Receive toggle -->
+    <div class="flex gap-2">
+        <button id="tab-send" onclick="switchDirection('send')"
+            class="px-4 py-1.5 rounded-lg text-sm font-medium bg-brand-600 text-white transition">
+            📤 {% trans "Send" %}
+        </button>
+        <button id="tab-receive" onclick="switchDirection('receive')"
+            class="px-4 py-1.5 rounded-lg text-sm font-medium bg-gray-800 text-gray-400 hover:text-white transition">
+            📥 {% trans "Receive" %}
+        </button>
+    </div>
+
+    <div id="create-form" class="space-y-4">
+        <!-- Text/File mode toggle (send mode only) -->
+        <div id="content-toggle" class="flex gap-2">
+            <button id="tab-text" onclick="switchMode('text')"
+                class="px-4 py-1.5 rounded-lg text-sm font-medium bg-brand-600 text-white transition">
+                📝 {% trans "Text" %}
+            </button>
+            <button id="tab-file" onclick="switchMode('file')"
+                class="px-4 py-1.5 rounded-lg text-sm font-medium bg-gray-800 text-gray-400 hover:text-white transition">
+                📎 {% trans "File" %}
+            </button>
+        </div>
+
+        <!-- Text input (send mode only) -->
+        <div id="text-mode">
+            <label for="whisper" class="block text-sm font-medium text-gray-300 mb-1">{% trans "Whisper content" %}</label>
+            <textarea id="whisper" rows="8"
+                class="w-full rounded-lg bg-gray-800 border border-gray-700 text-gray-100 px-4 py-3 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent font-mono text-sm resize-y"
+                placeholder="{% trans "Type your whisper here…" %}"></textarea>
+        </div>
+
+        <!-- File input (send mode only) -->
+        <div id="file-mode" class="hidden">
+            <label for="file-input" class="block text-sm font-medium text-gray-300 mb-1">{% trans "Whisper file" %}</label>
+            <div id="file-drop-zone"
+                class="w-full rounded-lg bg-gray-800 border-2 border-dashed border-gray-600 hover:border-brand-500 px-4 py-10 text-center transition cursor-pointer"
+                onclick="document.getElementById('file-input').click()">
+                <input type="file" id="file-input" class="hidden" onchange="onFileSelected()">
+                <div id="file-placeholder" class="space-y-2">
+                    <div class="text-3xl">📁</div>
+                    <p class="text-sm text-gray-400">{% trans "Click to select a file or drag & drop" %}</p>
+                    <p class="text-xs text-gray-500">{% settings_value "DATA_UPLOAD_MAX_MEMORY_SIZE" as max_size %}{% trans "Any file type supported." %} {% blocktrans with max_size=max_size|filesizeformat %}Max upload size: {{ max_size }}{% endblocktrans %}</p>
+                </div>
+                <div id="file-info" class="hidden space-y-1">
+                    <div class="text-3xl">📄</div>
+                    <p id="file-name" class="text-sm text-brand-300 font-medium"></p>
+                    <p id="file-size" class="text-xs text-gray-500"></p>
+                    <button onclick="event.stopPropagation(); clearFile()" class="text-xs text-red-400 hover:text-red-300 underline mt-1">{% trans "Remove" %}</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Receive mode description -->
+        <div id="receive-info" class="hidden rounded-lg bg-gray-800 border border-gray-700 p-5 space-y-2">
+            <p class="text-sm text-gray-300">📥 <strong class="text-white">{% trans "Receive mode" %}</strong> — {% trans "create a request for someone to send you a whisper." %}</p>
+            <p class="text-xs text-gray-500">{% trans "You'll get two links: a <strong>submit link</strong> to share with the sender, and a <strong>view link</strong> for you to retrieve the whisper once it's been submitted." %}</p>
+        </div>
+
+        <!-- Options row -->
+        <div class="flex flex-wrap gap-4 items-end">
+            <!-- Expiry -->
+            <div class="flex-1 min-w-[160px]">
+                <label for="expiry" class="block text-sm font-medium text-gray-300 mb-1">{% trans "Expires after" %}</label>
+                <select id="expiry"
+                    class="w-full rounded-lg bg-gray-800 border border-gray-700 text-gray-100 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    <option value="5m">{% trans "5 Minutes" %}</option>
+                    <option value="1h">{% trans "1 Hour" %}</option>
+                    <option value="1d" selected>{% trans "1 Day" %}</option>
+                    <option value="1w">{% trans "1 Week" %}</option>
+                    <option value="1M">{% trans "1 Month" %}</option>
+                </select>
+            </div>
+
+            <!-- Burn after read -->
+            <label class="relative flex items-center gap-2 pb-1 cursor-pointer select-none">
+                <input type="checkbox" id="burn" class="hidden"
+                    onchange="document.getElementById('burn-icon').classList.toggle('opacity-40', !this.checked)">
+                <span id="burn-icon" class="text-lg leading-none opacity-40 transition">🔥</span>
+                <span class="text-sm text-gray-300">{% trans "Burn after reading" %}</span>
+                <span class="relative text-gray-500 text-xs cursor-help group/tip" onclick="event.preventDefault()">
+                    &#x3f;
+                    <span class="pointer-events-none invisible group-hover/tip:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 rounded-lg bg-gray-800 border border-gray-600 px-3 py-2 text-xs text-gray-300 shadow-lg z-10 transition-all duration-75">
+                        {% trans "When enabled, the whisper will be permanently deleted after being viewed once. The recipient gets one chance to see it." %}
+                    </span>
+                </span>
+            </label>
+
+            <!-- Submit -->
+            <button id="encrypt-btn" onclick="handleCreate()"
+                class="px-6 py-2 rounded-lg bg-brand-600 hover:bg-brand-500 text-white font-semibold transition focus:outline-none focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 focus:ring-offset-gray-950">
+                🔒 {% trans "Encrypt & Share" %}
+            </button>
+            <button id="request-btn" onclick="handleCreateRequest()" class="hidden px-6 py-2 rounded-lg bg-brand-600 hover:bg-brand-500 text-white font-semibold transition focus:outline-none focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 focus:ring-offset-gray-950">
+                🔗 {% trans "Create Request" %}
+            </button>
+        </div>
+
+        <!-- Advanced Options -->
+        <details id="advanced-options" class="group">
+            <summary class="cursor-pointer text-sm text-gray-400 hover:text-white transition select-none">
+                ⚙️ {% trans "Advanced Options" %}
+            </summary>
+            <div class="mt-3 space-y-3 rounded-lg bg-gray-800/50 border border-gray-700 p-4">
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-300 mb-1">
+                        {% trans "Password" %}
+                        <span class="text-gray-500">({% trans "optional" %})</span>
+                    </label>
+                    <input type="password" id="password" autocomplete="off"
+                        class="w-full rounded-lg bg-gray-800 border border-gray-700 text-gray-100 px-3 py-2 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                        placeholder="{% trans "Extra protection…" %}">
+                    <p class="mt-1 text-xs text-gray-500">{% trans "Adds an extra layer of encryption. The recipient will need this password in addition to the link to decrypt the psst." %}</p>
+                </div>
+                <div>
+                    <label for="allowed-cidr" class="block text-sm font-medium text-gray-300 mb-1">
+                        {% trans "Restrict by IP" %}
+                        <span class="text-gray-500">({% trans "optional" %})</span>
+                    </label>
+                    <input type="text" id="allowed-cidr" autocomplete="off"
+                        class="w-full rounded-lg bg-gray-800 border border-gray-700 text-gray-100 px-3 py-2 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                        placeholder="{% trans "e.g. 203.0.113.5 or 10.0.0.0/24" %}">
+                    <p id="cidr-help-send" class="mt-1 text-xs text-gray-500">{% trans "Only this IP/CIDR will be able to <strong>view</strong> the whisper. A bare IP is treated as /32." %}</p>
+                    <p id="cidr-help-receive" class="mt-1 text-xs text-gray-500 hidden">{% trans "Only this IP/CIDR will be able to <strong>submit</strong> a whisper. A bare IP is treated as /32." %}</p>
+                </div>
+                {% if enable_auth %}
+                <div id="auth-options" class="space-y-2">
+                    {% if not force_auth_view %}
+                    <label class="flex items-center gap-2 cursor-pointer select-none">
+                        <input type="checkbox" id="require-auth-view" class="rounded bg-gray-700 border-gray-600 text-brand-500 focus:ring-brand-500 focus:ring-offset-gray-900">
+                        <span class="text-sm text-gray-300">{% trans "Require authentication to view" %}</span>
+                        <span class="relative text-gray-500 text-xs cursor-help group/tip" onclick="event.preventDefault()">
+                            &#x3f;
+                            <span class="pointer-events-none invisible group-hover/tip:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 rounded-lg bg-gray-800 border border-gray-600 px-3 py-2 text-xs text-gray-300 shadow-lg z-10 transition-all duration-75">
+                                {% trans "The person viewing this whisper must be signed in." %}
+                            </span>
+                        </span>
+                    </label>
+                    {% endif %}
+                    {% if not force_auth_submit %}
+                    <label id="require-auth-submit-label" class="hidden flex items-center gap-2 cursor-pointer select-none">
+                        <input type="checkbox" id="require-auth-submit" class="rounded bg-gray-700 border-gray-600 text-brand-500 focus:ring-brand-500 focus:ring-offset-gray-900">
+                        <span class="text-sm text-gray-300">{% trans "Require authentication to submit" %}</span>
+                        <span class="relative text-gray-500 text-xs cursor-help group/tip" onclick="event.preventDefault()">
+                            &#x3f;
+                            <span class="pointer-events-none invisible group-hover/tip:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 rounded-lg bg-gray-800 border border-gray-600 px-3 py-2 text-xs text-gray-300 shadow-lg z-10 transition-all duration-75">
+                                {% trans "The person submitting a whisper to this request must be signed in." %}
+                            </span>
+                        </span>
+                    </label>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </details>
+    </div>
+
+    <!-- Result (hidden initially) -->
+    <div id="result" class="hidden space-y-4">
+        <div class="rounded-lg bg-gray-800 border border-gray-700 p-6 space-y-3">
+            <h2 class="text-lg font-semibold text-brand-400">✅ {% trans "Whisper created!" %}</h2>
+            <p class="text-sm text-gray-400">{% trans "Share this link. The decryption key is in the URL fragment and is <strong>never sent to the server</strong>." %}</p>
+            <div class="flex gap-2">
+                <input id="result-url" type="text" readonly
+                    class="flex-1 rounded-lg bg-gray-900 border border-gray-600 text-gray-100 px-3 py-2 font-mono text-sm focus:outline-none">
+                <button onclick="copyUrl()" id="copy-btn"
+                    class="px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-white text-sm font-medium transition">
+                    {% trans "Copy" %}
+                </button>
+            </div>
+            <div id="password-notice" class="hidden text-sm text-brand-300">
+                🔑 {% trans "This whisper is password-protected. The recipient will need the password to decrypt it." %}
+            </div>
+            <div id="burn-warning" class="hidden text-sm text-amber-400">
+                ⚠️ {% trans "This whisper will be destroyed after being viewed once." %}
+            </div>
+        </div>
+        <button onclick="location.reload()"
+            class="text-sm text-gray-400 hover:text-white transition underline">
+            {% trans "Create another whisper" %}
+        </button>
+    </div>
+
+    <!-- Receive result (hidden initially) -->
+    <div id="receive-result" class="hidden space-y-4">
+        <div class="rounded-lg bg-gray-800 border border-gray-700 p-6 space-y-4">
+            <h2 class="text-lg font-semibold text-brand-400">✅ {% trans "Request created!" %}</h2>
+            <p class="text-sm text-gray-400">{% trans "Share the <strong>submit link</strong> with the person who should send you a whisper. Use the <strong>view link</strong> to retrieve it once they've submitted." %}</p>
+
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-medium text-gray-400 mb-1">📤 {% trans "Submit link — share this with the sender" %}</label>
+                    <div class="flex gap-2">
+                        <input id="submit-url" type="text" readonly
+                            class="flex-1 rounded-lg bg-gray-900 border border-gray-600 text-gray-100 px-3 py-2 font-mono text-sm focus:outline-none">
+                        <button onclick="copyLink('submit-url', 'copy-submit-btn')" id="copy-submit-btn"
+                            class="px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-white text-sm font-medium transition">
+                            {% trans "Copy" %}
+                        </button>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-400 mb-1">👁️ {% trans "View link — for you to retrieve the whisper" %}</label>
+                    <div class="flex gap-2">
+                        <input id="view-url" type="text" readonly
+                            class="flex-1 rounded-lg bg-gray-900 border border-gray-600 text-gray-100 px-3 py-2 font-mono text-sm focus:outline-none">
+                        <button onclick="copyLink('view-url', 'copy-view-btn')" id="copy-view-btn"
+                            class="px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-white text-sm font-medium transition">
+                            {% trans "Copy" %}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="receive-password-notice" class="hidden text-sm text-brand-300">
+                🔑 {% trans "This request is password-protected. Share the password separately with the sender." %}
+            </div>
+            <div id="receive-burn-warning" class="hidden text-sm text-amber-400">
+                ⚠️ {% trans "The whisper will be destroyed after you view it once." %}
+            </div>
+        </div>
+        <button onclick="location.reload()"
+            class="text-sm text-gray-400 hover:text-white transition underline">
+            {% trans "Create another whisper" %}
+        </button>
+    </div>
+
+    <!-- Error -->
+    <div id="error" class="hidden rounded-lg bg-red-900/30 border border-red-800 p-4 text-red-300 text-sm"></div>
+</div>
+
+{% csrf_token %}
+{% load static %}
+<script src="{% static 'js/crypto.js' %}"></script>
+{% endblock %}
+
+{% block extra_head %}
+<script>
+    let currentDirection = 'send';
+
+    function switchDirection(dir) {
+        currentDirection = dir;
+        const tabSend = document.getElementById('tab-send');
+        const tabReceive = document.getElementById('tab-receive');
+        const contentToggle = document.getElementById('content-toggle');
+        const textMode = document.getElementById('text-mode');
+        const fileMode = document.getElementById('file-mode');
+        const receiveInfo = document.getElementById('receive-info');
+        const encryptBtn = document.getElementById('encrypt-btn');
+        const requestBtn = document.getElementById('request-btn');
+
+        if (dir === 'receive') {
+            tabReceive.className = tabReceive.className.replace('bg-gray-800 text-gray-400', 'bg-brand-600 text-white');
+            tabSend.className = tabSend.className.replace('bg-brand-600 text-white', 'bg-gray-800 text-gray-400');
+            contentToggle.classList.add('hidden');
+            textMode.classList.add('hidden');
+            fileMode.classList.add('hidden');
+            receiveInfo.classList.remove('hidden');
+            encryptBtn.classList.add('hidden');
+            requestBtn.classList.remove('hidden');
+            document.getElementById('cidr-help-send').classList.add('hidden');
+            document.getElementById('cidr-help-receive').classList.remove('hidden');
+            const authSubmitLabel = document.getElementById('require-auth-submit-label');
+            if (authSubmitLabel) authSubmitLabel.classList.remove('hidden');
+        } else {
+            tabSend.className = tabSend.className.replace('bg-gray-800 text-gray-400', 'bg-brand-600 text-white');
+            tabReceive.className = tabReceive.className.replace('bg-brand-600 text-white', 'bg-gray-800 text-gray-400');
+            contentToggle.classList.remove('hidden');
+            textMode.classList.remove('hidden');
+            receiveInfo.classList.add('hidden');
+            encryptBtn.classList.remove('hidden');
+            requestBtn.classList.add('hidden');
+            document.getElementById('cidr-help-send').classList.remove('hidden');
+            document.getElementById('cidr-help-receive').classList.add('hidden');
+            const authSubmitLabel = document.getElementById('require-auth-submit-label');
+            if (authSubmitLabel) authSubmitLabel.classList.add('hidden');
+        }
+    }
+
+    function copyLink(inputId, btnId) {
+        const urlInput = document.getElementById(inputId);
+        navigator.clipboard.writeText(urlInput.value).then(() => {
+            const btn = document.getElementById(btnId);
+            btn.textContent = 'Copied!';
+            setTimeout(() => btn.textContent = 'Copy', 2000);
+        });
+    }
+
+    function switchMode(mode) {
+        const textMode = document.getElementById('text-mode');
+        const fileMode = document.getElementById('file-mode');
+        const tabText = document.getElementById('tab-text');
+        const tabFile = document.getElementById('tab-file');
+        if (mode === 'file') {
+            textMode.classList.add('hidden');
+            fileMode.classList.remove('hidden');
+            tabFile.className = tabFile.className.replace('bg-gray-800 text-gray-400', 'bg-brand-600 text-white');
+            tabText.className = tabText.className.replace('bg-brand-600 text-white', 'bg-gray-800 text-gray-400');
+        } else {
+            fileMode.classList.add('hidden');
+            textMode.classList.remove('hidden');
+            tabText.className = tabText.className.replace('bg-gray-800 text-gray-400', 'bg-brand-600 text-white');
+            tabFile.className = tabFile.className.replace('bg-brand-600 text-white', 'bg-gray-800 text-gray-400');
+        }
+    }
+
+    function onFileSelected() {
+        const fileEl = document.getElementById('file-input');
+        if (fileEl.files.length > 0) {
+            const file = fileEl.files[0];
+            document.getElementById('file-name').textContent = file.name;
+            document.getElementById('file-size').textContent = formatSize(file.size);
+            document.getElementById('file-placeholder').classList.add('hidden');
+            document.getElementById('file-info').classList.remove('hidden');
+        }
+    }
+
+    function clearFile() {
+        document.getElementById('file-input').value = '';
+        document.getElementById('file-placeholder').classList.remove('hidden');
+        document.getElementById('file-info').classList.add('hidden');
+    }
+
+    function formatSize(bytes) {
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+        return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+
+    // Drag and drop
+    document.addEventListener('DOMContentLoaded', () => {
+        const zone = document.getElementById('file-drop-zone');
+        if (!zone) return;
+        ['dragenter', 'dragover'].forEach(e => zone.addEventListener(e, ev => { ev.preventDefault(); zone.classList.add('border-brand-400'); }));
+        ['dragleave', 'drop'].forEach(e => zone.addEventListener(e, ev => { ev.preventDefault(); zone.classList.remove('border-brand-400'); }));
+        zone.addEventListener('drop', ev => {
+            const files = ev.dataTransfer.files;
+            if (files.length > 0) {
+                document.getElementById('file-input').files = files;
+                switchMode('file');
+                onFileSelected();
+            }
+        });
+    });
+</script>
+{% endblock %}

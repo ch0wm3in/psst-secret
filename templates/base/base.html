@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+{% load i18n %}
+{% get_current_language as LANGUAGE_CODE %}
+<html lang="{{ LANGUAGE_CODE }}" class="h-full">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{% block title %}psst-secret{% endblock %}</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
+        {% load whispers_extras %}
+        <script>
+            tailwind.config = {
+                theme: {
+                    extend: {
+                        colors: {
+                            brand: {% settings_value "BRAND_COLORS" as brand_colors %}{{ brand_colors|to_json }}
+                        }
+                    }
+                }
+            }
+        </script>
+        {% block extra_head %}{% endblock %}
+    </head>
+    <body class="h-full bg-gray-950 text-gray-100">
+        {% block layout %}{% endblock %}
+    </body>
+</html>

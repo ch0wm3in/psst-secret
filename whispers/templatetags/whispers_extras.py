@@ -1,0 +1,36 @@
+import json
+
+from django import template
+from django.conf import settings
+from django.utils.safestring import mark_safe
+
+register = template.Library()
+
+
+# settings value
+@register.simple_tag
+def settings_value(name):
+    return getattr(settings, name, "")
+
+
+@register.filter
+def to_json(
+    value,
+):
+    # Not using user input in this filter, so no risk of XSS or code injection.
+    """Serialize a Python object to a JSON string,
+    safe for embedding in <script>."""
+    return mark_safe(json.dumps(value))  # nosec: B703, B308
+
+
+@register.filter
+def filesizeformat(bytes):
+    """Format bytes as human-readable file size."""
+    if bytes < 1024:
+        return f"{bytes} B"
+    elif bytes < 1024**2:
+        return f"{bytes / 1024:.1f} KB"
+    elif bytes < 1024**3:
+        return f"{bytes / 1024**2:.1f} MB"
+    else:
+        return f"{bytes / 1024**3:.1f} GB"

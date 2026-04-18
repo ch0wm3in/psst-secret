@@ -1,0 +1,154 @@
+{% extends "base/layout.html" %}
+{% load i18n %}
+
+{% block title %}psst-secret — {% trans "About" %}{% endblock %}
+
+{% block content %}
+<div class="space-y-8 max-w-3xl">
+    <div>
+        <h1 class="text-3xl font-bold text-white">{% trans "About psst-secret" %}</h1>
+        <p class="mt-2 text-gray-400">{% trans "A privacy focused app for sharing secrets securely. We call them whispers." %}</p>
+    </div>
+
+    <!-- How it works -->
+    <section class="space-y-3">
+        <h2 class="text-xl font-semibold text-brand-400">{% trans "How It Works" %}</h2>
+        <div class="rounded-lg bg-gray-800 border border-gray-700 p-5 space-y-4 text-sm text-gray-300 leading-relaxed">
+            <p>{% trans 'psst-secret ensures that <strong class="text-white">your whispers never exist in plaintext on our server</strong>. All encryption and decryption happens entirely in your browser using the <a href="https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API" class="text-brand-400 underline hover:text-brand-300" target="_blank">Web Crypto API</a>.' %}</p>
+
+            <div class="grid gap-4 sm:grid-cols-2">
+                <div class="rounded-lg bg-gray-900 p-4 space-y-2">
+                    <h3 class="font-semibold text-white">🔒 {% trans "Creating a Whisper" %}</h3>
+                    <ol class="list-decimal list-inside space-y-1 text-gray-400">
+                        <li>{% trans "You type your whisper in the browser" %}</li>
+                        <li>{% trans 'A random <strong class="text-gray-200">AES-256-GCM</strong> key is generated client-side' %}</li>
+                        <li>{% trans "Your whisper is encrypted in-browser" %}</li>
+                        <li>{% trans "Only the <em>ciphertext</em> is sent to the server" %}</li>
+                        <li>{% trans 'The decryption key is placed in the URL fragment (<code class="text-brand-300">#key</code>)' %}</li>
+                    </ol>
+                </div>
+                <div class="rounded-lg bg-gray-900 p-4 space-y-2">
+                    <h3 class="font-semibold text-white">🔓 {% trans "Viewing a Whisper" %}</h3>
+                    <ol class="list-decimal list-inside space-y-1 text-gray-400">
+                        <li>{% trans "You open the shared link" %}</li>
+                        <li>{% trans "The server returns the ciphertext" %}</li>
+                        <li>{% trans "The key from the URL fragment decrypts it in-browser" %}</li>
+                        <li>{% trans "You see the plaintext — the server never does" %}</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- URL Fragment -->
+    <section class="space-y-3">
+        <h2 class="text-xl font-semibold text-brand-400">{% trans "Why the URL Fragment?" %}</h2>
+        <div class="rounded-lg bg-gray-800 border border-gray-700 p-5 text-sm text-gray-300 leading-relaxed space-y-2">
+            <p>{% trans "The decryption key is stored after the <code class='bg-gray-900 px-1.5 py-0.5 rounded text-brand-300'>#</code> in the URL. Per the HTTP specification, <strong class='text-white'>the URL fragment is never sent to the server</strong> — it's processed only by the browser. This means:" %}</p>
+            <ul class="list-disc list-inside space-y-1 text-gray-400 ml-2">
+                <li>{% trans "The server never receives the decryption key" %}</li>
+                <li>{% trans "The key doesn't appear in server logs or analytics" %}</li>
+                <li>{% trans "Even if the server is compromised, your whispers remain encrypted" %}</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- Password Protection -->
+    <section class="space-y-3">
+        <h2 class="text-xl font-semibold text-brand-400">🔑 {% trans "Password Protection" %}</h2>
+        <div class="rounded-lg bg-gray-800 border border-gray-700 p-5 text-sm text-gray-300 leading-relaxed space-y-2">
+            <p>{% trans "Optionally, you can set a password when creating a whisper. When a password is used:" %}</p>
+            <ul class="list-disc list-inside space-y-1 text-gray-400 ml-2">
+                <li>{% trans 'The encryption key is derived from your password using <strong class="text-gray-200">PBKDF2</strong> (600,000 iterations, SHA-256)' %}</li>
+                <li>{% trans 'A random <strong class="text-gray-200">salt</strong> is generated and stored on the server (useless without the password)' %}</li>
+                <li>{% trans "The URL contains <em>no key fragment</em> — only the password holder can decrypt" %}</li>
+                <li>{% trans "This provides an extra layer of security for highly sensitive data" %}</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- Security Features -->
+    <section class="space-y-3">
+        <h2 class="text-xl font-semibold text-brand-400">{% trans "Security Features" %}</h2>
+        <div class="grid gap-3 sm:grid-cols-2">
+            <div class="rounded-lg bg-gray-800 border border-gray-700 p-4">
+                <h3 class="font-semibold text-white mb-1">🔥 {% trans "Burn After Reading" %}</h3>
+                <p class="text-sm text-gray-400">{% trans 'Whispers marked as burn-after-read are <strong class="text-gray-300">permanently erased from memory</strong> the moment they are viewed — not just flagged, but gone.' %}</p>
+            </div>
+            <div class="rounded-lg bg-gray-800 border border-gray-700 p-4">
+                <h3 class="font-semibold text-white mb-1">⏰ {% trans "Auto-Expiry" %}</h3>
+                <p class="text-sm text-gray-400">{% trans "All whispers require an expiration time (5 minutes to 1 month). Expired whispers are automatically evicted from Redis via TTL and continuously purged by a background process." %}</p>
+            </div>
+            <div class="rounded-lg bg-gray-800 border border-gray-700 p-4">
+                <h3 class="font-semibold text-white mb-1">🛡️ AES-256-GCM</h3>
+                <p class="text-sm text-gray-400">{% trans "Industry-standard authenticated encryption. Provides both confidentiality and integrity — any tampering with the ciphertext is detected." %}</p>
+            </div>
+            <div class="rounded-lg bg-gray-800 border border-gray-700 p-4">
+                <h3 class="font-semibold text-white mb-1">🚫 {% trans "Zero Knowledge" %}</h3>
+                <p class="text-sm text-gray-400">{% trans "The server stores only ciphertext, IV, and optional salt — and only in volatile memory (Redis). It has no ability to decrypt your data, even under compulsion." %}</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- What the server stores -->
+    <section class="space-y-3">
+        <h2 class="text-xl font-semibold text-brand-400">{% trans "What the Server Stores" %}</h2>
+        <div class="rounded-lg bg-gray-800 border border-gray-700 p-5 space-y-4">
+            <div>
+                <h3 class="text-sm font-semibold text-white mb-2">💾 {% trans "Redis (in-memory only — never touches disk)" %}</h3>
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="text-left text-gray-400 border-b border-gray-700">
+                            <th class="pb-2 pr-4">{% trans "Field" %}</th>
+                            <th class="pb-2">{% trans "Purpose" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-gray-300">
+                        <tr class="border-b border-gray-700/50"><td class="py-2 pr-4 font-mono text-brand-300">ciphertext</td><td class="py-2">{% trans "Your encrypted data (useless without the key)" %}</td></tr>
+                        <tr class="border-b border-gray-700/50"><td class="py-2 pr-4 font-mono text-brand-300">iv</td><td class="py-2">{% trans "Random initialization vector for AES-GCM" %}</td></tr>
+                        <tr><td class="py-2 pr-4 font-mono text-brand-300">salt</td><td class="py-2">{% trans "PBKDF2 salt (only if password-protected)" %}</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div>
+                <h3 class="text-sm font-semibold text-white mb-2">🗄️ {% trans "PostgreSQL (metadata only)" %}</h3>
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="text-left text-gray-400 border-b border-gray-700">
+                            <th class="pb-2 pr-4">{% trans "Field" %}</th>
+                            <th class="pb-2">{% trans "Purpose" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-gray-300">
+                        <tr class="border-b border-gray-700/50"><td class="py-2 pr-4 font-mono text-brand-300">expires_at</td><td class="py-2">{% trans "When the whisper will be auto-deleted" %}</td></tr>
+                        <tr class="border-b border-gray-700/50"><td class="py-2 pr-4 font-mono text-brand-300">burn_after_read</td><td class="py-2">{% trans "Whether to delete on first view" %}</td></tr>
+                        <tr class="border-b border-gray-700/50"><td class="py-2 pr-4 font-mono text-brand-300">mode</td><td class="py-2">{% trans "Send or receive" %}</td></tr>
+                        <tr><td class="py-2 pr-4 font-mono text-brand-300">allowed_cidr</td><td class="py-2">{% trans "IP/CIDR restriction" %}</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="text-xs text-gray-500">❌ {% trans "The server does <strong>not</strong> store: plaintext, encryption keys, passwords, or any identifying information. Encrypted data lives only in volatile memory and is lost if Redis restarts." %}</p>
+        </div>
+    </section>
+
+    <!-- Tech stack -->
+    <section class="space-y-3">
+        <h2 class="text-xl font-semibold text-brand-400">{% trans "Tech Stack" %}</h2>
+        <div class="flex flex-wrap gap-2 text-sm">
+            <span class="px-3 py-1 rounded-full bg-gray-800 border border-gray-700 text-gray-300">Django 5.2</span>
+            <span class="px-3 py-1 rounded-full bg-gray-800 border border-gray-700 text-gray-300">Redis (in-memory)</span>
+            <span class="px-3 py-1 rounded-full bg-gray-800 border border-gray-700 text-gray-300">PostgreSQL</span>
+            <span class="px-3 py-1 rounded-full bg-gray-800 border border-gray-700 text-gray-300">Tailwind CSS</span>
+            <span class="px-3 py-1 rounded-full bg-gray-800 border border-gray-700 text-gray-300">Web Crypto API</span>
+            <span class="px-3 py-1 rounded-full bg-gray-800 border border-gray-700 text-gray-300">AES-256-GCM</span>
+            <span class="px-3 py-1 rounded-full bg-gray-800 border border-gray-700 text-gray-300">PBKDF2</span>
+        </div>
+    </section>
+
+    <div class="pt-4">
+        <a href="{% url 'whispers:create' %}" class="inline-block px-6 py-2 rounded-lg bg-brand-600 hover:bg-brand-500 text-white font-semibold transition">
+            ← {% trans "Create a whisper" %}
+        </a>
+    </div>
+</div>
+{% endblock %}
