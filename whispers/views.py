@@ -47,10 +47,7 @@ def get_client_ip(request):
     """
     num_proxies = getattr(settings, "NUM_PROXIES", 0)
     if num_proxies and request.META.get("HTTP_X_FORWARDED_FOR"):
-        addrs = [
-            a.strip()
-            for a in request.META["HTTP_X_FORWARDED_FOR"].split(",")
-        ]
+        addrs = [a.strip() for a in request.META["HTTP_X_FORWARDED_FOR"].split(",")]
         # The trusted proxy at position N appended the real client IP
         # at index -(num_proxies) from the right.
         try:
@@ -189,9 +186,8 @@ def view_whisper(request, whisper_id):
     For receive-mode whispers that haven't been submitted yet, show pending page.
     """
     # Rate-limit whisper views per IP to mitigate brute-force enumeration
-    view_rate_str = (
-        settings.REST_FRAMEWORK.get("DEFAULT_THROTTLE_RATES", {})
-        .get("whisper_view", "")
+    view_rate_str = settings.REST_FRAMEWORK.get("DEFAULT_THROTTLE_RATES", {}).get(
+        "whisper_view", ""
     )
     if view_rate_str:
         client_ip = get_client_ip(request)
@@ -199,9 +195,7 @@ def view_whisper(request, whisper_id):
         rate_limit = int(view_rate_str.split("/")[0])
         hits = cache.get(cache_key, 0)
         if hits >= rate_limit:
-            return HttpResponse(
-                "Rate limit exceeded. Try again later.", status=429
-            )
+            return HttpResponse("Rate limit exceeded. Try again later.", status=429)
         cache.set(cache_key, hits + 1, 60)
 
     whisper = get_object_or_404(Whisper, id=whisper_id)
