@@ -247,6 +247,7 @@ LOGGING = {
     },
 }
 
+CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])
 
 # Authentication with django-allauth (can be disabled if not needed) SSO
 ENABLE_AUTH = env.bool("ENABLE_AUTH", default=False)
