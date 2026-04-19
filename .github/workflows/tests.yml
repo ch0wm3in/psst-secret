@@ -53,6 +53,9 @@ jobs:
 
       - name: Install dependencies
         run: uv sync --locked
+      
+      - name: Run migrations
+        run: uv run python manage.py migrate --noinput
 
       - name: Run tests
         run: uv run pytest
