@@ -38,6 +38,8 @@ jobs:
       REDIS_URL: redis://localhost:6379/0
       SECRET_KEY: test-secret-key-not-for-production
       DEBUG: "true"
+      ENABLE_AUTH: "true"
+      ENABLE_LOCAL_LOGIN: "true"
 
     steps:
       - name: Checkout
