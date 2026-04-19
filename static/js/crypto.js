@@ -10,6 +10,21 @@
  */
 
 /**
+ * Sanitize a filename from an untrusted source.
+ * Strips path separators and null bytes, limits length, applies a fallback.
+ */
+function sanitizeFilename(name) {
+    if (typeof name !== 'string' || !name) return 'download';
+    // Strip path components and null bytes
+    let clean = name.replace(/[/\\]/g, '_').replace(/\0/g, '');
+    // Collapse leading dots to prevent hidden files
+    clean = clean.replace(/^\.+/, '');
+    // Limit length (255 is common filesystem max)
+    if (clean.length > 200) clean = clean.substring(0, 200);
+    return clean || 'download';
+}
+
+/**
  * Convert an ArrayBuffer to a Base64 string.
  */
 function bufToBase64(buf) {

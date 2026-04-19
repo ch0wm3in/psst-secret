@@ -1,0 +1,11 @@
+#!/bin/bash
+
+set -e
+
+# Run database migrations
+python manage.py migrate --noinput
+# Collect static files
+python manage.py collectstatic --noinput --clear
+python manage.py compilemessages
+# Start the server with granian and serve static files
+exec granian --static-path-mount /app/staticfiles/ --interface wsgi psst_secret.wsgi:application

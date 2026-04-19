@@ -161,9 +161,10 @@
 
     function showFile(envelope) {
         decryptedFileData = envelope;
+        decryptedFileData.filename = sanitizeFilename(envelope.filename);
         const size = Math.round(atob(envelope.data).length);
         let sizeStr = size < 1024 ? size + ' B' : size < 1024*1024 ? (size/1024).toFixed(1) + ' KB' : (size/(1024*1024)).toFixed(1) + ' MB';
-        document.getElementById("file-meta").textContent = envelope.filename + ' (' + sizeStr + ')';
+        document.getElementById("file-meta").textContent = decryptedFileData.filename + ' (' + sizeStr + ')';
         document.getElementById("decrypting").classList.add("hidden");
         document.getElementById("file-container").classList.remove("hidden");
     }
