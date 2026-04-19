@@ -24,6 +24,19 @@ _BASE_MIDDLEWARE = [
     m for m in settings.MIDDLEWARE if m != "whispers.middleware.LoginRequiredMiddleware"
 ]
 
+# Disable effective DRF throttling in tests so rapid-fire requests don't
+# get 429s.  We keep the rate keys (required by the per-view throttle
+# classes) but set them high enough to never trigger.
+_TEST_REST_FRAMEWORK = {
+    **settings.REST_FRAMEWORK,
+    "DEFAULT_THROTTLE_CLASSES": [],
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": "10000/minute",
+        "whisper_create": "10000/minute",
+        "whisper_view": "",
+    },
+}
+
 
 def _redis_version_from_compose():
     """Parse the Redis image tag from docker-compose.yml so fakeredis
@@ -206,7 +219,7 @@ class RedisStoreTests(TestCase):
 # ---------------------------------------------------------------------------
 
 
-@override_settings(MIDDLEWARE=_BASE_MIDDLEWARE)
+@override_settings(MIDDLEWARE=_BASE_MIDDLEWARE, REST_FRAMEWORK=_TEST_REST_FRAMEWORK)
 class ApiCreateWhisperTests(TestCase):
 
     def setUp(self):
@@ -304,7 +317,7 @@ class ApiCreateWhisperTests(TestCase):
         self.assertEqual(resp.status_code, 405)
 
 
-@override_settings(MIDDLEWARE=_BASE_MIDDLEWARE)
+@override_settings(MIDDLEWARE=_BASE_MIDDLEWARE, REST_FRAMEWORK=_TEST_REST_FRAMEWORK)
 class ViewWhisperTests(TestCase):
 
     def setUp(self):
@@ -378,7 +391,7 @@ class ViewWhisperTests(TestCase):
 # ---------------------------------------------------------------------------
 
 
-@override_settings(MIDDLEWARE=_BASE_MIDDLEWARE)
+@override_settings(MIDDLEWARE=_BASE_MIDDLEWARE, REST_FRAMEWORK=_TEST_REST_FRAMEWORK)
 class ApiCreateRequestTests(TestCase):
 
     def setUp(self):
@@ -418,7 +431,7 @@ class ApiCreateRequestTests(TestCase):
         self.assertEqual(resp.status_code, 400)
 
 
-@override_settings(MIDDLEWARE=_BASE_MIDDLEWARE)
+@override_settings(MIDDLEWARE=_BASE_MIDDLEWARE, REST_FRAMEWORK=_TEST_REST_FRAMEWORK)
 class SubmitWhisperFlowTests(TestCase):
 
     def setUp(self):
@@ -536,7 +549,7 @@ class SubmitWhisperFlowTests(TestCase):
 # ---------------------------------------------------------------------------
 
 
-@override_settings(MIDDLEWARE=_BASE_MIDDLEWARE)
+@override_settings(MIDDLEWARE=_BASE_MIDDLEWARE, REST_FRAMEWORK=_TEST_REST_FRAMEWORK)
 class PageRenderTests(TestCase):
 
     def test_create_page(self):
@@ -553,7 +566,7 @@ class PageRenderTests(TestCase):
 # ---------------------------------------------------------------------------
 
 
-@override_settings(MIDDLEWARE=_BASE_MIDDLEWARE)
+@override_settings(MIDDLEWARE=_BASE_MIDDLEWARE, REST_FRAMEWORK=_TEST_REST_FRAMEWORK)
 class NoCacheMiddlewareTests(TestCase):
 
     def test_no_cache_headers_present(self):
@@ -612,6 +625,7 @@ _AUTH_MIDDLEWARE = _BASE_MIDDLEWARE + ["whispers.middleware.LoginRequiredMiddlew
 
 @override_settings(
     MIDDLEWARE=_AUTH_MIDDLEWARE,
+    REST_FRAMEWORK=_TEST_REST_FRAMEWORK,
     ENABLE_AUTH=True,
     LOGIN_URL="/login/",
     LOGIN_REQUIRED_EXEMPT_URLS=[
@@ -722,6 +736,7 @@ class LoginRequiredMiddlewareTests(TestCase):
 
 @override_settings(
     MIDDLEWARE=_BASE_MIDDLEWARE,
+    REST_FRAMEWORK=_TEST_REST_FRAMEWORK,
     ENABLE_AUTH=True,
     ENABLE_LOCAL_LOGIN=True,
 )

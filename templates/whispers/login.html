@@ -1,5 +1,5 @@
 {% extends "base/base.html" %}
-{% load i18n %}
+{% load i18n whispers_extras %}
 
 {% block title %}psst-secret — {% trans "Sign in" %}{% endblock %}
 
@@ -57,7 +57,6 @@
         {% endif %}
 
         <!-- Provider buttons -->
-        {% load socialaccount %}
         <div class="space-y-3">
             {% for provider in providers %}
             <a href="{% provider_login_url provider.id process='login' next=next %}"

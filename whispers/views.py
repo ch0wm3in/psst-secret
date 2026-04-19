@@ -2,6 +2,8 @@ import ipaddress
 import logging
 
 from django.conf import settings
+from django.core.cache import cache
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_GET
@@ -9,6 +11,7 @@ from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
+from rest_framework.throttling import AnonRateThrottle
 from rest_framework.views import APIView
 
 from whispers.constants import EXPIRY_DELTAS
@@ -27,9 +30,34 @@ from .serializers import (
 logger = logging.getLogger(__name__)
 
 
+class WhisperCreateThrottle(AnonRateThrottle):
+    scope = "whisper_create"
+
+
+class WhisperViewThrottle(AnonRateThrottle):
+    scope = "whisper_view"
+
+
 def get_client_ip(request):
-    xff = request.META.get("HTTP_X_FORWARDED_FOR")
-    return xff.split(",")[0].strip() if xff else request.META.get("REMOTE_ADDR")
+    """Return the real client IP, respecting NUM_PROXIES.
+
+    NUM_PROXIES=0 (default): ignore X-Forwarded-For entirely, use REMOTE_ADDR.
+    NUM_PROXIES=N: take the Nth-from-right entry in X-Forwarded-For,
+    which is the value appended by the outermost trusted proxy.
+    """
+    num_proxies = getattr(settings, "NUM_PROXIES", 0)
+    if num_proxies and request.META.get("HTTP_X_FORWARDED_FOR"):
+        addrs = [
+            a.strip()
+            for a in request.META["HTTP_X_FORWARDED_FOR"].split(",")
+        ]
+        # The trusted proxy at position N appended the real client IP
+        # at index -(num_proxies) from the right.
+        try:
+            return addrs[-num_proxies]
+        except IndexError:
+            return addrs[0]
+    return request.META.get("REMOTE_ADDR")
 
 
 def check_ip_allowed(request, whisper):
@@ -104,6 +132,7 @@ class CreateWhisperView(APIView):
     """
 
     permission_classes = [AllowAny]
+    throttle_classes = [WhisperCreateThrottle]
     serializer_class = CreateWhisperSerializer
 
     @extend_schema(
@@ -159,6 +188,22 @@ def view_whisper(request, whisper_id):
     If burn_after_read, mark as burned after first retrieval.
     For receive-mode whispers that haven't been submitted yet, show pending page.
     """
+    # Rate-limit whisper views per IP to mitigate brute-force enumeration
+    view_rate_str = (
+        settings.REST_FRAMEWORK.get("DEFAULT_THROTTLE_RATES", {})
+        .get("whisper_view", "")
+    )
+    if view_rate_str:
+        client_ip = get_client_ip(request)
+        cache_key = f"view_rate:{client_ip}"
+        rate_limit = int(view_rate_str.split("/")[0])
+        hits = cache.get(cache_key, 0)
+        if hits >= rate_limit:
+            return HttpResponse(
+                "Rate limit exceeded. Try again later.", status=429
+            )
+        cache.set(cache_key, hits + 1, 60)
+
     whisper = get_object_or_404(Whisper, id=whisper_id)
 
     # Check expiry — delete from DB and Redis
@@ -266,6 +311,7 @@ class CreateRequestView(APIView):
     """
 
     permission_classes = [AllowAny]
+    throttle_classes = [WhisperCreateThrottle]
     serializer_class = CreateRequestSerializer
 
     @extend_schema(
@@ -329,6 +375,7 @@ class SubmitWhisperView(APIView):
     """
 
     permission_classes = [AllowAny]
+    throttle_classes = [WhisperCreateThrottle]
     serializer_class = SubmitWhisperSerializer
 
     @extend_schema(

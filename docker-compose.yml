@@ -1,4 +1,14 @@
 services:
+
+ psst_secret:
+    restart: on-failure
+    build: .
+    env_file: .env
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - redis
  postgres:
     restart: on-failure
     image: postgres:18.3

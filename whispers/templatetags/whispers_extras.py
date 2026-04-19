@@ -7,6 +7,21 @@ from django.utils.safestring import mark_safe
 register = template.Library()
 
 
+# Try to import the provider_login_url tag from allauth, if available.
+# Allauth is condtionally enabled in settings.py,
+# so we need to handle the case where it's not installed.
+try:
+    from allauth.socialaccount.templatetags.socialaccount import provider_login_url
+
+    register.tag("provider_login_url", provider_login_url)
+except (ImportError, Exception):
+    # allauth not installed or socialaccount not in INSTALLED_APPS —
+    # register a no-op tag so the template still compiles.
+    @register.simple_tag(name="provider_login_url", takes_context=True)
+    def provider_login_url_noop(context, *args, **kwargs):
+        return ""
+
+
 # settings value
 @register.simple_tag
 def settings_value(name):

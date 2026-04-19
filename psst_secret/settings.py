@@ -174,6 +174,11 @@ SECURE_SSL_REDIRECT = env.bool("SECURE_SSL_REDIRECT", default=not DEBUG)
 # Redis — ciphertext storage (never touches disk)
 REDIS_URL = env.str("REDIS_URL", default="redis://localhost:6379/0")
 
+# Trusted proxy — set the number of proxies in front of Django so that
+# get_client_ip() only trusts X-Forwarded-For from known infrastructure.
+# 0 = no proxy (use REMOTE_ADDR directly); 1 = one reverse proxy; etc.
+NUM_PROXIES = env.int("NUM_PROXIES", default=0)
+
 # Per-whisper authentication options
 # When True, all whispers force authentication for view/submit
 # and the per-whisper option is hidden from the UI.
@@ -210,6 +215,14 @@ REST_FRAMEWORK = {
     "DEFAULT_PARSER_CLASSES": [
         "rest_framework.parsers.JSONParser",
     ],
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": env.str("API_THROTTLE_RATE_ANON", default="60/minute"),
+        "whisper_create": env.str("API_THROTTLE_RATE_CREATE", default="20/minute"),
+        "whisper_view": env.str("THROTTLE_RATE_VIEW", default="30/minute"),
+    },
 }
 
 # drf-spectacular — OpenAPI schema generation
@@ -277,7 +290,6 @@ if ENABLE_AUTH:
         default=[
             r"login/",  # custom login page
             r"accounts/.*",  # allauth auth flow
-            r"admin/.*",  # admin has its own auth
             r"i18n/.*",  # language switching
             r"static/.*",  # static files
         ],

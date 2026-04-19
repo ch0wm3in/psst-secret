@@ -88,13 +88,52 @@ python manage.py migrate
 
 ## Environment variables
 
+### Core
+
 | Variable | Description | Default |
 |---|---|---|
-| `SECRET_KEY` | Django secret key | Insecure default (dev only) |
-| `DEBUG` | Debug mode | `False` |
-| `DATABASE_URL` | Database connection string | `sqlite:///db.sqlite3` |
-| `REDIS_URL` | Redis connection string | `redis://localhost:6379/0` |
-| `BRAND_COLORS` | Tailwind brand palette as JSON (shade → hex) | Teal palette |
+| `SECRET_KEY` | Django secret key. **Required in production** (app refuses to start with the insecure default when `DEBUG=False`). | Insecure default (dev only) |
+| `DEBUG` | Enable Django debug mode. | `False` |
+| `ALLOWED_HOSTS` | Comma-separated list of allowed hostnames. | `localhost,127.0.0.1` |
+| `DATABASE_URL` | Database connection string ([dj-database-url](https://github.com/jazzband/dj-database-url) format). | `sqlite:///db.sqlite3` |
+| `REDIS_URL` | Redis connection string for in-memory ciphertext storage. | `redis://localhost:6379/0` |
+
+### Security
+
+| Variable | Description | Default |
+|---|---|---|
+| `SECURE_SSL_REDIRECT` | Redirect all HTTP requests to HTTPS. | `True` (production) / `False` (debug) |
+| `NUM_PROXIES` | Number of trusted reverse proxies in front of Django. Controls how `X-Forwarded-For` is parsed for IP-based restrictions. `0` = ignore the header and use `REMOTE_ADDR`. | `0` |
+
+### Authentication (SSO / allauth)
+
+All authentication features are **disabled by default**. Set `ENABLE_AUTH=True` to activate them.
+
+| Variable | Description | Default |
+|---|---|---|
+| `ENABLE_AUTH` | Enable django-allauth authentication. Adds login-required middleware, allauth apps, and the `/login/` page. | `False` |
+| `ENABLE_LOCAL_LOGIN` | Allow username/password login (in addition to SSO providers). Only takes effect when `ENABLE_AUTH=True`. | `False` |
+| `PSST_FORCE_AUTH_VIEW` | Require authentication to **view** all whispers (overrides per-whisper setting). | `False` |
+| `PSST_FORCE_AUTH_SUBMIT` | Require authentication to **submit** to all receive-mode requests (overrides per-whisper setting). | `False` |
+| `EMAIL_BACKEND` | Django email backend for allauth. Only used when `ENABLE_AUTH=True`. | `django.core.mail.backends.console.EmailBackend` |
+| `ACCOUNT_EMAIL_VERIFICATION` | allauth email verification mode: `"mandatory"`, `"optional"`, or `"none"`. Only used when `ENABLE_AUTH=True`. | `"none"` |
+| `LOGIN_REQUIRED_EXEMPT_URLS` | Comma-separated list of regex patterns for paths that bypass the login requirement (matched without leading `/`). Only used when `ENABLE_AUTH=True`. | `login/,accounts/.*,i18n/.*,static/.*` |
+| `SOCIAL_AUTH_PROVIDERS` | Comma-separated list of allauth social provider names to enable (e.g. `google,github`). Only used when `ENABLE_AUTH=True`. | `[]` (empty) |
+| `{PROVIDER}_SOCIAL_AUTH_CONFIG` | JSON configuration for each social provider (uppercased provider name, e.g. `GOOGLE_SOCIAL_AUTH_CONFIG`). Only used when the provider is listed in `SOCIAL_AUTH_PROVIDERS`. | `{}` |
+
+### Rate limiting
+
+| Variable | Description | Default |
+|---|---|---|
+| `API_THROTTLE_RATE_ANON` | Global anonymous API rate limit (DRF format, e.g. `100/hour`). | `60/minute` |
+| `API_THROTTLE_RATE_CREATE` | Rate limit for whisper/request creation and submit API endpoints. | `20/minute` |
+| `THROTTLE_RATE_VIEW` | Rate limit for the whisper view page (per IP, cache-based). | `30/minute` |
+
+### Branding
+
+| Variable | Description | Default |
+|---|---|---|
+| `BRAND_COLORS` | Tailwind color palette as JSON (shade → hex). | Teal palette |
 
 Example custom brand colors (blue):
 
@@ -106,8 +145,8 @@ BRAND_COLORS='{"50":"#eff6ff","100":"#dbeafe","200":"#bfdbfe","300":"#93c5fd","4
 
 ```
 psst_secret/          Django project config (settings, urls, wsgi, asgi)
-pssts/                Main app
-├── models.py         Pssts model (metadata only — no ciphertext fields)
+whispers/                Main app
+├── models.py         Whispers model (metadata only — no ciphertext fields)
 ├── redis_store.py    Redis helpers for in-memory ciphertext storage
 ├── views.py          API + page views (send, receive, submit)
 ├── urls.py           URL routing
