@@ -8,31 +8,6 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
-    services:
-      redis:
-        image: redis:8
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 6379:6379
-
-      postgres:
-        image: postgres:18
-        env:
-          POSTGRES_USER: psst
-          POSTGRES_PASSWORD: psst
-          POSTGRES_DB: psst_test
-        options: >-
-          --health-cmd "pg_isready -U psst"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
     env:
       DATABASE_URL: postgres://psst:psst@localhost:5432/psst_test
       REDIS_URL: redis://localhost:6379/0
@@ -40,10 +15,38 @@ jobs:
       DEBUG: "true"
       ENABLE_AUTH: "true"
       ENABLE_LOCAL_LOGIN: "true"
+      POSTGRES_USER: psst
+      POSTGRES_PASSWORD: psst
+      POSTGRES_DB: psst_test
 
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create .env for docker compose
+        run: |
+          cat <<EOF > .env
+          POSTGRES_USER=$POSTGRES_USER
+          POSTGRES_PASSWORD=$POSTGRES_PASSWORD
+          POSTGRES_DB=$POSTGRES_DB
+          EOF
+
+      - name: Start services from docker-compose
+        run: docker compose up -d postgres redis
+
+      - name: Wait for PostgreSQL
+        run: |
+          for i in $(seq 1 30); do
+            docker compose exec -T postgres pg_isready -U "$POSTGRES_USER" && break
+            sleep 1
+          done
+
+      - name: Wait for Redis
+        run: |
+          for i in $(seq 1 30); do
+            docker compose exec -T redis redis-cli ping | grep -q PONG && break
+            sleep 1
+          done
 
       - name: setup Python
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
@@ -61,3 +64,7 @@ jobs:
 
       - name: Run tests
         run: uv run pytest
+
+      - name: Stop services
+        if: always()
+        run: docker compose down
