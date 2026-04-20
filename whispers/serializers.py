@@ -63,5 +63,11 @@ class SubmitWhisperSerializer(serializers.Serializer):
     iv = serializers.CharField(max_length=50)
 
 
+class RevealWhisperResponseSerializer(serializers.Serializer):
+    ciphertext = serializers.CharField()
+    iv = serializers.CharField()
+    salt = serializers.CharField()
+
+
 class SubmitWhisperResponseSerializer(serializers.Serializer):
     success = serializers.BooleanField()

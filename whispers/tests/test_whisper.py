@@ -361,11 +361,22 @@ class ViewWhisperTests(TestCase):
 
     def test_burn_after_read_deletes(self):
         w = self._create_whisper(burn_after_read=True)
+        # First GET shows confirmation page (not the actual content)
         resp = self.client.get(f"/whisper/{w.id}")
         self.assertEqual(resp.status_code, 200)
-        # Second view should 404 — whisper is gone
-        resp2 = self.client.get(f"/whisper/{w.id}")
-        self.assertEqual(resp2.status_code, 404)
+        self.assertTemplateUsed(resp, "whispers/confirm_burn.html")
+        # Whisper still exists — bot GETs don't burn
+        self.assertTrue(Whisper.objects.filter(id=w.id).exists())
+        # POST to reveal endpoint burns the whisper
+        resp2 = self.client.post(f"/api/whisper/{w.id}/reveal")
+        self.assertEqual(resp2.status_code, 200)
+        data = resp2.json()
+        self.assertIn("ciphertext", data)
+        # Whisper is now gone
+        self.assertFalse(Whisper.objects.filter(id=w.id).exists())
+        # Second reveal should 404
+        resp3 = self.client.post(f"/api/whisper/{w.id}/reveal")
+        self.assertEqual(resp3.status_code, 404)
 
     def test_ip_restriction_blocks(self):
         w = self._create_whisper(allowed_cidr="192.168.1.0/24")
@@ -404,7 +415,7 @@ class ApiCreateRequestTests(TestCase):
 
     def _post(self, payload):
         return self.client.post(
-            "/api/request",
+            "/api/whisper/request",
             data=json.dumps(payload),
             content_type="application/json",
         )
@@ -482,7 +493,7 @@ class SubmitWhisperFlowTests(TestCase):
     def test_api_submit_success(self):
         w = self._create_request()
         resp = self.client.post(
-            f"/api/submit/{w.id}",
+            f"/api/whisper/submit/{w.id}",
             data=json.dumps({"ciphertext": "ct", "iv": "iv"}),
             content_type="application/json",
         )
@@ -494,7 +505,7 @@ class SubmitWhisperFlowTests(TestCase):
     def test_api_submit_missing_fields(self):
         w = self._create_request()
         resp = self.client.post(
-            f"/api/submit/{w.id}",
+            f"/api/whisper/submit/{w.id}",
             data=json.dumps({"ciphertext": "ct"}),
             content_type="application/json",
         )
@@ -504,7 +515,7 @@ class SubmitWhisperFlowTests(TestCase):
         w = self._create_request()
         redis_store.update_crypto(w.id, ciphertext="ct", iv="iv")
         resp = self.client.post(
-            f"/api/submit/{w.id}",
+            f"/api/whisper/submit/{w.id}",
             data=json.dumps({"ciphertext": "ct2", "iv": "iv2"}),
             content_type="application/json",
         )
@@ -513,7 +524,7 @@ class SubmitWhisperFlowTests(TestCase):
     def test_api_submit_expired(self):
         w = self._create_request(expires_at=timezone.now() - timedelta(seconds=1))
         resp = self.client.post(
-            f"/api/submit/{w.id}",
+            f"/api/whisper/submit/{w.id}",
             data=json.dumps({"ciphertext": "ct", "iv": "iv"}),
             content_type="application/json",
         )
@@ -522,7 +533,7 @@ class SubmitWhisperFlowTests(TestCase):
     def test_api_submit_ip_blocked(self):
         w = self._create_request(allowed_cidr="192.168.1.0/24")
         resp = self.client.post(
-            f"/api/submit/{w.id}",
+            f"/api/whisper/submit/{w.id}",
             data=json.dumps({"ciphertext": "ct", "iv": "iv"}),
             content_type="application/json",
         )
@@ -635,7 +646,7 @@ _AUTH_MIDDLEWARE = _BASE_MIDDLEWARE + ["whispers.middleware.LoginRequiredMiddlew
         r"i18n/.*",
         r"static/.*",
         r"submit/.*",
-        r"api/submit/.*",
+        r"api/whisper/submit/.*",
         r"whisper/.*",
     ],
 )
@@ -688,13 +699,13 @@ class LoginRequiredMiddlewareTests(TestCase):
         self.assertNotEqual(resp.status_code, 302)
 
     def test_submit_api_exempt_when_not_forced(self):
-        """api/submit/ is exempt when PSST_FORCE_AUTH_SUBMIT is False."""
-        resp = self.client.get(f"/api/submit/{uuid.uuid4()}")
+        """api/whisper/submit/ is exempt when PSST_FORCE_AUTH_SUBMIT is False."""
+        resp = self.client.get(f"/api/whisper/submit/{uuid.uuid4()}")
         # Non-existent → 404 (not 302)
         self.assertNotEqual(resp.status_code, 302)
 
     def test_submit_api_requires_auth_when_forced(self):
-        """api/submit/ requires auth when PSST_FORCE_AUTH_SUBMIT is True."""
+        """api/whisper/submit/ requires auth when PSST_FORCE_AUTH_SUBMIT is True."""
         with self.settings(
             LOGIN_REQUIRED_EXEMPT_URLS=[
                 r"login/",
@@ -705,7 +716,7 @@ class LoginRequiredMiddlewareTests(TestCase):
             ],
         ):
             resp = self.client.post(
-                f"/api/submit/{uuid.uuid4()}",
+                f"/api/whisper/submit/{uuid.uuid4()}",
                 data=json.dumps({"ciphertext": "ct", "iv": "iv", "salt": "s"}),
                 content_type="application/json",
             )
