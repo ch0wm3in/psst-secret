@@ -11,9 +11,9 @@ register = template.Library()
 # Allauth is condtionally enabled in settings.py,
 # so we need to handle the case where it's not installed.
 try:
-    from allauth.socialaccount.templatetags.socialaccount import provider_login_url
+    from allauth.socialaccount.templatetags.socialaccount import register as allauth_register
 
-    register.tag("provider_login_url", provider_login_url)
+    register.tags["provider_login_url"] = allauth_register.tags["provider_login_url"]
 except ImportError, Exception:
     # allauth not installed or socialaccount not in INSTALLED_APPS —
     # register a no-op tag so the template still compiles.
