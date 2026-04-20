@@ -290,15 +290,7 @@
             document.getElementById('cidr-help-receive').classList.remove('hidden');
             const authSubmitLabel = document.getElementById('require-auth-submit-label');
             if (authSubmitLabel) authSubmitLabel.classList.remove('hidden');
-            // Email notification label/help toggle
-            const notifyLabelSend = document.getElementById('notify-email-label-send');
-            const notifyLabelRecv = document.getElementById('notify-email-label-receive');
-            const notifyHelpSend = document.getElementById('notify-help-send');
-            const notifyHelpRecv = document.getElementById('notify-help-receive');
-            if (notifyLabelSend) notifyLabelSend.classList.add('hidden');
-            if (notifyLabelRecv) notifyLabelRecv.classList.remove('hidden');
-            if (notifyHelpSend) notifyHelpSend.classList.add('hidden');
-            if (notifyHelpRecv) notifyHelpRecv.classList.remove('hidden');
+            toggleEmailLabels('receive');
         } else {
             tabSend.className = tabSend.className.replace('bg-gray-800 text-gray-400', 'bg-brand-600 text-white');
             tabReceive.className = tabReceive.className.replace('bg-brand-600 text-white', 'bg-gray-800 text-gray-400');
@@ -311,16 +303,20 @@
             document.getElementById('cidr-help-receive').classList.add('hidden');
             const authSubmitLabel = document.getElementById('require-auth-submit-label');
             if (authSubmitLabel) authSubmitLabel.classList.add('hidden');
-            // Email notification label/help toggle
-            const notifyLabelSend = document.getElementById('notify-email-label-send');
-            const notifyLabelRecv = document.getElementById('notify-email-label-receive');
-            const notifyHelpSend = document.getElementById('notify-help-send');
-            const notifyHelpRecv = document.getElementById('notify-help-receive');
-            if (notifyLabelSend) notifyLabelSend.classList.remove('hidden');
-            if (notifyLabelRecv) notifyLabelRecv.classList.add('hidden');
-            if (notifyHelpSend) notifyHelpSend.classList.remove('hidden');
-            if (notifyHelpRecv) notifyHelpRecv.classList.add('hidden');
+            toggleEmailLabels('send');
         }
+    }
+
+    function toggleEmailLabels(mode) {
+        const notifyLabelSend = document.getElementById('notify-email-label-send');
+        const notifyLabelRecv = document.getElementById('notify-email-label-receive');
+        const notifyHelpSend = document.getElementById('notify-help-send');
+        const notifyHelpRecv = document.getElementById('notify-help-receive');
+        const isReceive = mode === 'receive';
+        if (notifyLabelSend) notifyLabelSend.classList.toggle('hidden', isReceive);
+        if (notifyLabelRecv) notifyLabelRecv.classList.toggle('hidden', !isReceive);
+        if (notifyHelpSend) notifyHelpSend.classList.toggle('hidden', isReceive);
+        if (notifyHelpRecv) notifyHelpRecv.classList.toggle('hidden', !isReceive);
     }
 
     function copyLink(inputId, btnId) {
