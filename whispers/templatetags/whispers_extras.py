@@ -1,3 +1,4 @@
+# isort: off
 import json
 
 from django import template
@@ -11,7 +12,9 @@ register = template.Library()
 # Allauth is condtionally enabled in settings.py,
 # so we need to handle the case where it's not installed.
 try:
-    from allauth.socialaccount.templatetags.socialaccount import register as allauth_register
+    from allauth.socialaccount.templatetags.socialaccount import (
+        register as allauth_register,
+    )
 
     register.tags["provider_login_url"] = allauth_register.tags["provider_login_url"]
 except ImportError, Exception:
