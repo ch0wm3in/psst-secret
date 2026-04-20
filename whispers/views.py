@@ -17,6 +17,7 @@ from rest_framework.views import APIView
 from whispers.constants import EXPIRY_DELTAS
 
 from . import redis_store
+from .email import send_whisper_created_email, send_whisper_submitted_email
 from .models import Whisper
 from .serializers import (
     CreateRequestResponseSerializer,
@@ -111,6 +112,7 @@ def create(request):
             "enable_auth": getattr(settings, "ENABLE_AUTH", False),
             "force_auth_view": getattr(settings, "PSST_FORCE_AUTH_VIEW", False),
             "force_auth_submit": getattr(settings, "PSST_FORCE_AUTH_SUBMIT", False),
+            "enable_email": getattr(settings, "PSST_ENABLE_EMAIL", False),
         },
     )
 
@@ -161,6 +163,7 @@ class CreateWhisperView(APIView):
             require_auth_view=require_auth_view,
             expiry_option=d["expiry"],
             expires_at=expires_at,
+            notify_email=d["notify_email"],
         )
 
         redis_store.store_crypto(
@@ -171,10 +174,15 @@ class CreateWhisperView(APIView):
             salt=d["salt"],
         )
 
+        whisper_url = request.build_absolute_uri(f"/whisper/{whisper.id}")
+
+        if d["notify_email"]:
+            send_whisper_created_email(d["notify_email"], whisper_url)
+
         return Response(
             {
                 "id": str(whisper.id),
-                "url": request.build_absolute_uri(f"/whisper/{whisper.id}"),
+                "url": whisper_url,
             }
         )
 
@@ -433,6 +441,7 @@ class CreateRequestView(APIView):
             require_auth_submit=require_auth_submit,
             expiry_option=d["expiry"],
             expires_at=expires_at,
+            notify_email=d["notify_email"],
         )
 
         redis_store.store_crypto(
@@ -513,5 +522,9 @@ class SubmitWhisperView(APIView):
 
         d = serializer.validated_data
         redis_store.update_crypto(request_id, ciphertext=d["ciphertext"], iv=d["iv"])
+
+        if whisper.notify_email:
+            view_url = request.build_absolute_uri(f"/whisper/{whisper.id}")
+            send_whisper_submitted_email(whisper.notify_email, view_url)
 
         return Response({"success": True})

@@ -1,0 +1,13 @@
+Good news — someone has submitted a whisper to your request!
+
+You can begin viewing it at the following URL:
+{{ view_url }}
+
+*** IMPORTANT — INCOMPLETE LINK ***
+The link above does NOT contain the decryption key. The decryption key
+is stored only in the URL fragment (the part after the # symbol), which
+our server never sees. You should already have the full link (with the
+key) from when you created the request. Use that link to decrypt the
+submitted whisper.
+
+If you did not expect this message, you can safely ignore it.

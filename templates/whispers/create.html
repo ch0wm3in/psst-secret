@@ -164,6 +164,21 @@
                     {% endif %}
                 </div>
                 {% endif %}
+                {% if enable_email %}
+                <div>
+                    <label for="notify-email" class="block text-sm font-medium text-gray-300 mb-1">
+                        <span id="notify-email-label-send">{% trans "Notify recipient" %}</span>
+                        <span id="notify-email-label-receive" class="hidden">{% trans "Notify me when submitted" %}</span>
+                        <span class="text-gray-500">({% trans "optional" %})</span>
+                    </label>
+                    <input type="email" id="notify-email" autocomplete="email"
+                        class="w-full rounded-lg bg-gray-800 border border-gray-700 text-gray-100 px-3 py-2 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                        placeholder="{% trans "recipient@example.com" %}"
+                        {% if request.user.is_authenticated and request.user.email %}value="{{ request.user.email }}"{% endif %}>
+                    <p id="notify-help-send" class="mt-1 text-xs text-gray-500">{% trans "The recipient will be emailed a notification that a whisper is waiting. <strong>The email will NOT contain the decryption key</strong> — you must share the full link (with the key) separately." %}</p>
+                    <p id="notify-help-receive" class="mt-1 text-xs text-gray-500 hidden">{% trans "You will be emailed when someone submits a whisper to your request. <strong>The email will NOT contain the decryption key</strong> — use the view link you saved when creating the request." %}</p>
+                </div>
+                {% endif %}
             </div>
         </details>
     </div>
@@ -275,6 +290,15 @@
             document.getElementById('cidr-help-receive').classList.remove('hidden');
             const authSubmitLabel = document.getElementById('require-auth-submit-label');
             if (authSubmitLabel) authSubmitLabel.classList.remove('hidden');
+            // Email notification label/help toggle
+            const notifyLabelSend = document.getElementById('notify-email-label-send');
+            const notifyLabelRecv = document.getElementById('notify-email-label-receive');
+            const notifyHelpSend = document.getElementById('notify-help-send');
+            const notifyHelpRecv = document.getElementById('notify-help-receive');
+            if (notifyLabelSend) notifyLabelSend.classList.add('hidden');
+            if (notifyLabelRecv) notifyLabelRecv.classList.remove('hidden');
+            if (notifyHelpSend) notifyHelpSend.classList.add('hidden');
+            if (notifyHelpRecv) notifyHelpRecv.classList.remove('hidden');
         } else {
             tabSend.className = tabSend.className.replace('bg-gray-800 text-gray-400', 'bg-brand-600 text-white');
             tabReceive.className = tabReceive.className.replace('bg-brand-600 text-white', 'bg-gray-800 text-gray-400');
@@ -287,6 +311,15 @@
             document.getElementById('cidr-help-receive').classList.add('hidden');
             const authSubmitLabel = document.getElementById('require-auth-submit-label');
             if (authSubmitLabel) authSubmitLabel.classList.add('hidden');
+            // Email notification label/help toggle
+            const notifyLabelSend = document.getElementById('notify-email-label-send');
+            const notifyLabelRecv = document.getElementById('notify-email-label-receive');
+            const notifyHelpSend = document.getElementById('notify-help-send');
+            const notifyHelpRecv = document.getElementById('notify-help-receive');
+            if (notifyLabelSend) notifyLabelSend.classList.remove('hidden');
+            if (notifyLabelRecv) notifyLabelRecv.classList.add('hidden');
+            if (notifyHelpSend) notifyHelpSend.classList.remove('hidden');
+            if (notifyHelpRecv) notifyHelpRecv.classList.add('hidden');
         }
     }
 
