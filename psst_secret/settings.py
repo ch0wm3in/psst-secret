@@ -303,7 +303,7 @@ if ENABLE_AUTH:
         LOGIN_REQUIRED_EXEMPT_URLS.append(
             r"submit/.*"
         )  # allow unauthenticated submits if not forcing auth
-        LOGIN_REQUIRED_EXEMPT_URLS.append(r"api/submit/.*")
+        LOGIN_REQUIRED_EXEMPT_URLS.append(r"api/whisper/submit/.*")
     if not PSST_FORCE_AUTH_VIEW:
         LOGIN_REQUIRED_EXEMPT_URLS.append(
             r"whisper/.*"

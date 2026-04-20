@@ -1,0 +1,56 @@
+{% extends "base/layout.html" %}
+{% load i18n %}
+
+{% block title %}psst-secret — {% trans "Reveal Whisper" %}{% endblock %}
+
+{% block content %}
+<div class="text-center py-16 space-y-4">
+    <div class="text-5xl">🔥</div>
+    <h1 class="text-2xl font-bold text-white">{% trans "Burn-after-reading whisper" %}</h1>
+    <p class="text-gray-400 max-w-md mx-auto">{% trans "This psst will be permanently destroyed after you view it. Click below when you are ready." %}</p>
+    <button id="reveal-btn" onclick="revealWhisper()"
+        class="inline-block mt-4 px-6 py-2 rounded-lg bg-brand-600 hover:bg-brand-500 text-white font-semibold transition">
+        🔓 {% trans "Reveal whisper" %}
+    </button>
+    <div id="error" class="hidden text-sm text-red-400 mt-2"></div>
+</div>
+
+<script>
+    async function revealWhisper() {
+        const btn = document.getElementById('reveal-btn');
+        const errorEl = document.getElementById('error');
+        btn.disabled = true;
+        btn.textContent = '{% trans "Loading…" %}';
+        errorEl.classList.add('hidden');
+
+        try {
+            const resp = await fetch("{{ reveal_url }}", {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!resp.ok) {
+                let msg = 'Error (' + resp.status + ')';
+                try { const body = await resp.json(); msg = body.error || msg; } catch(e) {}
+                throw new Error(msg);
+            }
+
+            const data = await resp.json();
+            // Store the revealed data in sessionStorage so the view page can pick it up.
+            sessionStorage.setItem('revealed_paste_data', JSON.stringify(data));
+            // Build redirect URL: query param must come before the hash fragment.
+            const url = new URL(window.location.href);
+            url.searchParams.set('revealed', '1');
+            window.location.replace(url.toString());
+        } catch (e) {
+            errorEl.textContent = e.message;
+            errorEl.classList.remove('hidden');
+            btn.disabled = false;
+            btn.textContent = '🔓 {% trans "Reveal whisper" %}';
+        }
+    }
+</script>
+{% endblock %}

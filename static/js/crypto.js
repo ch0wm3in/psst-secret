@@ -317,7 +317,7 @@ async function handleCreateRequest() {
         }
 
         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-        const response = await fetch('/api/request', {
+        const response = await fetch('/api/whisper/request', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -467,7 +467,7 @@ async function handleSubmit() {
 
         // Submit to server
         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-        const response = await fetch('/api/submit/' + requestData.request_id, {
+        const response = await fetch('/api/whisper/submit/' + requestData.request_id, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

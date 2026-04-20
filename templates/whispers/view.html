@@ -92,48 +92,26 @@
 {% load static %}
 <script src="{% static 'js/crypto.js' %}"></script>
 <script>
-    const pasteData = JSON.parse(document.getElementById("paste-data").textContent);
-    const keyB64 = window.location.hash.substring(1);
-    const isPasswordProtected = !!pasteData.salt;
+    let pasteData = JSON.parse(document.getElementById("paste-data").textContent);
+
+    // Burn-after-read: crypto data arrives via sessionStorage (set by the
+    // confirm_burn page after a POST reveal), not embedded in the HTML.
+    if (!pasteData) {
+        const revealed = sessionStorage.getItem('revealed_paste_data');
+        if (revealed) {
+            pasteData = JSON.parse(revealed);
+            sessionStorage.removeItem('revealed_paste_data');
+        }
+    }
 
     // Store decrypted file data for download
     let decryptedFileData = null;
 
-    (async () => {
-        if (isPasswordProtected) {
-            document.getElementById("password-prompt").classList.remove("hidden");
-            return;
-        }
-
-        if (!keyB64) {
-            showError("No decryption key found in URL. The link may be incomplete.");
-            return;
-        }
-
-        document.getElementById("decrypting").classList.remove("hidden");
-        try {
-            const plaintext = await decryptContent(pasteData.ciphertext, pasteData.iv, keyB64);
-            handleDecrypted(plaintext);
-        } catch (e) {
-            showError("Decryption failed. The link may be incomplete or corrupted.");
-        }
-    })();
-
-    async function decryptWithPassword() {
-        const password = document.getElementById("view-password").value;
-        if (!password) return;
-
+    function showError(msg) {
+        document.getElementById("decrypting").classList.add("hidden");
         document.getElementById("password-prompt").classList.add("hidden");
-        document.getElementById("decrypting").classList.remove("hidden");
-
-        try {
-            const plaintext = await decryptContent(
-                pasteData.ciphertext, pasteData.iv, null, password, pasteData.salt
-            );
-            handleDecrypted(plaintext);
-        } catch (e) {
-            showError("Wrong password or corrupted data.");
-        }
+        document.getElementById("error").classList.remove("hidden");
+        document.getElementById("error-message").textContent = msg;
     }
 
     function handleDecrypted(plaintext) {
@@ -144,11 +122,9 @@
             } else if (envelope.type === 'text') {
                 showText(envelope.content);
             } else {
-                // Unknown envelope, show as raw text
                 showText(plaintext);
             }
         } catch (e) {
-            // Not JSON — legacy plain text paste
             showText(plaintext);
         }
     }
@@ -185,15 +161,52 @@
         URL.revokeObjectURL(url);
     }
 
-    function showError(msg) {
-        document.getElementById("decrypting").classList.add("hidden");
-        document.getElementById("password-prompt").classList.add("hidden");
-        document.getElementById("error").classList.remove("hidden");
-        document.getElementById("error-message").textContent = msg;
-    }
-
     function copyContent() {
         navigator.clipboard.writeText(document.getElementById("decrypted-content").textContent);
+    }
+
+    async function decryptWithPassword() {
+        const password = document.getElementById("view-password").value;
+        if (!password) return;
+
+        document.getElementById("password-prompt").classList.add("hidden");
+        document.getElementById("decrypting").classList.remove("hidden");
+
+        try {
+            const plaintext = await decryptContent(
+                pasteData.ciphertext, pasteData.iv, null, password, pasteData.salt
+            );
+            handleDecrypted(plaintext);
+        } catch (e) {
+            showError("Wrong password or corrupted data.");
+        }
+    }
+
+    if (!pasteData) {
+        showError("No encrypted data available. The psst may have already been viewed.");
+    } else {
+        const keyB64 = window.location.hash.substring(1);
+        const isPasswordProtected = !!pasteData.salt;
+
+        (async () => {
+            if (isPasswordProtected) {
+                document.getElementById("password-prompt").classList.remove("hidden");
+                return;
+            }
+
+            if (!keyB64) {
+                showError("No decryption key found in URL. The link may be incomplete.");
+                return;
+            }
+
+            document.getElementById("decrypting").classList.remove("hidden");
+            try {
+                const plaintext = await decryptContent(pasteData.ciphertext, pasteData.iv, keyB64);
+                handleDecrypted(plaintext);
+            } catch (e) {
+                showError("Decryption failed. The link may be incomplete or corrupted.");
+            }
+        })();
     }
 </script>
 {% endblock %}

@@ -10,9 +10,18 @@ urlpatterns = [
     path("whisper/<uuid:whisper_id>", views.view_whisper, name="view"),
     path("submit/<uuid:request_id>", views.submit_whisper, name="submit"),
     path("api/whisper", views.CreateWhisperView.as_view(), name="api_create"),
-    path("api/request", views.CreateRequestView.as_view(), name="api_create_request"),
     path(
-        "api/submit/<uuid:request_id>",
+        "api/whisper/<uuid:whisper_id>/reveal",
+        views.RevealWhisperView.as_view(),
+        name="api_reveal",
+    ),
+    path(
+        "api/whisper/request",
+        views.CreateRequestView.as_view(),
+        name="api_create_request",
+    ),
+    path(
+        "api/whisper/submit/<uuid:request_id>",
         views.SubmitWhisperView.as_view(),
         name="api_submit",
     ),
