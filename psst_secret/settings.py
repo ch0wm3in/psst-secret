@@ -249,6 +249,17 @@ LOGGING = {
 
 CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])
 
+# ── Email ─────────────────────────────────────────────────────────────────
+# EMAIL_BACKEND is configured via env var so it can be customized
+# independently of whether authentication is enabled.
+EMAIL_BACKEND = env.str(
+    "EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend"
+)
+DEFAULT_FROM_EMAIL = env.str("DEFAULT_FROM_EMAIL", default="noreply@localhost")
+
+# Enable email notifications (send-to / notify features).
+PSST_ENABLE_EMAIL = env.bool("PSST_ENABLE_EMAIL", default=False)
+
 # Authentication with django-allauth (can be disabled if not needed) SSO
 ENABLE_AUTH = env.bool("ENABLE_AUTH", default=False)
 if ENABLE_AUTH:
@@ -256,10 +267,6 @@ if ENABLE_AUTH:
     ACCOUNT_DEFAULT_HTTP_PROTOCOL = env.str(
         "ACCOUNT_DEFAULT_HTTP_PROTOCOL", default="https" if not DEBUG else "http"
     )
-
-    EMAIL_BACKEND = env.str(
-        "EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend"
-    )  # For development, print emails to console. Override in production.
 
     ACCOUNT_EMAIL_VERIFICATION = env.str(
         "ACCOUNT_EMAIL_VERIFICATION", default="none"

@@ -1,0 +1,14 @@
+Someone has sent you an encrypted whisper via psst-secret!
+
+You can begin viewing it at the following URL:
+{{ whisper_url }}
+
+*** IMPORTANT — INCOMPLETE LINK ***
+The link above does NOT contain the decryption key. The decryption key
+is stored only in the URL fragment (the part after the # symbol), which
+our server never sees. The sender must share the full link — or just the
+fragment — with you through a separate, secure channel.
+
+Without the decryption key you will not be able to read the whisper.
+
+If you did not expect this message, you can safely ignore it.

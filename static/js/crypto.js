@@ -225,6 +225,7 @@ async function handleCreate() {
                 expiry: expiryEl.value,
                 allowed_cidr: (document.getElementById('allowed-cidr') || {}).value || '',
                 require_auth_view: !!(document.getElementById('require-auth-view') || {}).checked,
+                notify_email: (document.getElementById('notify-email') || {}).value || '',
             }),
         });
 
@@ -332,6 +333,7 @@ async function handleCreateRequest() {
                 allowed_cidr: (document.getElementById('allowed-cidr') || {}).value || '',
                 require_auth_view: !!(document.getElementById('require-auth-view') || {}).checked,
                 require_auth_submit: !!(document.getElementById('require-auth-submit') || {}).checked,
+                notify_email: (document.getElementById('notify-email') || {}).value || '',
             }),
         });
 

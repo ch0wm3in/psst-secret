@@ -28,6 +28,7 @@ class CreateWhisperSerializer(serializers.Serializer):
     )  # noqa: E501
     allowed_cidr = CIDRField(default="", allow_blank=True)
     require_auth_view = serializers.BooleanField(default=False)
+    notify_email = serializers.EmailField(default="", allow_blank=True)
 
 
 class CreateWhisperResponseSerializer(serializers.Serializer):
@@ -50,6 +51,7 @@ class CreateRequestSerializer(serializers.Serializer):
     allowed_cidr = CIDRField(default="", allow_blank=True)
     require_auth_view = serializers.BooleanField(default=False)
     require_auth_submit = serializers.BooleanField(default=False)
+    notify_email = serializers.EmailField(default="", allow_blank=True)
 
 
 class CreateRequestResponseSerializer(serializers.Serializer):

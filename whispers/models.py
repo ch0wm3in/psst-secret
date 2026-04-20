@@ -43,6 +43,12 @@ class Whisper(models.Model):
         default=False,
         help_text="Require authentication to submit to this receive-mode request",
     )
+    notify_email = models.EmailField(
+        max_length=254,
+        blank=True,
+        default="",
+        help_text="Email address to notify (receiver in send mode, creator in receive mode)",
+    )
     expiry_option = models.CharField(
         max_length=5,
         choices=ExpiryChoices.choices,
