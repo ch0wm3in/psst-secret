@@ -253,6 +253,10 @@ CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])
 ENABLE_AUTH = env.bool("ENABLE_AUTH", default=False)
 if ENABLE_AUTH:
 
+    ACCOUNT_DEFAULT_HTTP_PROTOCOL = env.str(
+        "ACCOUNT_DEFAULT_HTTP_PROTOCOL", default="https" if not DEBUG else "http"
+    )
+
     EMAIL_BACKEND = env.str(
         "EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend"
     )  # For development, print emails to console. Override in production.
