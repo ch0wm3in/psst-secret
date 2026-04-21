@@ -1,7 +1,7 @@
 import logging
 
 from django.conf import settings
-from django.core.mail import send_mail
+from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 
 logger = logging.getLogger(__name__)
@@ -22,20 +22,24 @@ def send_whisper_created_email(notify_email, whisper_url):
     if not _email_enabled() or not notify_email:
         return
 
-    subject = "You have received a psst!"
-    context = {"whisper_url": whisper_url}
+    subject = "You have received a whisper!"
+    context = {"whisper_url": whisper_url, "brand": settings.BRAND_COLORS}
     text_body = render_to_string("whispers/email/whisper_created.txt", context)
+    html_body = render_to_string("whispers/email/whisper_created.html", context)
 
     try:
-        send_mail(
+        msg = EmailMultiAlternatives(
             subject=subject,
-            message=text_body,
+            body=text_body,
             from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[notify_email],
-            fail_silently=False,
+            to=[notify_email],
         )
+        msg.attach_alternative(html_body, "text/html")
+        msg.send(fail_silently=False)
     except Exception:
-        logger.exception("Failed to send whisper-created notification to %s", notify_email)
+        logger.exception(
+            "Failed to send whisper-created notification to %s", notify_email
+        )
 
 
 def send_whisper_submitted_email(notify_email, view_url):
@@ -49,17 +53,19 @@ def send_whisper_submitted_email(notify_email, view_url):
         return
 
     subject = "A whisper has been submitted to your request!"
-    context = {"view_url": view_url}
+    context = {"view_url": view_url, "brand": settings.BRAND_COLORS}
     text_body = render_to_string("whispers/email/whisper_submitted.txt", context)
+    html_body = render_to_string("whispers/email/whisper_submitted.html", context)
 
     try:
-        send_mail(
+        msg = EmailMultiAlternatives(
             subject=subject,
-            message=text_body,
+            body=text_body,
             from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[notify_email],
-            fail_silently=False,
+            to=[notify_email],
         )
+        msg.attach_alternative(html_body, "text/html")
+        msg.send(fail_silently=False)
     except Exception:
         logger.exception(
             "Failed to send whisper-submitted notification to %s", notify_email

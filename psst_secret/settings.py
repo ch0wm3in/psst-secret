@@ -165,12 +165,6 @@ CSRF_COOKIE_SAMESITE = "Lax"
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_BROWSER_XSS_FILTER = True
 
-# HSTS — only enable over HTTPS (i.e., not in DEBUG)
-SECURE_HSTS_SECONDS = 0 if DEBUG else 31536000  # 1 year
-SECURE_HSTS_INCLUDE_SUBDOMAINS = not DEBUG
-SECURE_HSTS_PRELOAD = not DEBUG
-SECURE_SSL_REDIRECT = env.bool("SECURE_SSL_REDIRECT", default=not DEBUG)
-
 # Redis — ciphertext storage (never touches disk)
 REDIS_URL = env.str("REDIS_URL", default="redis://localhost:6379/0")
 
@@ -259,6 +253,12 @@ DEFAULT_FROM_EMAIL = env.str("DEFAULT_FROM_EMAIL", default="noreply@localhost")
 
 # Enable email notifications (send-to / notify features).
 PSST_ENABLE_EMAIL = env.bool("PSST_ENABLE_EMAIL", default=False)
+
+if PSST_ENABLE_EMAIL:
+    # If using Azure Communication Services for email, the connection string must be provided in the environment.
+    AZURE_COMMUNICATION_CONNECTION_STRING = env.str(
+        "AZURE_COMMUNICATION_CONNECTION_STRING", default=""
+    )
 
 # Authentication with django-allauth (can be disabled if not needed) SSO
 ENABLE_AUTH = env.bool("ENABLE_AUTH", default=False)

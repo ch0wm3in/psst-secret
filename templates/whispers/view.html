@@ -17,6 +17,7 @@
                 class="px-6 py-2 rounded-lg bg-brand-600 hover:bg-brand-500 text-white font-semibold transition">
                 {% trans "Decrypt" %}
             </button>
+            <p id="password-error" class="hidden text-sm text-red-400"></p>
         </div>
     </div>
 
@@ -169,6 +170,8 @@
         const password = document.getElementById("view-password").value;
         if (!password) return;
 
+        const passwordError = document.getElementById("password-error");
+        passwordError.classList.add("hidden");
         document.getElementById("password-prompt").classList.add("hidden");
         document.getElementById("decrypting").classList.remove("hidden");
 
@@ -178,7 +181,11 @@
             );
             handleDecrypted(plaintext);
         } catch (e) {
-            showError("Wrong password or corrupted data.");
+            document.getElementById("decrypting").classList.add("hidden");
+            document.getElementById("password-prompt").classList.remove("hidden");
+            passwordError.textContent = "{% trans "Wrong password. Please try again." %}";
+            passwordError.classList.remove("hidden");
+            document.getElementById("view-password").select();
         }
     }
 

@@ -1,5 +1,4 @@
 import json
-import uuid
 from datetime import timedelta
 from unittest.mock import patch
 
@@ -26,7 +25,7 @@ _TEST_REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {
         "anon": "10000/minute",
         "whisper_create": "10000/minute",
-        "whisper_view": "",
+        "whisper_view": "10000/minute",
     },
 }
 
@@ -71,62 +70,74 @@ class SendModeEmailTests(TestCase):
         )
 
     def test_email_sent_on_create_with_notify_email(self):
-        resp = self._post({
-            "ciphertext": "ct",
-            "iv": "iv",
-            "notify_email": "recipient@example.com",
-        })
+        resp = self._post(
+            {
+                "ciphertext": "ct",
+                "iv": "iv",
+                "notify_email": "recipient@example.com",
+            }
+        )
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(len(mail.outbox), 1)
         msg = mail.outbox[0]
         self.assertEqual(msg.to, ["recipient@example.com"])
-        self.assertIn("psst", msg.subject.lower())
+        self.assertIn("whisper", msg.subject.lower())
         self.assertIn("/whisper/", msg.body)
         # Email must warn about incomplete link
         self.assertIn("NOT contain the decryption key", msg.body)
 
     def test_no_email_when_notify_email_empty(self):
-        resp = self._post({
-            "ciphertext": "ct",
-            "iv": "iv",
-            "notify_email": "",
-        })
+        resp = self._post(
+            {
+                "ciphertext": "ct",
+                "iv": "iv",
+                "notify_email": "",
+            }
+        )
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(len(mail.outbox), 0)
 
     def test_no_email_when_notify_email_absent(self):
-        resp = self._post({
-            "ciphertext": "ct",
-            "iv": "iv",
-        })
+        resp = self._post(
+            {
+                "ciphertext": "ct",
+                "iv": "iv",
+            }
+        )
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(len(mail.outbox), 0)
 
     def test_invalid_notify_email_rejected(self):
-        resp = self._post({
-            "ciphertext": "ct",
-            "iv": "iv",
-            "notify_email": "not-an-email",
-        })
+        resp = self._post(
+            {
+                "ciphertext": "ct",
+                "iv": "iv",
+                "notify_email": "not-an-email",
+            }
+        )
         self.assertEqual(resp.status_code, 400)
 
     def test_notify_email_stored_in_model(self):
-        resp = self._post({
-            "ciphertext": "ct",
-            "iv": "iv",
-            "notify_email": "user@example.com",
-        })
+        resp = self._post(
+            {
+                "ciphertext": "ct",
+                "iv": "iv",
+                "notify_email": "user@example.com",
+            }
+        )
         wid = resp.json()["id"]
         w = Whisper.objects.get(id=wid)
         self.assertEqual(w.notify_email, "user@example.com")
 
     def test_email_url_does_not_contain_fragment(self):
         """The emailed URL must NOT include the decryption key (fragment)."""
-        resp = self._post({
-            "ciphertext": "ct",
-            "iv": "iv",
-            "notify_email": "recipient@example.com",
-        })
+        resp = self._post(
+            {
+                "ciphertext": "ct",
+                "iv": "iv",
+                "notify_email": "recipient@example.com",
+            }
+        )
         self.assertEqual(resp.status_code, 200)
         msg = mail.outbox[0]
         wid = resp.json()["id"]
@@ -136,7 +147,8 @@ class SendModeEmailTests(TestCase):
         for line in msg.body.splitlines():
             if f"/whisper/{wid}" in line:
                 self.assertFalse(
-                    line.strip().endswith("#") or "#" in line.split(f"/whisper/{wid}")[1],
+                    line.strip().endswith("#")
+                    or "#" in line.split(f"/whisper/{wid}")[1],
                     f"URL line contains a fragment: {line}",
                 )
 
@@ -162,11 +174,13 @@ class SendModeEmailDisabledTests(TestCase):
     def test_no_email_when_disabled(self):
         resp = self.client.post(
             "/api/whisper",
-            data=json.dumps({
-                "ciphertext": "ct",
-                "iv": "iv",
-                "notify_email": "recipient@example.com",
-            }),
+            data=json.dumps(
+                {
+                    "ciphertext": "ct",
+                    "iv": "iv",
+                    "notify_email": "recipient@example.com",
+                }
+            ),
             content_type="application/json",
         )
         self.assertEqual(resp.status_code, 200)
@@ -206,10 +220,12 @@ class ReceiveModeEmailTests(TestCase):
         """Creating a receive request should NOT immediately send email."""
         resp = self.client.post(
             "/api/whisper/request",
-            data=json.dumps({
-                "salt": "s",
-                "notify_email": "creator@example.com",
-            }),
+            data=json.dumps(
+                {
+                    "salt": "s",
+                    "notify_email": "creator@example.com",
+                }
+            ),
             content_type="application/json",
         )
         self.assertEqual(resp.status_code, 200)
@@ -247,10 +263,12 @@ class ReceiveModeEmailTests(TestCase):
     def test_notify_email_stored_in_receive_mode(self):
         resp = self.client.post(
             "/api/whisper/request",
-            data=json.dumps({
-                "salt": "s",
-                "notify_email": "creator@example.com",
-            }),
+            data=json.dumps(
+                {
+                    "salt": "s",
+                    "notify_email": "creator@example.com",
+                }
+            ),
             content_type="application/json",
         )
         wid = resp.json()["id"]
@@ -271,7 +289,8 @@ class ReceiveModeEmailTests(TestCase):
         for line in msg.body.splitlines():
             if f"/whisper/{w.id}" in line:
                 self.assertFalse(
-                    line.strip().endswith("#") or "#" in line.split(f"/whisper/{w.id}")[1],
+                    line.strip().endswith("#")
+                    or "#" in line.split(f"/whisper/{w.id}")[1],
                     f"URL line contains a fragment: {line}",
                 )
 
