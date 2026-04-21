@@ -2,8 +2,6 @@ import ipaddress
 import logging
 
 from django.conf import settings
-from django.core.cache import cache
-from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_GET
@@ -187,118 +185,66 @@ class CreateWhisperView(APIView):
         )
 
 
-@require_GET
-def view_whisper(request, whisper_id):
+class RevealWhisperView(APIView):
     """
-    Serve the whisper viewing page with ciphertext.
-    If burn_after_read, mark as burned after first retrieval.
-    For receive-mode whispers that haven't been submitted yet, show pending page.
+    View and reveal a whisper.
+
+    GET: Show a confirmation page. After reveal, the user is redirected
+    back with ?revealed=1 and the decrypted data comes from sessionStorage.
+    POST: Return the crypto payload as JSON. For burn-after-read whispers,
+    the whisper is permanently deleted.
     """
-    # Rate-limit whisper views per IP to mitigate brute-force enumeration
-    view_rate_str = settings.REST_FRAMEWORK.get("DEFAULT_THROTTLE_RATES", {}).get(
-        "whisper_view", ""
-    )
-    if view_rate_str:
-        client_ip = get_client_ip(request)
-        cache_key = f"view_rate:{client_ip}"
-        rate_limit = int(view_rate_str.split("/")[0])
-        hits = cache.get(cache_key, 0)
-        if hits >= rate_limit:
-            return HttpResponse("Rate limit exceeded. Try again later.", status=429)
-        cache.set(cache_key, hits + 1, 60)
 
-    # Burn-after-read reveal redirect: the confirm page POSTed to the
-    # reveal endpoint (which already deleted the DB row and Redis data)
-    # then stored the crypto payload in sessionStorage and redirected here
-    # with ?revealed=1.  The whisper no longer exists in the DB, so we
-    # must handle this before the DB lookup.
-    if request.GET.get("revealed"):
-        return render(
-            request,
-            "whispers/view.html",
-            {"burn_after_read": True, "paste_data": None},
-        )
+    permission_classes = [AllowAny]
+    throttle_classes = [WhisperViewThrottle]
 
-    whisper = get_object_or_404(Whisper, id=whisper_id)
+    @extend_schema(exclude=True)
+    def get(self, request, whisper_id):
+        # After reveal: crypto data was stored in sessionStorage by the
+        # confirm page; the whisper may already be deleted (burn case).
+        if request.GET.get("revealed"):
+            return render(
+                request,
+                "whispers/view.html",
+                {
+                    "burn_after_read": bool(request.GET.get("burn")),
+                    "paste_data": None,
+                },
+            )
 
-    # Check expiry — delete from DB and Redis
-    if whisper.is_expired:
-        redis_store.delete_crypto(whisper_id)
-        whisper.delete()
-        return render(request, "whispers/expired.html", status=410)
+        whisper = get_object_or_404(Whisper, id=whisper_id)
 
-    # Authentication check for viewing
-    if _requires_auth_view(whisper) and not request.user.is_authenticated:
-        return _redirect_to_login(request)
+        # Check expiry — delete from DB and Redis
+        if whisper.is_expired:
+            redis_store.delete_crypto(whisper_id)
+            whisper.delete()
+            return render(request, "whispers/expired.html", status=410)
 
-    # IP restriction: in send mode, restrict the viewer
-    if whisper.mode == "send" and not check_ip_allowed(request, whisper):
-        return render(request, "whispers/forbidden.html", status=403)
+        # Authentication check for viewing
+        if _requires_auth_view(whisper) and not request.user.is_authenticated:
+            return _redirect_to_login(request)
 
-    # Burn-after-read: show a confirmation page on first GET so that
-    # link-preview bots (Teams, Slack, Outlook…) don't burn the content.
-    # The actual reveal happens via a POST to the reveal endpoint, and the
-    # user is then redirected back here with ?revealed=1 to decrypt from
-    # sessionStorage.
-    if whisper.burn_after_read:
-        # First visit: just check the crypto still exists, don't consume it.
+        # IP restriction: in send mode, restrict the viewer
+        if whisper.mode == "send" and not check_ip_allowed(request, whisper):
+            return render(request, "whispers/forbidden.html", status=403)
+
         crypto = redis_store.get_crypto(whisper_id)
         if crypto is None:
             whisper.delete()
             return render(request, "whispers/expired.html", status=410)
+
         # Receive mode: if no ciphertext yet, show pending page
         if whisper.mode == "receive" and not crypto.get("ciphertext"):
             return render(request, "whispers/pending.html", {"whisper": whisper})
+
         return render(
             request,
-            "whispers/confirm_burn.html",
+            "whispers/confirm.html",
             {
                 "whisper": whisper,
-                "reveal_url": f"/api/whisper/{whisper_id}/reveal",
+                "reveal_url": request.path,
             },
         )
-
-    # Non-burn path: return crypto data directly
-    crypto = redis_store.get_crypto(whisper_id)
-    if crypto is None:
-        whisper.delete()
-        return render(request, "whispers/expired.html", status=410)
-
-    # Receive mode: if no ciphertext yet, show pending page
-    if whisper.mode == "receive" and not crypto.get("ciphertext"):
-        return render(
-            request,
-            "whispers/pending.html",
-            {
-                "whisper": whisper,
-            },
-        )
-
-    context = {
-        "whisper": whisper,
-        "burn_after_read": False,
-        "paste_data": {
-            "ciphertext": crypto["ciphertext"],
-            "iv": crypto["iv"],
-            "salt": crypto["salt"],
-        },
-    }
-
-    return render(request, "whispers/view.html", context)
-
-
-class RevealWhisperView(APIView):
-    """
-    Atomically reveal a burn-after-read whisper.
-
-    Called via JS from the confirmation page. Returns the crypto data
-    as JSON and deletes the whisper so it can never be read again.
-    Bots never POST, so this prevents link-preview services from
-    burning the content.
-    """
-
-    permission_classes = [AllowAny]
-    throttle_classes = [WhisperCreateThrottle]
 
     @extend_schema(
         request=None,
@@ -311,13 +257,7 @@ class RevealWhisperView(APIView):
             redis_store.delete_crypto(whisper_id)
             whisper.delete()
             return Response(
-                {"error": "This psst has expired"}, status=status.HTTP_410_GONE
-            )
-
-        if not whisper.burn_after_read:
-            return Response(
-                {"error": "Not a burn-after-read psst"},
-                status=status.HTTP_400_BAD_REQUEST,
+                {"error": "This whisper has expired"}, status=status.HTTP_410_GONE
             )
 
         if _requires_auth_view(whisper) and not request.user.is_authenticated:
@@ -332,14 +272,21 @@ class RevealWhisperView(APIView):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
-        crypto = redis_store.get_and_delete_crypto(whisper_id)
-        if crypto is None:
+        if whisper.burn_after_read:
+            crypto = redis_store.get_and_delete_crypto(whisper_id)
+            if crypto is None:
+                whisper.delete()
+                return Response(
+                    {"error": "This whisper has expired"}, status=status.HTTP_410_GONE
+                )
             whisper.delete()
-            return Response(
-                {"error": "This psst has expired"}, status=status.HTTP_410_GONE
-            )
-
-        whisper.delete()
+        else:
+            crypto = redis_store.get_crypto(whisper_id)
+            if crypto is None:
+                whisper.delete()
+                return Response(
+                    {"error": "This whisper has expired"}, status=status.HTTP_410_GONE
+                )
 
         return Response(
             {

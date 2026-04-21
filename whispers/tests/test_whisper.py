@@ -33,7 +33,7 @@ _TEST_REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {
         "anon": "10000/minute",
         "whisper_create": "10000/minute",
-        "whisper_view": "",
+        "whisper_view": "10000/minute",
     },
 }
 
@@ -348,6 +348,7 @@ class ViewWhisperTests(TestCase):
         w = self._create_whisper()
         resp = self.client.get(f"/whisper/{w.id}")
         self.assertEqual(resp.status_code, 200)
+        self.assertTemplateUsed(resp, "whispers/confirm.html")
 
     def test_view_nonexistent_whisper(self):
         resp = self.client.get(f"/whisper/{uuid.uuid4()}")
@@ -364,18 +365,18 @@ class ViewWhisperTests(TestCase):
         # First GET shows confirmation page (not the actual content)
         resp = self.client.get(f"/whisper/{w.id}")
         self.assertEqual(resp.status_code, 200)
-        self.assertTemplateUsed(resp, "whispers/confirm_burn.html")
+        self.assertTemplateUsed(resp, "whispers/confirm.html")
         # Whisper still exists — bot GETs don't burn
         self.assertTrue(Whisper.objects.filter(id=w.id).exists())
         # POST to reveal endpoint burns the whisper
-        resp2 = self.client.post(f"/api/whisper/{w.id}/reveal")
+        resp2 = self.client.post(f"/whisper/{w.id}")
         self.assertEqual(resp2.status_code, 200)
         data = resp2.json()
         self.assertIn("ciphertext", data)
         # Whisper is now gone
         self.assertFalse(Whisper.objects.filter(id=w.id).exists())
         # Second reveal should 404
-        resp3 = self.client.post(f"/api/whisper/{w.id}/reveal")
+        resp3 = self.client.post(f"/whisper/{w.id}")
         self.assertEqual(resp3.status_code, 404)
 
     def test_ip_restriction_blocks(self):
@@ -552,7 +553,17 @@ class SubmitWhisperFlowTests(TestCase):
         redis_store.update_crypto(w.id, ciphertext="ct", iv="iv")
         resp = self.client.get(f"/whisper/{w.id}")
         self.assertEqual(resp.status_code, 200)
-        self.assertTemplateUsed(resp, "whispers/view.html")
+        self.assertTemplateUsed(resp, "whispers/confirm.html")
+
+    def test_non_burn_reveal_keeps_whisper(self):
+        w = self._create_request()
+        redis_store.update_crypto(w.id, ciphertext="ct", iv="iv")
+        resp = self.client.post(f"/whisper/{w.id}")
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        self.assertIn("ciphertext", data)
+        # Non-burn whisper should still exist
+        self.assertTrue(Whisper.objects.filter(id=w.id).exists())
 
 
 # ---------------------------------------------------------------------------

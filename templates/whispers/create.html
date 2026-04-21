@@ -174,8 +174,8 @@
                     <input type="email" id="notify-email" autocomplete="email"
                         class="w-full rounded-lg bg-gray-800 border border-gray-700 text-gray-100 px-3 py-2 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
                         placeholder="{% trans "recipient@example.com" %}"
-                        {% if request.user.is_authenticated and request.user.email %}value="{{ request.user.email }}"{% endif %}>
-                    <p id="notify-help-send" class="mt-1 text-xs text-gray-500">{% trans "The recipient will be emailed a notification that a whisper is waiting. <strong>The email will NOT contain the decryption key</strong> — you must share the full link (with the key) separately." %}</p>
+                        data-user-email="{% if request.user.is_authenticated and request.user.email %}{{ request.user.email }}{% endif %}">
+                    <p id="notify-help-send" class="mt-1 text-xs text-gray-500">{% trans "The recipient will be emailed a notification that a whisper is waiting. <strong>The email will NOT contain the decryption key</strong> — you must share the full link (with the key) separately. <strong>This option is not recommended, as it will must likely confuse the recipient more than just sending it directly on other channels</strong" %}</p>
                     <p id="notify-help-receive" class="mt-1 text-xs text-gray-500 hidden">{% trans "You will be emailed when someone submits a whisper to your request. <strong>The email will NOT contain the decryption key</strong> — use the view link you saved when creating the request." %}</p>
                 </div>
                 {% endif %}
@@ -312,11 +312,16 @@
         const notifyLabelRecv = document.getElementById('notify-email-label-receive');
         const notifyHelpSend = document.getElementById('notify-help-send');
         const notifyHelpRecv = document.getElementById('notify-help-receive');
+        const notifyEmail = document.getElementById('notify-email');
         const isReceive = mode === 'receive';
         if (notifyLabelSend) notifyLabelSend.classList.toggle('hidden', isReceive);
         if (notifyLabelRecv) notifyLabelRecv.classList.toggle('hidden', !isReceive);
         if (notifyHelpSend) notifyHelpSend.classList.toggle('hidden', isReceive);
         if (notifyHelpRecv) notifyHelpRecv.classList.toggle('hidden', !isReceive);
+        if (notifyEmail) {
+            const userEmail = notifyEmail.dataset.userEmail || '';
+            notifyEmail.value = isReceive ? userEmail : '';
+        }
     }
 
     function copyLink(inputId, btnId) {

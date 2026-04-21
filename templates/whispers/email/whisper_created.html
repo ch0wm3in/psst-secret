@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>You have received a whisper!</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: transparent; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: transparent; padding: 40px 20px;">
+        <tr>
+            <td align="center">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 560px; background-color: transparent; border-radius: 12px; border: 1px solid {{ brand.200 }}; overflow: hidden;">
+                    <!-- Header -->
+                    <tr>
+                        <td style="background-color: {{ brand.200 }}; padding: 24px 32px; text-align: center;">
+                            <h1 style="margin: 0; font-size: 22px; font-weight: 700; color: #ffffff; letter-spacing: -0.025em;">🤫 psst-secret</h1>
+                        </td>
+                    </tr>
+                    <!-- Body -->
+                    <tr>
+                        <td style="padding: 32px;">
+                            <h2 style="margin: 0 0 16px; font-size: 18px; font-weight: 600; color: {{ brand.500 }};">📬 You have received a whisper!</h2>
+                            <p style="margin: 0 0 20px; font-size: 14px; line-height: 1.6; color: #374151;">Someone has sent you an encrypted whisper. Click below to open it:</p>
+
+                            <!-- CTA Button -->
+                            <table role="presentation" cellspacing="0" cellpadding="0" style="margin: 0 auto 24px;">
+                                <tr>
+                                    <td style="border-radius: 8px; background-color: {{brand.200 }};">
+                                        <a href="{{ whisper_url }}" target="_blank" style="display: inline-block; padding: 12px 28px; font-size: 14px; font-weight: 600; color: #ffffff; text-decoration: none;">View Whisper</a>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <!-- Warning box -->
+                            <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                                <tr>
+                                    <td style="background-color: {{ brand.50 }}; border: 1px solid {{ brand.200 }}; border-radius: 8px; padding: 16px;">
+                                        <p style="margin: 0 0 8px; font-size: 13px; font-weight: 600; color: {{ brand.800 }};">⚠️ IMPORTANT — INCOMPLETE LINK</p>
+                                        <p style="margin: 0; font-size: 12px; line-height: 1.5; color: #374151;">The link above does <strong>NOT</strong> contain the decryption key. The key is stored only in the URL fragment (after the # symbol), which our server never sees. The sender must share the full link — or the fragment — with you through a separate channel.</p>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <p style="margin: 20px 0 0; font-size: 12px; color: #6b7280;">Without the decryption key you will not be able to read the whisper.</p>
+                        </td>
+                    </tr>
+                    <!-- Footer -->
+                    <tr>
+                        <td style="padding: 20px 32px; border-top: 1px solid {{ brand.200 }}; text-align: center;">
+                            <p style="margin: 0; font-size: 11px; color: #6b7280;">If you did not expect this message, you can safely ignore it.</p>
+                            <p style="margin: 8px 0 0; font-size: 11px; color: {{ brand.700 }};">Sent by psst-secret</p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
