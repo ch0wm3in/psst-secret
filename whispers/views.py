@@ -1,8 +1,8 @@
 import ipaddress
 import logging
-from urllib.parse import urlencode
 
 from django.conf import settings
+from django.contrib.auth.views import redirect_to_login
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -94,7 +94,7 @@ def _redirect_to_login(request):
         require_https=request.is_secure(),
     ):
         next_path = "/"
-    return redirect(f"{login_url}?{urlencode({'next': next_path})}")
+    return redirect_to_login(next_path, login_url=login_url)
 
 
 def _first_error(errors):
