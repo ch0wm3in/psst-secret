@@ -179,6 +179,11 @@ NUM_PROXIES = env.int("NUM_PROXIES", default=0)
 PSST_FORCE_AUTH_VIEW = env.bool("PSST_FORCE_AUTH_VIEW", default=False)
 PSST_FORCE_AUTH_SUBMIT = env.bool("PSST_FORCE_AUTH_SUBMIT", default=False)
 
+# About page — toggle persistence-aware language
+ABOUT_PAGE_PERSISTENCE_ENABLED = env.bool(
+    "ABOUT_PAGE_PERSISTENCE_ENABLED", default=False
+)
+
 # Brand colors — Tailwind color palette (shade: hex)
 # Override via BRAND_COLORS env var as JSON, e.g.:
 #   BRAND_COLORS={"50":"#eff6ff","500":"#3b82f6","600":"#2563eb"}
@@ -242,6 +247,7 @@ LOGGING = {
 }
 
 CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])
+
 
 # ── Email ─────────────────────────────────────────────────────────────────
 # EMAIL_BACKEND is configured via env var so it can be customized

@@ -73,7 +73,11 @@
         <div class="grid gap-3 sm:grid-cols-2">
             <div class="rounded-lg bg-gray-800 border border-gray-700 p-4">
                 <h3 class="font-semibold text-white mb-1">🔥 {% trans "Burn After Reading" %}</h3>
+                {% if persistence_enabled %}
+                <p class="text-sm text-gray-400">{% trans 'Whispers marked as burn-after-read are <strong class="text-gray-300">permanently deleted</strong> the moment they are viewed — not just flagged, but gone.' %}</p>
+                {% else %}
                 <p class="text-sm text-gray-400">{% trans 'Whispers marked as burn-after-read are <strong class="text-gray-300">permanently erased from memory</strong> the moment they are viewed — not just flagged, but gone.' %}</p>
+                {% endif %}
             </div>
             <div class="rounded-lg bg-gray-800 border border-gray-700 p-4">
                 <h3 class="font-semibold text-white mb-1">⏰ {% trans "Auto-Expiry" %}</h3>
@@ -85,7 +89,11 @@
             </div>
             <div class="rounded-lg bg-gray-800 border border-gray-700 p-4">
                 <h3 class="font-semibold text-white mb-1">🚫 {% trans "Zero Knowledge" %}</h3>
+                {% if persistence_enabled %}
+                <p class="text-sm text-gray-400">{% trans "The server stores only ciphertext, IV, and optional salt in Redis. It has no ability to decrypt your data, even under compulsion." %}</p>
+                {% else %}
                 <p class="text-sm text-gray-400">{% trans "The server stores only ciphertext, IV, and optional salt — and only in volatile memory (Redis). It has no ability to decrypt your data, even under compulsion." %}</p>
+                {% endif %}
             </div>
         </div>
     </section>
@@ -95,7 +103,11 @@
         <h2 class="text-xl font-semibold text-brand-400">{% trans "What the Server Stores" %}</h2>
         <div class="rounded-lg bg-gray-800 border border-gray-700 p-5 space-y-4">
             <div>
+                {% if persistence_enabled %}
+                <h3 class="text-sm font-semibold text-white mb-2">💾 {% trans "Redis (with persistence enabled)" %}</h3>
+                {% else %}
                 <h3 class="text-sm font-semibold text-white mb-2">💾 {% trans "Redis (in-memory only — never touches disk)" %}</h3>
+                {% endif %}
                 <table class="w-full text-sm">
                     <thead>
                         <tr class="text-left text-gray-400 border-b border-gray-700">
@@ -127,7 +139,11 @@
                     </tbody>
                 </table>
             </div>
+            {% if persistence_enabled %}
+            <p class="text-xs text-gray-500">❌ {% trans "The server does <strong>not</strong> store: plaintext, encryption keys, passwords, or any identifying information. Encrypted data is stored in Redis with persistence enabled." %}</p>
+            {% else %}
             <p class="text-xs text-gray-500">❌ {% trans "The server does <strong>not</strong> store: plaintext, encryption keys, passwords, or any identifying information. Encrypted data lives only in volatile memory and is lost if Redis restarts." %}</p>
+            {% endif %}
         </div>
     </section>
 
@@ -136,7 +152,11 @@
         <h2 class="text-xl font-semibold text-brand-400">{% trans "Tech Stack" %}</h2>
         <div class="flex flex-wrap gap-2 text-sm">
             <span class="px-3 py-1 rounded-full bg-gray-800 border border-gray-700 text-gray-300">Django 6.0</span>
+            {% if persistence_enabled %}
+            <span class="px-3 py-1 rounded-full bg-gray-800 border border-gray-700 text-gray-300">{% trans "Redis (persistent)" %}</span>
+            {% else %}
             <span class="px-3 py-1 rounded-full bg-gray-800 border border-gray-700 text-gray-300">{% trans "Redis (in-memory)" %}</span>
+            {% endif %}
             <span class="px-3 py-1 rounded-full bg-gray-800 border border-gray-700 text-gray-300">PostgreSQL</span>
             <span class="px-3 py-1 rounded-full bg-gray-800 border border-gray-700 text-gray-300">Tailwind CSS</span>
             <span class="px-3 py-1 rounded-full bg-gray-800 border border-gray-700 text-gray-300">Web Crypto API</span>
