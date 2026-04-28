@@ -118,7 +118,11 @@ def create(request):
 @require_GET
 def about(request):
     """Render the about page."""
-    return render(request, "whispers/about.html")
+    return render(
+        request,
+        "whispers/about.html",
+        {"persistence_enabled": settings.ABOUT_PAGE_PERSISTENCE_ENABLED},
+    )
 
 
 class CreateWhisperView(APIView):

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-21 07:33+0000\n"
+"POT-Creation-Date: 2026-04-28 11:10+0000\n"
 "PO-Revision-Date: 2026-04-17 15:26+0000\n"
 "Last-Translator: \n"
 "Language-Team: Danish\n"
@@ -212,7 +212,17 @@ msgstr "Sikkerhedsfunktioner"
 msgid "Burn After Reading"
 msgstr "Slet efter læsning"
 
-#: templates/whispers/about.html:76
+#: templates/whispers/about.html:77
+msgid ""
+"Whispers marked as burn-after-read are <strong class=\"text-"
+"gray-300\">permanently deleted</strong> the moment they are viewed — not "
+"just flagged, but gone."
+msgstr ""
+"Whispers markeret til sletning efter læsning bliver <strong class=\"text-"
+"gray-300\">permanent slettet fra hukommelsen</strong> i det øjeblik, de "
+"bliver vist — ikke bare markeret, men væk."
+
+#: templates/whispers/about.html:79
 msgid ""
 "Whispers marked as burn-after-read are <strong class=\"text-"
 "gray-300\">permanently erased from memory</strong> the moment they are "
@@ -222,11 +232,11 @@ msgstr ""
 "gray-300\">permanent slettet fra hukommelsen</strong> i det øjeblik, de "
 "bliver vist — ikke bare markeret, men væk."
 
-#: templates/whispers/about.html:79
+#: templates/whispers/about.html:83
 msgid "Auto-Expiry"
 msgstr "Automatisk udløb"
 
-#: templates/whispers/about.html:80
+#: templates/whispers/about.html:84
 msgid ""
 "All whispers require an expiration time (5 minutes to 1 month). Expired "
 "whispers are automatically evicted from Redis via TTL and continuously "
@@ -235,7 +245,7 @@ msgstr ""
 "Alle whispers kræver en udløbstid (5 minutter til 1 måned). Udløbne whispers "
 "fjernes automatisk fra Redis via TTL og ryddes løbende af en baggrundsproces."
 
-#: templates/whispers/about.html:84
+#: templates/whispers/about.html:88
 msgid ""
 "Industry-standard authenticated encryption. Provides both confidentiality "
 "and integrity — any tampering with the ciphertext is detected."
@@ -243,11 +253,20 @@ msgstr ""
 "Industristandard autentificeret kryptering. Giver både fortrolighed og "
 "integritet — enhver manipulering af ciphertext opdages."
 
-#: templates/whispers/about.html:87
+#: templates/whispers/about.html:91
 msgid "Zero Knowledge"
 msgstr "Intet-kendskab"
 
-#: templates/whispers/about.html:88
+#: templates/whispers/about.html:93
+msgid ""
+"The server stores only ciphertext, IV, and optional salt in Redis. It has no "
+"ability to decrypt your data, even under compulsion."
+msgstr ""
+"Serveren gemmer kun ciphertext, IV og eventuel salt — og kun i flygtig "
+"hukommelse (Redis). Den har ingen mulighed for at dekryptere dine data, selv "
+"under tvang."
+
+#: templates/whispers/about.html:95
 msgid ""
 "The server stores only ciphertext, IV, and optional salt — and only in "
 "volatile memory (Redis). It has no ability to decrypt your data, even under "
@@ -257,55 +276,69 @@ msgstr ""
 "hukommelse (Redis). Den har ingen mulighed for at dekryptere dine data, selv "
 "under tvang."
 
-#: templates/whispers/about.html:95
+#: templates/whispers/about.html:103
 msgid "What the Server Stores"
 msgstr "Hvad serveren gemmer"
 
-#: templates/whispers/about.html:98
+#: templates/whispers/about.html:107
+msgid "Redis (with persistence enabled)"
+msgstr ""
+
+#: templates/whispers/about.html:109
 msgid "Redis (in-memory only — never touches disk)"
 msgstr "Redis (kun i hukommelsen — skriver aldrig til disk)"
 
-#: templates/whispers/about.html:102 templates/whispers/about.html:118
+#: templates/whispers/about.html:114 templates/whispers/about.html:130
 msgid "Field"
 msgstr "Felt"
 
-#: templates/whispers/about.html:103 templates/whispers/about.html:119
+#: templates/whispers/about.html:115 templates/whispers/about.html:131
 msgid "Purpose"
 msgstr "Formål"
 
-#: templates/whispers/about.html:107
+#: templates/whispers/about.html:119
 msgid "Your encrypted data (useless without the key)"
 msgstr "Dine krypterede data (ubrugelige uden nøglen)"
 
-#: templates/whispers/about.html:108
+#: templates/whispers/about.html:120
 msgid "Random initialization vector for AES-GCM"
 msgstr "Tilfældig initialiseringsvektor til AES-GCM"
 
-#: templates/whispers/about.html:109
+#: templates/whispers/about.html:121
 msgid "PBKDF2 salt (only if password-protected)"
 msgstr "PBKDF2-salt (kun hvis adgangskodebeskyttet)"
 
-#: templates/whispers/about.html:114
+#: templates/whispers/about.html:126
 msgid "PostgreSQL (metadata only)"
 msgstr "PostgreSQL (kun metadata)"
 
-#: templates/whispers/about.html:123
+#: templates/whispers/about.html:135
 msgid "When the whisper will be auto-deleted"
 msgstr "Hvornår whisperen slettes automatisk"
 
-#: templates/whispers/about.html:124
+#: templates/whispers/about.html:136
 msgid "Whether to delete on first view"
 msgstr "Om den skal slettes ved første visning"
 
-#: templates/whispers/about.html:125
+#: templates/whispers/about.html:137
 msgid "Send or receive"
 msgstr "Send eller modtag"
 
-#: templates/whispers/about.html:126
+#: templates/whispers/about.html:138
 msgid "IP/CIDR restriction"
 msgstr "IP/CIDR-begrænsning"
 
-#: templates/whispers/about.html:130
+#: templates/whispers/about.html:143
+msgid ""
+"The server does <strong>not</strong> store: plaintext, encryption keys, "
+"passwords, or any identifying information. Encrypted data is stored in Redis "
+"with persistence enabled."
+msgstr ""
+"Serveren gemmer <strong>ikke</strong>: klartekst, krypteringsnøgler, "
+"adgangskoder eller identificerende oplysninger. Krypterede data findes i "
+"redis med vedvarende datalagring"
+
+#: templates/whispers/about.html:145
 msgid ""
 "The server does <strong>not</strong> store: plaintext, encryption keys, "
 "passwords, or any identifying information. Encrypted data lives only in "
@@ -315,15 +348,19 @@ msgstr ""
 "adgangskoder eller identificerende oplysninger. Krypterede data findes kun i "
 "flygtig hukommelse og går tabt, hvis Redis genstarter."
 
-#: templates/whispers/about.html:136
+#: templates/whispers/about.html:152
 msgid "Tech Stack"
 msgstr "Teknologistak"
 
-#: templates/whispers/about.html:139
+#: templates/whispers/about.html:156
+msgid "Redis (persistent)"
+msgstr "Redis (vedvarende)"
+
+#: templates/whispers/about.html:158
 msgid "Redis (in-memory)"
 msgstr "Redis (i hukommelse)"
 
-#: templates/whispers/about.html:150
+#: templates/whispers/about.html:170
 msgid "Create a whisper"
 msgstr "Opret en whisper"
 
