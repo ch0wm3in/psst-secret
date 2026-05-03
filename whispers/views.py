@@ -2,8 +2,10 @@ import ipaddress
 import logging
 
 from django.conf import settings
+from django.contrib.auth.views import redirect_to_login
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_GET
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
@@ -85,7 +87,14 @@ def _requires_auth_submit(whisper):
 def _redirect_to_login(request):
     """Redirect to the login page, preserving the current URL as next."""
     login_url = getattr(settings, "LOGIN_URL", "/accounts/login/")
-    return redirect(f"{login_url}?next={request.get_full_path()}")
+    next_path = request.get_full_path()
+    if not url_has_allowed_host_and_scheme(
+        next_path,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        next_path = "/"
+    return redirect_to_login(next_path, login_url=login_url)
 
 
 def _first_error(errors):
