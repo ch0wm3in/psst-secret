@@ -33,23 +33,21 @@
 
         <!-- File input -->
         <div id="file-mode" class="hidden">
-            <label for="file-input" class="block text-sm font-medium text-gray-300 mb-1">{% trans "Whisper file" %}</label>
+            <label for="file-input" class="block text-sm font-medium text-gray-300 mb-1">{% trans "Whisper files" %}</label>
             <div id="file-drop-zone"
-                class="w-full rounded-lg bg-gray-800 border-2 border-dashed border-gray-600 hover:border-brand-500 px-4 py-10 text-center transition cursor-pointer"
+                class="w-full rounded-lg bg-gray-800 border-2 border-dashed border-gray-600 hover:border-brand-500 px-4 py-6 text-center transition cursor-pointer"
                 onclick="document.getElementById('file-input').click()">
-                <input type="file" id="file-input" class="hidden" onchange="onFileSelected()">
-                <div id="file-placeholder" class="space-y-2">
+                <input type="file" id="file-input" class="hidden" multiple onchange="onFileSelected()">
+                <div id="file-placeholder" class="space-y-2 py-4">
                     <div class="text-3xl">📁</div>
-                    <p class="text-sm text-gray-400">{% trans "Click to select a file or drag & drop" %}</p>
-                    <p class="text-xs text-gray-500">{% settings_value "DATA_UPLOAD_MAX_MEMORY_SIZE" as max_size %}{% trans "Any file type supported." %} {% blocktrans with max_size=max_size|filesizeformat %}Max upload size: {{ max_size }}{% endblocktrans %}</p>
+                    <p class="text-sm text-gray-400">{% trans "Click to select files or drag & drop" %}</p>
+                    <p class="text-xs text-gray-500">{% settings_value "DATA_UPLOAD_MAX_MEMORY_SIZE" as max_size %}{% trans "Any file type supported." %} {% blocktrans with max_size=max_size|filesizeformat %}Max total upload size: {{ max_size }}{% endblocktrans %}</p>
                 </div>
-                <div id="file-info" class="hidden space-y-1">
-                    <div class="text-3xl">📄</div>
-                    <p id="file-name" class="text-sm text-brand-300 font-medium"></p>
-                    <p id="file-size" class="text-xs text-gray-500"></p>
-                    <button onclick="event.stopPropagation(); clearFile()" class="text-xs text-red-400 hover:text-red-300 underline mt-1">{% trans "Remove" %}</button>
-                </div>
+                <p class="text-xs text-gray-500 mt-1" id="file-add-more">{% trans "Click to add more files…" %}</p>
             </div>
+            <ul id="file-list" class="mt-2 space-y-1 hidden"></ul>
+            <p id="file-total" class="mt-1 text-xs text-gray-500 hidden"></p>
+            <p id="file-size-error" class="hidden mt-2 text-xs text-red-400"></p>
         </div>
 
         {% if salt %}
@@ -97,6 +95,8 @@
 
 {% csrf_token %}
 {% load static %}
+{% settings_value "DATA_UPLOAD_MAX_MEMORY_SIZE" as max_upload_size %}
+<script>window.PSST_MAX_UPLOAD_SIZE = {{ max_upload_size }};</script>
 <script src="{% static 'js/crypto.js' %}"></script>
 <script>
     const requestData = JSON.parse(document.getElementById("request-data").textContent);
@@ -124,28 +124,7 @@
         }
     }
 
-    function onFileSelected() {
-        const fileEl = document.getElementById('file-input');
-        if (fileEl.files.length > 0) {
-            const file = fileEl.files[0];
-            document.getElementById('file-name').textContent = file.name;
-            document.getElementById('file-size').textContent = formatSize(file.size);
-            document.getElementById('file-placeholder').classList.add('hidden');
-            document.getElementById('file-info').classList.remove('hidden');
-        }
-    }
-
-    function clearFile() {
-        document.getElementById('file-input').value = '';
-        document.getElementById('file-placeholder').classList.remove('hidden');
-        document.getElementById('file-info').classList.add('hidden');
-    }
-
-    function formatSize(bytes) {
-        if (bytes < 1024) return bytes + ' B';
-        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-        return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-    }
+    // onFileSelected, addFiles, formatSize are provided by crypto.js.
 
     // Drag and drop
     document.addEventListener('DOMContentLoaded', () => {
@@ -156,9 +135,8 @@
         zone.addEventListener('drop', ev => {
             const files = ev.dataTransfer.files;
             if (files.length > 0) {
-                document.getElementById('file-input').files = files;
                 switchMode('file');
-                onFileSelected();
+                addFiles(files);
             }
         });
     });

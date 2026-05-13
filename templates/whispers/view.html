@@ -34,6 +34,7 @@
             🔥 {% trans "This whisper has been burned — it can never be viewed again." %}
         </div>
         {% endif %}
+        <div id="view-count-banner-text" class="hidden rounded-lg bg-gray-800/60 border border-gray-700 px-4 py-2 text-xs text-gray-300"></div>
 
         <div>
             <div class="flex items-center justify-between mb-2">
@@ -52,22 +53,28 @@
         </a>
     </div>
 
-    <!-- Decrypted content (file) -->
+    <!-- Decrypted content (file(s)) -->
     <div id="file-container" class="hidden space-y-4">
         {% if burn_after_read %}
         <div class="rounded-lg bg-amber-900/30 border border-amber-700 px-4 py-3 text-sm text-amber-300">
             🔥 {% trans "This whisper has been burned — it can never be viewed again. Download it now." %}
         </div>
         {% endif %}
+        <div id="view-count-banner-file" class="hidden rounded-lg bg-gray-800/60 border border-gray-700 px-4 py-2 text-xs text-gray-300"></div>
 
-        <div class="rounded-lg bg-gray-800 border border-gray-700 p-6 text-center space-y-4">
-            <div class="text-5xl">📄</div>
-            <h1 class="text-xl font-bold text-white">{% trans "Decrypted File" %}</h1>
-            <p id="file-meta" class="text-sm text-gray-400"></p>
-            <button id="download-btn" onclick="downloadFile()"
-                class="px-6 py-2 rounded-lg bg-brand-600 hover:bg-brand-500 text-white font-semibold transition">
-                ⬇️ {% trans "Download File" %}
-            </button>
+        <div class="rounded-lg bg-gray-800 border border-gray-700 p-6 space-y-4">
+            <div class="text-center space-y-1">
+                <div class="text-5xl">📄</div>
+                <h1 id="file-heading" class="text-xl font-bold text-white">{% trans "Decrypted File" %}</h1>
+                <p id="file-meta" class="text-sm text-gray-400"></p>
+            </div>
+            <ul id="decrypted-file-list" class="space-y-2"></ul>
+            <div id="download-all-row" class="hidden text-center">
+                <button id="download-all-btn" onclick="downloadAllFiles()"
+                    class="px-6 py-2 rounded-lg bg-brand-600 hover:bg-brand-500 text-white font-semibold transition">
+                    ⬇️ {% trans "Download all" %}
+                </button>
+            </div>
         </div>
 
         <a href="{% url 'whispers:create' %}" class="inline-block text-sm text-brand-400 hover:text-brand-300 underline transition">
@@ -105,8 +112,30 @@
         }
     }
 
-    // Store decrypted file data for download
-    let decryptedFileData = null;
+    function renderViewCountBanner() {
+        if (!pasteData) return;
+        const count = pasteData.view_count;
+        const max = pasteData.max_views;
+        if (typeof count !== 'number') return;
+        let msg;
+        if (max === 0) {
+            msg = '{% trans "View" %} #' + count + ' \u2014 {% trans "this whisper has unlimited views" %}';
+        } else if (count >= max) {
+            msg = '{% trans "Final view" %} (' + count + ' / ' + max + ') \u2014 {% trans "this whisper has now been destroyed" %}';
+        } else {
+            const remaining = (typeof pasteData.remaining_views === 'number') ? pasteData.remaining_views : (max - count);
+            msg = '{% trans "Viewed" %} ' + count + ' / ' + max + ' \u2014 ' + remaining + ' {% trans "view(s) remaining" %}';
+        }
+        ['view-count-banner-text', 'view-count-banner-file'].forEach(id => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.textContent = msg;
+            el.classList.remove('hidden');
+        });
+    }
+
+    // Store decrypted files for download
+    let decryptedFiles = [];
 
     function showError(msg) {
         document.getElementById("decrypting").classList.add("hidden");
@@ -118,8 +147,15 @@
     function handleDecrypted(plaintext) {
         try {
             const envelope = JSON.parse(plaintext);
-            if (envelope.type === 'file') {
-                showFile(envelope);
+            if (envelope.type === 'files' && Array.isArray(envelope.files)) {
+                showFiles(envelope.files);
+            } else if (envelope.type === 'file') {
+                // Legacy single-file envelope — keep working for old whispers.
+                showFiles([{
+                    filename: envelope.filename,
+                    mimetype: envelope.mimetype,
+                    data: envelope.data,
+                }]);
             } else if (envelope.type === 'text') {
                 showText(envelope.content);
             } else {
@@ -134,32 +170,93 @@
         document.getElementById("decrypted-content").textContent = text;
         document.getElementById("decrypting").classList.add("hidden");
         document.getElementById("decrypted-container").classList.remove("hidden");
+        renderViewCountBanner();
     }
 
-    function showFile(envelope) {
-        decryptedFileData = envelope;
-        decryptedFileData.filename = sanitizeFilename(envelope.filename);
-        const size = Math.round(atob(envelope.data).length);
-        let sizeStr = size < 1024 ? size + ' B' : size < 1024*1024 ? (size/1024).toFixed(1) + ' KB' : (size/(1024*1024)).toFixed(1) + ' MB';
-        document.getElementById("file-meta").textContent = decryptedFileData.filename + ' (' + sizeStr + ')';
+    function fmtSize(bytes) {
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+        return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+
+    function showFiles(files) {
+        decryptedFiles = files.map(f => ({
+            filename: sanitizeFilename(f.filename),
+            mimetype: f.mimetype || 'application/octet-stream',
+            data: f.data,
+        }));
+
+        const list = document.getElementById('decrypted-file-list');
+        list.innerHTML = '';
+        let totalBytes = 0;
+        decryptedFiles.forEach((f, i) => {
+            const size = Math.round(atob(f.data).length);
+            totalBytes += size;
+            const li = document.createElement('li');
+            li.className = 'flex items-center justify-between gap-3 rounded-lg bg-gray-900 border border-gray-700 px-4 py-3';
+            const meta = document.createElement('div');
+            meta.className = 'flex items-center gap-3 min-w-0';
+            const icon = document.createElement('span');
+            icon.className = 'text-2xl shrink-0';
+            icon.textContent = '📄';
+            const textBox = document.createElement('div');
+            textBox.className = 'min-w-0';
+            const name = document.createElement('p');
+            name.className = 'truncate text-sm text-gray-100';
+            name.textContent = f.filename;
+            const sz = document.createElement('p');
+            sz.className = 'text-xs text-gray-500';
+            sz.textContent = fmtSize(size);
+            textBox.appendChild(name);
+            textBox.appendChild(sz);
+            meta.appendChild(icon);
+            meta.appendChild(textBox);
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'shrink-0 px-3 py-1.5 rounded-lg bg-brand-600 hover:bg-brand-500 text-white text-sm font-medium transition';
+            btn.textContent = '⬇️ {% trans "Download" %}';
+            btn.onclick = () => downloadFile(i);
+            li.appendChild(meta);
+            li.appendChild(btn);
+            list.appendChild(li);
+        });
+
+        const heading = document.getElementById('file-heading');
+        const meta = document.getElementById('file-meta');
+        if (decryptedFiles.length === 1) {
+            heading.textContent = '{% trans "Decrypted File" %}';
+            meta.textContent = '';
+            document.getElementById('download-all-row').classList.add('hidden');
+        } else {
+            heading.textContent = '{% trans "Decrypted Files" %}';
+            meta.textContent = decryptedFiles.length + ' files — ' + fmtSize(totalBytes) + ' total';
+            document.getElementById('download-all-row').classList.remove('hidden');
+        }
+
         document.getElementById("decrypting").classList.add("hidden");
         document.getElementById("file-container").classList.remove("hidden");
+        renderViewCountBanner();
     }
 
-    function downloadFile() {
-        if (!decryptedFileData) return;
-        const binary = atob(decryptedFileData.data);
+    function downloadFile(index) {
+        const f = decryptedFiles[index];
+        if (!f) return;
+        const binary = atob(f.data);
         const bytes = new Uint8Array(binary.length);
         for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-        const blob = new Blob([bytes], { type: decryptedFileData.mimetype });
+        const blob = new Blob([bytes], { type: f.mimetype });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = decryptedFileData.filename;
+        a.download = f.filename;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
+    }
+
+    function downloadAllFiles() {
+        decryptedFiles.forEach((_, i) => downloadFile(i));
     }
 
     function copyContent() {

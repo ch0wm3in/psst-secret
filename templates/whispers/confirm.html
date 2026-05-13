@@ -9,6 +9,10 @@
     <div class="text-5xl">🔥</div>
     <h1 class="text-2xl font-bold text-white">{% trans "Burn-after-reading whisper" %}</h1>
     <p class="text-gray-400 max-w-md mx-auto">{% trans "This whisper will be permanently destroyed after you view it. Click below when you are ready." %}</p>
+    {% elif whisper.max_views > 0 %}
+    <div class="text-5xl">👁️</div>
+    <h1 class="text-2xl font-bold text-white">{% trans "View Whisper" %}</h1>
+    <p class="text-gray-400 max-w-md mx-auto">{% blocktrans with n=whisper.max_views %}This whisper can be viewed up to {{ n }} times in total before it is destroyed. Click below to reveal it.{% endblocktrans %}</p>
     {% else %}
     <div class="text-5xl">🔒</div>
     <h1 class="text-2xl font-bold text-white">{% trans "View Whisper" %}</h1>
@@ -53,6 +57,8 @@
             {% if whisper.burn_after_read %}
             url.searchParams.set('burn', '1');
             {% endif %}
+            // Pass the max_views policy through so the view page can render the banner.
+            url.searchParams.set('max_views', '{{ whisper.max_views }}');
             window.location.replace(url.toString());
         } catch (e) {
             errorEl.textContent = e.message;

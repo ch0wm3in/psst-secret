@@ -10,14 +10,14 @@ class WhisperAdmin(admin.ModelAdmin):
         "mode",
         "created_at",
         "expiry_option",
-        "burn_after_read",
+        "max_views",
         "allowed_cidr",
     )
-    list_filter = ("mode", "burn_after_read", "expiry_option")
+    list_filter = ("mode", "max_views", "expiry_option")
     readonly_fields = (
         "id",
         "created_at",
-        "burn_after_read",
+        "max_views",
         "mode",
         "allowed_cidr",
     )  # noqa: E501
