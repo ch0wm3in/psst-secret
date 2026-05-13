@@ -598,6 +598,26 @@ class SubmitWhisperFlowTests(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertTemplateUsed(resp, "whispers/pending.html")
 
+    def test_post_reveal_pending_request_does_not_delete_payload(self):
+        w = self._create_request(max_views=1)
+        resp = self.client.post(f"/whisper/{w.id}")
+        self.assertEqual(resp.status_code, 404)
+
+        crypto = redis_store.get_crypto(w.id)
+        self.assertIsNotNone(crypto)
+        self.assertEqual(crypto["ciphertext"], "")
+
+        submit_resp = self.client.post(
+            f"/api/whisper/submit/{w.id}",
+            data=json.dumps({"ciphertext": "ct", "iv": "iv"}),
+            content_type="application/json",
+        )
+        self.assertEqual(submit_resp.status_code, 200)
+
+        reveal_resp = self.client.post(f"/whisper/{w.id}")
+        self.assertEqual(reveal_resp.status_code, 200)
+        self.assertEqual(reveal_resp.json()["ciphertext"], "ct")
+
     def test_view_after_submit(self):
         w = self._create_request()
         redis_store.update_crypto(w.id, ciphertext="ct", iv="iv")
