@@ -276,6 +276,19 @@ class RevealWhisperView(APIView):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
+        if whisper.mode == "receive":
+            crypto = redis_store.get_crypto(whisper_id)
+            if crypto is None:
+                whisper.delete()
+                return Response(
+                    {"error": "This whisper has expired"}, status=status.HTTP_410_GONE
+                )
+            if not crypto.get("ciphertext"):
+                return Response(
+                    {"error": "No content has been submitted yet"},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
         crypto, count, exhausted = redis_store.increment_and_reveal(
             whisper_id, whisper.max_views
         )
@@ -283,17 +296,6 @@ class RevealWhisperView(APIView):
             whisper.delete()
             return Response(
                 {"error": "This whisper has expired"}, status=status.HTTP_410_GONE
-            )
-
-        # Receive mode: no ciphertext yet means nothing has been submitted.
-        # Don't count this as a "view" — unwind the increment so the counter
-        # only ticks for successful reveals of real content.
-        if whisper.mode == "receive" and not crypto.get("ciphertext"):
-            client = redis_store.get_client()
-            client.decr(redis_store._views_key(whisper_id))
-            return Response(
-                {"error": "No content has been submitted yet"},
-                status=status.HTTP_404_NOT_FOUND,
             )
 
         if exhausted:
