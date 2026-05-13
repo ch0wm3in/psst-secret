@@ -277,6 +277,8 @@ class RevealWhisperView(APIView):
             )
 
         if whisper.mode == "receive":
+            # For receive-mode requests, a pre-submit POST must not increment the
+            # counter (or trigger max_views deletion). Check pending state first.
             crypto = redis_store.get_crypto(whisper_id)
             if crypto is None:
                 whisper.delete()
