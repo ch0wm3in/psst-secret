@@ -45,23 +45,21 @@
 
         <!-- File input (send mode only) -->
         <div id="file-mode" class="hidden">
-            <label for="file-input" class="block text-sm font-medium text-gray-300 mb-1">{% trans "Whisper file" %}</label>
+            <label for="file-input" class="block text-sm font-medium text-gray-300 mb-1">{% trans "Whisper files" %}</label>
             <div id="file-drop-zone"
-                class="w-full rounded-lg bg-gray-800 border-2 border-dashed border-gray-600 hover:border-brand-500 px-4 py-10 text-center transition cursor-pointer"
+                class="w-full rounded-lg bg-gray-800 border-2 border-dashed border-gray-600 hover:border-brand-500 px-4 py-6 text-center transition cursor-pointer"
                 onclick="document.getElementById('file-input').click()">
-                <input type="file" id="file-input" class="hidden" onchange="onFileSelected()">
-                <div id="file-placeholder" class="space-y-2">
+                <input type="file" id="file-input" class="hidden" multiple onchange="onFileSelected()">
+                <div id="file-placeholder" class="space-y-2 py-4">
                     <div class="text-3xl">📁</div>
-                    <p class="text-sm text-gray-400">{% trans "Click to select a file or drag & drop" %}</p>
-                    <p class="text-xs text-gray-500">{% settings_value "DATA_UPLOAD_MAX_MEMORY_SIZE" as max_size %}{% trans "Any file type supported." %} {% blocktrans with max_size=max_size|filesizeformat %}Max upload size: {{ max_size }}{% endblocktrans %}</p>
+                    <p class="text-sm text-gray-400">{% trans "Click to select files or drag & drop" %}</p>
+                    <p class="text-xs text-gray-500">{% settings_value "DATA_UPLOAD_MAX_MEMORY_SIZE" as max_size %}{% trans "Any file type supported." %} {% blocktrans with max_size=max_size|filesizeformat %}Max total upload size: {{ max_size }}{% endblocktrans %}</p>
                 </div>
-                <div id="file-info" class="hidden space-y-1">
-                    <div class="text-3xl">📄</div>
-                    <p id="file-name" class="text-sm text-brand-300 font-medium"></p>
-                    <p id="file-size" class="text-xs text-gray-500"></p>
-                    <button onclick="event.stopPropagation(); clearFile()" class="text-xs text-red-400 hover:text-red-300 underline mt-1">{% trans "Remove" %}</button>
-                </div>
+                <p class="text-xs text-gray-500 mt-1" id="file-add-more">{% trans "Click to add more files…" %}</p>
             </div>
+            <ul id="file-list" class="mt-2 space-y-1 hidden"></ul>
+            <p id="file-total" class="mt-1 text-xs text-gray-500 hidden"></p>
+            <p id="file-size-error" class="hidden mt-2 text-xs text-red-400"></p>
         </div>
 
         <!-- Receive mode description -->
@@ -85,19 +83,31 @@
                 </select>
             </div>
 
-            <!-- Burn after read -->
-            <label class="relative flex items-center gap-2 pb-1 cursor-pointer select-none">
-                <input type="checkbox" id="burn" class="hidden"
-                    onchange="document.getElementById('burn-icon').classList.toggle('opacity-40', !this.checked)">
-                <span id="burn-icon" class="text-lg leading-none opacity-40 transition">🔥</span>
-                <span class="text-sm text-gray-300">{% trans "Burn after reading" %}</span>
-                <span class="relative text-gray-500 text-xs cursor-help group/tip" onclick="event.preventDefault()">
-                    &#x3f;
-                    <span class="pointer-events-none invisible group-hover/tip:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 rounded-lg bg-gray-800 border border-gray-600 px-3 py-2 text-xs text-gray-300 shadow-lg z-10 transition-all duration-75">
-                        {% trans "When enabled, the whisper will be permanently deleted after being viewed once. The recipient gets one chance to see it." %}
+            <!-- Burn / max-views -->
+            <div class="flex-1 min-w-[180px]">
+                <label for="max-views" class="block text-sm font-medium text-gray-300 mb-1">
+                    {% trans "Destroy after" %}
+                    <span class="relative text-gray-500 text-xs cursor-help group/tip" onclick="event.preventDefault()">
+                        &#x3f;
+                        <span class="pointer-events-none invisible group-hover/tip:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 rounded-lg bg-gray-800 border border-gray-600 px-3 py-2 text-xs text-gray-300 shadow-lg z-10 transition-all duration-75">
+                            {% trans "The whisper is permanently destroyed after this many successful reveals. Helps detect link leaks: an unexpected destruction means it was viewed more times than you expected." %}
+                        </span>
                     </span>
-                </span>
-            </label>
+                </label>
+                <select id="max-views"
+                    class="w-full rounded-lg bg-gray-800 border border-gray-700 text-gray-100 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    onchange="onMaxViewsChanged()">
+                    <option value="1" selected>{% trans "1 view (burn 🔥)" %}</option>
+                    <option value="3">{% trans "3 views" %}</option>
+                    <option value="5">{% trans "5 views" %}</option>
+                    <option value="10">{% trans "10 views" %}</option>
+                    <option value="custom">{% trans "Custom…" %}</option>
+                    <option value="0">{% trans "Unlimited (time-based only)" %}</option>
+                </select>
+                <input type="number" id="max-views-custom" min="1" max="100" value="3"
+                    class="hidden mt-2 w-full rounded-lg bg-gray-800 border border-gray-700 text-gray-100 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    placeholder="{% trans "Number of views (1–100)" %}">
+            </div>
 
             <!-- Submit -->
             <button id="encrypt-btn" onclick="handleCreate()"
@@ -200,7 +210,7 @@
                 🔑 {% trans "This whisper is password-protected. The recipient will need the password to decrypt it." %}
             </div>
             <div id="burn-warning" class="hidden text-sm text-amber-400">
-                ⚠️ {% trans "This whisper will be destroyed after being viewed once." %}
+                ⚠️ <span id="burn-warning-text">{% trans "This whisper will be destroyed after being viewed once." %}</span>
             </div>
         </div>
         <button onclick="location.reload()"
@@ -244,7 +254,7 @@
                 🔑 {% trans "This request is password-protected. Share the password separately with the sender." %}
             </div>
             <div id="receive-burn-warning" class="hidden text-sm text-amber-400">
-                ⚠️ {% trans "The whisper will be destroyed after you view it once." %}
+                ⚠️ <span id="receive-burn-warning-text">{% trans "The whisper will be destroyed after you view it once." %}</span>
             </div>
         </div>
         <button onclick="location.reload()"
@@ -259,6 +269,8 @@
 
 {% csrf_token %}
 {% load static %}
+{% settings_value "DATA_UPLOAD_MAX_MEMORY_SIZE" as max_upload_size %}
+<script>window.PSST_MAX_UPLOAD_SIZE = {{ max_upload_size }};</script>
 <script src="{% static 'js/crypto.js' %}"></script>
 {% endblock %}
 
@@ -351,27 +363,13 @@
         }
     }
 
-    function onFileSelected() {
-        const fileEl = document.getElementById('file-input');
-        if (fileEl.files.length > 0) {
-            const file = fileEl.files[0];
-            document.getElementById('file-name').textContent = file.name;
-            document.getElementById('file-size').textContent = formatSize(file.size);
-            document.getElementById('file-placeholder').classList.add('hidden');
-            document.getElementById('file-info').classList.remove('hidden');
-        }
-    }
+    // onFileSelected, addFiles, formatSize are provided by crypto.js.
 
-    function clearFile() {
-        document.getElementById('file-input').value = '';
-        document.getElementById('file-placeholder').classList.remove('hidden');
-        document.getElementById('file-info').classList.add('hidden');
-    }
-
-    function formatSize(bytes) {
-        if (bytes < 1024) return bytes + ' B';
-        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-        return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    function onMaxViewsChanged() {
+        const sel = document.getElementById('max-views');
+        const custom = document.getElementById('max-views-custom');
+        if (!sel || !custom) return;
+        custom.classList.toggle('hidden', sel.value !== 'custom');
     }
 
     // Drag and drop
@@ -383,9 +381,8 @@
         zone.addEventListener('drop', ev => {
             const files = ev.dataTransfer.files;
             if (files.length > 0) {
-                document.getElementById('file-input').files = files;
                 switchMode('file');
-                onFileSelected();
+                addFiles(files);
             }
         });
     });

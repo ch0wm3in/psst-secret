@@ -6,8 +6,151 @@
  *
  * Encrypted payload format (JSON before encryption):
  *   Text:  { type: "text", content: "..." }
- *   File:  { type: "file", filename: "...", mimetype: "...", data: "<base64>" }
+ *   Files: { type: "files", files: [{ filename, mimetype, data: "<base64>" }, ...] }
+ *   Legacy (single file, still decoded for backward compatibility):
+ *          { type: "file", filename: "...", mimetype: "...", data: "<base64>" }
  */
+
+// ---- Multi-file selection state (shared between create.html and submit.html) ----
+
+/** Maximum aggregate upload size in bytes (mirrors Django DATA_UPLOAD_MAX_MEMORY_SIZE). */
+function getMaxUploadSize() {
+    return (typeof window !== 'undefined' && window.PSST_MAX_UPLOAD_SIZE) || 50000000;
+}
+
+/** Files queued for the current whisper (File objects). */
+let selectedFiles = [];
+
+function formatSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
+function totalSelectedSize() {
+    return selectedFiles.reduce((s, f) => s + f.size, 0);
+}
+
+/**
+ * Add files to the queue. Rejects any that would push the aggregate size over
+ * the cap. Returns the list of rejected filenames (empty if all accepted).
+ */
+function addFiles(fileList) {
+    const cap = getMaxUploadSize();
+    let total = totalSelectedSize();
+    const rejected = [];
+    for (const f of fileList) {
+        if (total + f.size > cap) {
+            rejected.push(f.name);
+            continue;
+        }
+        selectedFiles.push(f);
+        total += f.size;
+    }
+    renderFileList(rejected);
+    return rejected;
+}
+
+function removeSelectedFile(index) {
+    if (index < 0 || index >= selectedFiles.length) return;
+    selectedFiles.splice(index, 1);
+    renderFileList();
+}
+
+function clearAllFiles() {
+    selectedFiles = [];
+    const input = document.getElementById('file-input');
+    if (input) input.value = '';
+    renderFileList();
+}
+
+/**
+ * Render the queued-files list and update placeholder/error UI.
+ * Expects markup added by create.html / submit.html:
+ *   #file-placeholder, #file-list (ul), #file-total, #file-size-error
+ */
+function renderFileList(rejected) {
+    const placeholder = document.getElementById('file-placeholder');
+    const list = document.getElementById('file-list');
+    const total = document.getElementById('file-total');
+    const err = document.getElementById('file-size-error');
+    if (!list) return;
+
+    list.innerHTML = '';
+    const hasFiles = selectedFiles.length > 0;
+    if (placeholder) placeholder.classList.toggle('hidden', hasFiles);
+    list.classList.toggle('hidden', !hasFiles);
+    if (total) total.classList.toggle('hidden', !hasFiles);
+
+    selectedFiles.forEach((file, i) => {
+        const li = document.createElement('li');
+        li.className = 'flex items-center justify-between gap-3 rounded-lg bg-gray-900 border border-gray-700 px-3 py-2';
+        const meta = document.createElement('div');
+        meta.className = 'flex items-center gap-2 min-w-0';
+        const icon = document.createElement('span');
+        icon.className = 'text-lg';
+        icon.textContent = '📄';
+        const text = document.createElement('div');
+        text.className = 'min-w-0';
+        const name = document.createElement('p');
+        name.className = 'truncate text-sm text-brand-300';
+        name.textContent = file.name;
+        const size = document.createElement('p');
+        size.className = 'text-xs text-gray-500';
+        size.textContent = formatSize(file.size);
+        text.appendChild(name);
+        text.appendChild(size);
+        meta.appendChild(icon);
+        meta.appendChild(text);
+        const remove = document.createElement('button');
+        remove.type = 'button';
+        remove.className = 'shrink-0 text-xs text-red-400 hover:text-red-300 underline';
+        remove.textContent = 'Remove';
+        remove.onclick = (e) => { e.stopPropagation(); removeSelectedFile(i); };
+        li.appendChild(meta);
+        li.appendChild(remove);
+        list.appendChild(li);
+    });
+
+    if (total) {
+        const cap = getMaxUploadSize();
+        total.textContent = 'Total: ' + formatSize(totalSelectedSize()) + ' / ' + formatSize(cap);
+    }
+
+    if (err) {
+        if (rejected && rejected.length > 0) {
+            err.textContent = 'Skipped (would exceed ' + formatSize(getMaxUploadSize()) + ' total): ' + rejected.join(', ');
+            err.classList.remove('hidden');
+        } else {
+            err.classList.add('hidden');
+        }
+    }
+
+    // Reset the input so re-selecting the same file fires onchange again.
+    const input = document.getElementById('file-input');
+    if (input) input.value = '';
+}
+
+/** Called by <input type="file" multiple onchange="onFileSelected()">. */
+function onFileSelected() {
+    const input = document.getElementById('file-input');
+    if (!input || !input.files || input.files.length === 0) return;
+    addFiles(input.files);
+}
+
+/** Build the multi-file payload envelope from the current selection. */
+async function buildFilesEnvelope() {
+    const files = [];
+    for (const file of selectedFiles) {
+        const arrayBuf = await readFileAsArrayBuffer(file);
+        files.push({
+            filename: file.name,
+            mimetype: file.type || 'application/octet-stream',
+            data: bufToBase64(arrayBuf),
+        });
+    }
+    return JSON.stringify({ type: 'files', files });
+}
 
 /**
  * Sanitize a filename from an untrusted source.
@@ -154,25 +297,48 @@ async function decryptContent(ciphertextB64, ivB64, keyB64, password, saltB64) {
 }
 
 /**
+ * Read the max-views policy selected on the create page.
+ * Returns an int: 0 = unlimited, 1 = burn, N = destroy after N reveals.
+ */
+function readMaxViews() {
+    const sel = document.getElementById('max-views');
+    if (!sel) return 1;
+    if (sel.value === 'custom') {
+        const custom = document.getElementById('max-views-custom');
+        const n = custom ? parseInt(custom.value, 10) : NaN;
+        if (!Number.isFinite(n) || n < 1) return 1;
+        return Math.min(n, 100);
+    }
+    const n = parseInt(sel.value, 10);
+    return Number.isFinite(n) && n >= 0 ? n : 1;
+}
+
+/**
  * Main handler for the Create page. Called by the "Encrypt & Share" button.
  */
 async function handleCreate() {
     const whisperEl = document.getElementById('whisper');
     const fileEl = document.getElementById('file-input');
     const expiryEl = document.getElementById('expiry');
-    const burnEl = document.getElementById('burn');
     const errorEl = document.getElementById('error');
     const resultEl = document.getElementById('result');
     const formEl = document.getElementById('create-form');
     const btn = document.getElementById('encrypt-btn');
 
     errorEl.classList.add('hidden');
+    const maxViews = readMaxViews();
 
-    const isFileMode = fileEl && fileEl.files.length > 0;
+    const isFileMode = selectedFiles.length > 0;
     const plaintext = whisperEl.value.trim();
 
     if (!isFileMode && !plaintext) {
         errorEl.textContent = 'Please enter some content or select a file to encrypt.';
+        errorEl.classList.remove('hidden');
+        return;
+    }
+
+    if (isFileMode && totalSelectedSize() > getMaxUploadSize()) {
+        errorEl.textContent = 'Selected files exceed the maximum total size of ' + formatSize(getMaxUploadSize()) + '.';
         errorEl.classList.remove('hidden');
         return;
     }
@@ -187,15 +353,7 @@ async function handleCreate() {
         // Build the payload envelope
         let payload;
         if (isFileMode) {
-            const file = fileEl.files[0];
-            const arrayBuf = await readFileAsArrayBuffer(file);
-            const fileDataB64 = bufToBase64(arrayBuf);
-            payload = JSON.stringify({
-                type: 'file',
-                filename: file.name,
-                mimetype: file.type || 'application/octet-stream',
-                data: fileDataB64,
-            });
+            payload = await buildFilesEnvelope();
         } else {
             payload = JSON.stringify({
                 type: 'text',
@@ -221,7 +379,7 @@ async function handleCreate() {
                 ciphertext,
                 iv,
                 salt,
-                burn_after_read: burnEl.checked,
+                max_views: maxViews,
                 expiry: expiryEl.value,
                 allowed_cidr: (document.getElementById('allowed-cidr') || {}).value || '',
                 require_auth_view: !!(document.getElementById('require-auth-view') || {}).checked,
@@ -247,8 +405,15 @@ async function handleCreate() {
         if (password) {
             document.getElementById('password-notice').classList.remove('hidden');
         }
-        if (burnEl.checked) {
-            document.getElementById('burn-warning').classList.remove('hidden');
+        const burnWarn = document.getElementById('burn-warning');
+        const burnWarnText = document.getElementById('burn-warning-text');
+        if (burnWarn && maxViews > 0) {
+            if (maxViews === 1) {
+                burnWarnText.textContent = 'This whisper will be destroyed after being viewed once.';
+            } else {
+                burnWarnText.textContent = 'This whisper will be destroyed after ' + maxViews + ' views.';
+            }
+            burnWarn.classList.remove('hidden');
         }
 
         formEl.classList.add('hidden');
@@ -280,12 +445,12 @@ function copyUrl() {
  */
 async function handleCreateRequest() {
     const expiryEl = document.getElementById('expiry');
-    const burnEl = document.getElementById('burn');
     const errorEl = document.getElementById('error');
     const formEl = document.getElementById('create-form');
     const btn = document.getElementById('request-btn');
 
     errorEl.classList.add('hidden');
+    const maxViews = readMaxViews();
 
     btn.disabled = true;
     btn.textContent = 'Creating…';
@@ -328,7 +493,7 @@ async function handleCreateRequest() {
                 salt,
                 password_verify_token: passwordVerifyToken,
                 password_verify_iv: passwordVerifyIv,
-                burn_after_read: burnEl.checked,
+                max_views: maxViews,
                 expiry: expiryEl.value,
                 allowed_cidr: (document.getElementById('allowed-cidr') || {}).value || '',
                 require_auth_view: !!(document.getElementById('require-auth-view') || {}).checked,
@@ -355,8 +520,15 @@ async function handleCreateRequest() {
         if (password) {
             document.getElementById('receive-password-notice').classList.remove('hidden');
         }
-        if (burnEl.checked) {
-            document.getElementById('receive-burn-warning').classList.remove('hidden');
+        const rBurnWarn = document.getElementById('receive-burn-warning');
+        const rBurnWarnText = document.getElementById('receive-burn-warning-text');
+        if (rBurnWarn && maxViews > 0) {
+            if (maxViews === 1) {
+                rBurnWarnText.textContent = 'The whisper will be destroyed after you view it once.';
+            } else {
+                rBurnWarnText.textContent = 'The whisper will be destroyed after ' + maxViews + ' views.';
+            }
+            rBurnWarn.classList.remove('hidden');
         }
 
         formEl.classList.add('hidden');
@@ -383,11 +555,17 @@ async function handleSubmit() {
 
     errorEl.classList.add('hidden');
 
-    const isFileMode = fileEl && fileEl.files.length > 0;
+    const isFileMode = selectedFiles.length > 0;
     const plaintext = whisperEl.value.trim();
 
     if (!isFileMode && !plaintext) {
         errorEl.textContent = 'Please enter some content or select a file to encrypt.';
+        errorEl.classList.remove('hidden');
+        return;
+    }
+
+    if (isFileMode && totalSelectedSize() > getMaxUploadSize()) {
+        errorEl.textContent = 'Selected files exceed the maximum total size of ' + formatSize(getMaxUploadSize()) + '.';
         errorEl.classList.remove('hidden');
         return;
     }
@@ -430,15 +608,7 @@ async function handleSubmit() {
         // Build the payload envelope (same format as send mode)
         let payload;
         if (isFileMode) {
-            const file = fileEl.files[0];
-            const arrayBuf = await readFileAsArrayBuffer(file);
-            const fileDataB64 = bufToBase64(arrayBuf);
-            payload = JSON.stringify({
-                type: 'file',
-                filename: file.name,
-                mimetype: file.type || 'application/octet-stream',
-                data: fileDataB64,
-            });
+            payload = await buildFilesEnvelope();
         } else {
             payload = JSON.stringify({
                 type: 'text',

@@ -22,7 +22,12 @@ class CreateWhisperSerializer(serializers.Serializer):
     ciphertext = serializers.CharField(max_length=70_000_000)
     iv = serializers.CharField(max_length=50)
     salt = serializers.CharField(max_length=50, default="", allow_blank=True)
-    burn_after_read = serializers.BooleanField(default=False)
+    max_views = serializers.IntegerField(
+        default=1,
+        min_value=0,
+        max_value=100,
+        help_text="Reveals before self-destruction. 1 = burn after read; 0 = unlimited.",
+    )
     expiry = serializers.ChoiceField(
         choices=list(EXPIRY_DELTAS.keys()), default="1d"
     )  # noqa: E501
@@ -44,7 +49,12 @@ class CreateRequestSerializer(serializers.Serializer):
     password_verify_iv = serializers.CharField(
         max_length=50, default="", allow_blank=True
     )
-    burn_after_read = serializers.BooleanField(default=False)
+    max_views = serializers.IntegerField(
+        default=1,
+        min_value=0,
+        max_value=100,
+        help_text="Reveals before self-destruction. 1 = burn after read; 0 = unlimited.",
+    )
     expiry = serializers.ChoiceField(
         choices=list(EXPIRY_DELTAS.keys()), default="1d"
     )  # noqa: E501
@@ -69,6 +79,9 @@ class RevealWhisperResponseSerializer(serializers.Serializer):
     ciphertext = serializers.CharField()
     iv = serializers.CharField()
     salt = serializers.CharField()
+    view_count = serializers.IntegerField()
+    max_views = serializers.IntegerField()
+    remaining_views = serializers.IntegerField()
 
 
 class SubmitWhisperResponseSerializer(serializers.Serializer):

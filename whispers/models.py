@@ -28,7 +28,13 @@ class Whisper(models.Model):
         choices=ModeChoices.choices,
         default=ModeChoices.SEND,
     )
-    burn_after_read = models.BooleanField(default=False)
+    max_views = models.PositiveIntegerField(
+        default=1,
+        help_text=(
+            "Number of successful reveals before the whisper self-destructs. "
+            "1 = burn after first read; 0 = unlimited (no view-based destruction)."
+        ),
+    )
     allowed_cidr = models.CharField(
         max_length=43,
         blank=True,
@@ -68,3 +74,12 @@ class Whisper(models.Model):
         if self.expires_at is None:
             return False
         return timezone.now() >= self.expires_at
+
+    @property
+    def burn_after_read(self):
+        """Convenience flag — True when this whisper is destroyed after the first reveal."""
+        return self.max_views == 1
+
+    @property
+    def is_unlimited_views(self):
+        return self.max_views == 0

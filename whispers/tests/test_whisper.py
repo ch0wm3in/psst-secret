@@ -79,7 +79,9 @@ class WhisperModelTests(TestCase):
     def test_default_fields(self):
         w = Whisper.objects.create()
         self.assertEqual(w.mode, "send")
-        self.assertFalse(w.burn_after_read)
+        # Default policy is burn-after-read (max_views == 1).
+        self.assertEqual(w.max_views, 1)
+        self.assertTrue(w.burn_after_read)
         self.assertEqual(w.allowed_cidr, "")
         self.assertEqual(w.expiry_option, "1d")
 
@@ -257,11 +259,25 @@ class ApiCreateWhisperTests(TestCase):
         data = redis_store.get_crypto(wid)
         self.assertEqual(data["ciphertext"], "ct")
 
-    def test_burn_after_read_flag(self):
-        resp = self._post({"ciphertext": "ct", "iv": "iv", "burn_after_read": True})
+    def test_max_views_flag(self):
+        resp = self._post({"ciphertext": "ct", "iv": "iv", "max_views": 1})
         wid = resp.json()["id"]
         w = Whisper.objects.get(id=wid)
+        self.assertEqual(w.max_views, 1)
         self.assertTrue(w.burn_after_read)
+
+    def test_max_views_unlimited(self):
+        resp = self._post({"ciphertext": "ct", "iv": "iv", "max_views": 0})
+        wid = resp.json()["id"]
+        self.assertEqual(Whisper.objects.get(id=wid).max_views, 0)
+
+    def test_max_views_rejects_negative(self):
+        resp = self._post({"ciphertext": "ct", "iv": "iv", "max_views": -1})
+        self.assertEqual(resp.status_code, 400)
+
+    def test_max_views_rejects_too_large(self):
+        resp = self._post({"ciphertext": "ct", "iv": "iv", "max_views": 101})
+        self.assertEqual(resp.status_code, 400)
 
     def test_allowed_cidr_stored(self):
         resp = self._post(
@@ -361,7 +377,7 @@ class ViewWhisperTests(TestCase):
         self.assertFalse(Whisper.objects.filter(id=w.id).exists())
 
     def test_burn_after_read_deletes(self):
-        w = self._create_whisper(burn_after_read=True)
+        w = self._create_whisper(max_views=1)
         # First GET shows confirmation page (not the actual content)
         resp = self.client.get(f"/whisper/{w.id}")
         self.assertEqual(resp.status_code, 200)
@@ -373,11 +389,45 @@ class ViewWhisperTests(TestCase):
         self.assertEqual(resp2.status_code, 200)
         data = resp2.json()
         self.assertIn("ciphertext", data)
+        self.assertEqual(data["view_count"], 1)
+        self.assertEqual(data["max_views"], 1)
+        self.assertEqual(data["remaining_views"], 0)
         # Whisper is now gone
         self.assertFalse(Whisper.objects.filter(id=w.id).exists())
         # Second reveal should 404
         resp3 = self.client.post(f"/whisper/{w.id}")
         self.assertEqual(resp3.status_code, 404)
+
+    def test_max_views_three_destroys_on_third(self):
+        w = self._create_whisper(max_views=3)
+        # First two reveals succeed, whisper survives.
+        for expected_count in (1, 2):
+            resp = self.client.post(f"/whisper/{w.id}")
+            self.assertEqual(resp.status_code, 200)
+            data = resp.json()
+            self.assertEqual(data["view_count"], expected_count)
+            self.assertEqual(data["max_views"], 3)
+            self.assertEqual(data["remaining_views"], 3 - expected_count)
+            self.assertTrue(Whisper.objects.filter(id=w.id).exists())
+        # Third reveal is the final one — still returns content, then destroys.
+        resp = self.client.post(f"/whisper/{w.id}")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json()["view_count"], 3)
+        self.assertEqual(resp.json()["remaining_views"], 0)
+        self.assertFalse(Whisper.objects.filter(id=w.id).exists())
+        # Fourth reveal: 404 (whisper gone).
+        resp = self.client.post(f"/whisper/{w.id}")
+        self.assertEqual(resp.status_code, 404)
+
+    def test_max_views_unlimited_does_not_destroy(self):
+        w = self._create_whisper(max_views=0)
+        for expected_count in range(1, 5):
+            resp = self.client.post(f"/whisper/{w.id}")
+            self.assertEqual(resp.status_code, 200)
+            data = resp.json()
+            self.assertEqual(data["view_count"], expected_count)
+            self.assertEqual(data["max_views"], 0)
+            self.assertTrue(Whisper.objects.filter(id=w.id).exists())
 
     def test_ip_restriction_blocks(self):
         w = self._create_whisper(allowed_cidr="192.168.1.0/24")
@@ -556,7 +606,7 @@ class SubmitWhisperFlowTests(TestCase):
         self.assertTemplateUsed(resp, "whispers/confirm.html")
 
     def test_non_burn_reveal_keeps_whisper(self):
-        w = self._create_request()
+        w = self._create_request(max_views=0)
         redis_store.update_crypto(w.id, ciphertext="ct", iv="iv")
         resp = self.client.post(f"/whisper/{w.id}")
         self.assertEqual(resp.status_code, 200)

@@ -160,7 +160,7 @@ class CreateWhisperView(APIView):
         )
 
         whisper = Whisper.objects.create(
-            burn_after_read=d["burn_after_read"],
+            max_views=d["max_views"],
             allowed_cidr=d["allowed_cidr"],
             require_auth_view=require_auth_view,
             expiry_option=d["expiry"],
@@ -276,27 +276,39 @@ class RevealWhisperView(APIView):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
-        if whisper.burn_after_read:
-            crypto = redis_store.get_and_delete_crypto(whisper_id)
-            if crypto is None:
-                whisper.delete()
-                return Response(
-                    {"error": "This whisper has expired"}, status=status.HTTP_410_GONE
-                )
+        crypto, count, exhausted = redis_store.increment_and_reveal(
+            whisper_id, whisper.max_views
+        )
+        if crypto is None:
             whisper.delete()
-        else:
-            crypto = redis_store.get_crypto(whisper_id)
-            if crypto is None:
-                whisper.delete()
-                return Response(
-                    {"error": "This whisper has expired"}, status=status.HTTP_410_GONE
-                )
+            return Response(
+                {"error": "This whisper has expired"}, status=status.HTTP_410_GONE
+            )
+
+        # Receive mode: no ciphertext yet means nothing has been submitted.
+        # Don't count this as a "view" — unwind the increment so the counter
+        # only ticks for successful reveals of real content.
+        if whisper.mode == "receive" and not crypto.get("ciphertext"):
+            client = redis_store.get_client()
+            client.decr(redis_store._views_key(whisper_id))
+            return Response(
+                {"error": "No content has been submitted yet"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        if exhausted:
+            whisper.delete()
+
+        remaining = max(whisper.max_views - count, 0) if whisper.max_views > 0 else 0
 
         return Response(
             {
                 "ciphertext": crypto["ciphertext"],
                 "iv": crypto["iv"],
                 "salt": crypto["salt"],
+                "view_count": count,
+                "max_views": whisper.max_views,
+                "remaining_views": remaining,
             }
         )
 
@@ -386,7 +398,7 @@ class CreateRequestView(APIView):
 
         whisper = Whisper.objects.create(
             mode="receive",
-            burn_after_read=d["burn_after_read"],
+            max_views=d["max_views"],
             allowed_cidr=d["allowed_cidr"],
             require_auth_view=require_auth_view,
             require_auth_submit=require_auth_submit,
