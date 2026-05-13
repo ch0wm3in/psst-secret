@@ -114,7 +114,7 @@ def get_view_count(whisper_id):
     raw = get_client().get(_views_key(whisper_id))
     try:
         return int(raw) if raw is not None else 0
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         return 0
 
 

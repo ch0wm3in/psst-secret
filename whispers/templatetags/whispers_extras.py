@@ -17,7 +17,7 @@ try:
     )
 
     register.tags["provider_login_url"] = allauth_register.tags["provider_login_url"]
-except (ImportError, Exception):
+except ImportError, Exception:
     # allauth not installed or socialaccount not in INSTALLED_APPS —
     # register a no-op tag so the template still compiles.
     @register.simple_tag(name="provider_login_url", takes_context=True)
