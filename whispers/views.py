@@ -1,9 +1,11 @@
 import ipaddress
 import logging
+from urllib.parse import urlencode
 
 from django.conf import settings
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_GET
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
@@ -85,7 +87,11 @@ def _requires_auth_submit(whisper):
 def _redirect_to_login(request):
     """Redirect to the login page, preserving the current URL as next."""
     login_url = getattr(settings, "LOGIN_URL", "/accounts/login/")
-    return redirect(f"{login_url}?next={request.get_full_path()}")
+    next_url = request.get_full_path()
+    allowed_hosts = {request.get_host()}
+    if url_has_allowed_host_and_scheme(next_url, allowed_hosts=allowed_hosts):
+        return redirect(f"{login_url}?{urlencode({'next': next_url})}")
+    return redirect(login_url)
 
 
 def _first_error(errors):
