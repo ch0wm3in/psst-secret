@@ -11,7 +11,7 @@ services:
     - redis
  postgres:
   restart: on-failure
-  image: postgres:18.3
+  image: postgres:18.4
   volumes:
     - pgdata:/var/lib/postgresql/
   env_file: .env
