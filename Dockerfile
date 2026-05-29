@@ -11,6 +11,8 @@ WORKDIR /app
 COPY pyproject.toml uv.lock ./
 RUN uv sync
 ENV PATH="/app/.venv/bin:$PATH"
+ARG APP_VERSION=dev
+ENV APP_VERSION=${APP_VERSION}
 COPY . .
 RUN ["chmod", "+x", "/app/entrypoint"]
 EXPOSE 8000
