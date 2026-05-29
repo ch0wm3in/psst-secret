@@ -59,8 +59,25 @@
     </main>
 
     <!-- Footer -->
+    {% settings_value "APP_VERSION" as app_version %}
     <footer class="border-t border-gray-800 py-4 text-center text-xs text-gray-600">
         psst-secret &mdash; {% trans "Psst! Don't tell anyone." %} <br>
+        <div class="inline-flex items-center justify-center gap-2 mt-2">
+            <a href="https://github.com/ch0wm3in/psst-secret" target="_blank" rel="noopener noreferrer"
+                aria-label="{% trans 'GitHub repository' %}"
+                class="inline-flex items-center justify-center text-gray-600 hover:text-brand-300 transition">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5" aria-hidden="true">
+                    <path fill-rule="evenodd" clip-rule="evenodd" d="M12 .5C5.73.5.5 5.73.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.52-1.33-1.28-1.69-1.28-1.69-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.7 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.47.11-3.07 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.79 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.6.23 2.78.11 3.07.74.81 1.19 1.84 1.19 3.1 0 4.43-2.69 5.41-5.25 5.69.41.36.78 1.07.78 2.15 0 1.55-.02 2.8-.02 3.18 0 .31.21.68.8.56C20.21 21.38 23.5 17.08 23.5 12 23.5 5.73 18.27.5 12 .5Z"/>
+                </svg>
+            </a>
+            {% if app_version|slice:":1" == "v" %}
+                <a href="https://github.com/ch0wm3in/psst-secret/releases/tag/{{ app_version }}"
+                    target="_blank" rel="noopener noreferrer"
+                    class="text-gray-600 hover:text-brand-300 transition">{{ app_version }}</a>
+            {% else %}
+                <span class="text-gray-600">{{ app_version }}</span>
+            {% endif %}
+        </div>
     </footer>
 </div>
 {% endblock %}

@@ -45,6 +45,9 @@ if not DEBUG and SECRET_KEY.startswith("django-insecure"):
 
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["localhost", "127.0.0.1"])
 
+# Build/release version — set by Docker build-arg from the GitHub release tag.
+APP_VERSION = env.str("APP_VERSION", default="dev")
+
 
 # Application definition
 

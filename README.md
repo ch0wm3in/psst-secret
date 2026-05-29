@@ -1,17 +1,21 @@
 # psst-secret
 
-A zero-knowledge encrypted secret sharing tool. All encryption and decryption happens in the browser — the server never sees your plaintext. Encrypted data is stored only in volatile memory (Redis with persistence disabled) and never touches disk.
+A zero-knowledge encrypted secret-sharing tool. All encryption and decryption happens in the browser — the server never sees your plaintext. Encrypted data is stored only in volatile memory (Redis with persistence disabled) and never touches disk.
 
 ## Features
 
 - **Zero-knowledge architecture** — secrets are encrypted client-side with AES-256-GCM using the [Web Crypto API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API). The decryption key lives only in the URL fragment (`#key`), which is never sent to the server.
-- **In-memory ciphertext storage** — encrypted data (ciphertext, IV, salt) is stored in Redis with persistence disabled (`--save "" --appendonly no`). Ciphertexts never touch disk. If Redis restarts, all pssts are gone — by design.
+- **In-memory ciphertext storage** — encrypted data (ciphertext, IV, salt) is stored in Redis with persistence disabled (`--save "" --appendonly no`). Ciphertexts never touch disk. If Redis restarts, all whispers are gone — by design.
 - **Send mode** — encrypt a secret (text or file) and get a shareable link.
 - **Receive mode** — create a request for someone to send you a secret. You get a submit link to share and a view link to retrieve it later.
 - **Password protection** — optionally protect secrets with a password (PBKDF2, 600k iterations, SHA-256). In receive mode, the sender's password is validated client-side before submission.
-- **Burn after reading** — secrets are permanently erased from memory the moment they are viewed.
-- **Auto-expiry** — secrets expire after a configurable duration (5 minutes to 1 month). Redis TTLs evict keys automatically, and a background thread cleans up orphaned DB metadata every 60 seconds.
-- **IP/CIDR restriction** — restrict who can view (send mode) or submit (receive mode) a secret by IP address or CIDR range.
+- **View counter / burn-after-read** — configure how many successful reveals a whisper allows before it self-destructs. `1` = burn after first read; `0` = unlimited (no view-based destruction); any other value enforces a strict reveal counter atomically in Redis.
+- **Auto-expiry** — whispers expire after a configurable duration (5 minutes to 1 month). Redis TTLs evict keys automatically, and a background thread cleans up orphaned DB metadata every 60 seconds.
+- **IP/CIDR restriction** — restrict who can view (send mode) or submit (receive mode) a whisper by IP address or CIDR range.
+- **Optional authentication (SSO)** — opt-in [django-allauth](https://docs.allauth.org/) integration with pluggable social providers and/or local username/password. Disabled by default.
+- **Optional per-whisper auth** — individual whispers can require an authenticated viewer or submitter. Global overrides force auth for all whispers.
+- **Optional email notifications** — notify the receiver (send mode) or creator (receive mode) by email when a whisper is created or submitted. Supports Django's standard SMTP backend or Azure Communication Services.
+- **Internationalization** — English and Danish (`da`) out of the box, with a per-request language switcher.
 - **No-cache headers** — middleware ensures browsers and proxies never cache secret pages.
 
 ## How it works
@@ -33,21 +37,33 @@ A zero-knowledge encrypted secret sharing tool. All encryption and decryption ha
 
 ## Requirements
 
-- Python 3.13+
-- Django 5.2+
+- Python 3.14
+- Django 6.0+
 - Redis 7+ (persistence disabled)
+- PostgreSQL 16+ (optional — SQLite works for development)
 
 ## Quick start
 
+### Using Docker (recommended)
+
+Pre-built images are published to [ghcr.io/ch0wm3in/psst-secret](https://github.com/ch0wm3in/psst-secret/pkgs/container/psst-secret) on every release tag.
+
 ```bash
-# Clone and install
-git clone <repo-url> && cd psst-secret
-pip install -e .  # or: uv sync
+# Bring up app + PostgreSQL + Redis (Redis runs with persistence disabled)
+docker compose up -d
+```
+
+The app is served by [Granian](https://github.com/emmett-framework/granian) on port `8000`.
+
+### Local development
+
+```bash
+git clone https://github.com/ch0wm3in/psst-secret.git && cd psst-secret
+uv sync  # or: pip install -e .
 
 # Start Redis (no persistence — ciphertexts stay in RAM only)
 docker compose up -d redis
 
-# Run with SQLite (development)
 python manage.py migrate
 python manage.py runserver
 ```
@@ -60,31 +76,19 @@ psst-secret uses a split storage model:
 
 | Store | What it holds | Persistence |
 |---|---|---|
-| **Redis** | Ciphertext, IV, salt, password verification tokens | **In-memory only** — `--save "" --appendonly no` |
-| **PostgreSQL** | Metadata: expiry, mode, burn flag, IP restriction | On disk |
+| **Redis** | Ciphertext, IV, salt, password verification tokens, remaining-views counter | **In-memory only** — `--save "" --appendonly no` |
+| **PostgreSQL / SQLite** | Metadata: expiry, mode, max-views, IP restriction, auth flags, notify email | On disk |
 
 This means encrypted data **never touches disk**. If Redis restarts, all ciphertexts are lost (a feature, not a bug). Orphaned DB metadata is cleaned up automatically — the background thread and on-access checks both delete DB rows when their Redis key is gone.
 
-### Expiry: belt and suspenders
+> A `docker-compose-with-persistence-example.yml` is provided for users who explicitly want Redis persistence (e.g. for a long-lived single-node deployment with periodic restarts). **Enabling persistence weakens the zero-knowledge guarantee** — only do this if you understand the tradeoff.
 
-1. **Redis TTL** — each key is stored with a TTL matching the psst's expiry. Redis evicts them automatically.
-2. **Background thread** — runs every 60s, deletes expired DB rows and their Redis keys (defense-in-depth).
-3. **On-access cleanup** — if a user visits a psst whose Redis key has vanished, the orphaned DB row is deleted immediately.
+### Expiry & view-counter: belt and suspenders
 
-## Database: PostgreSQL
-
-PostgreSQL stores only non-sensitive metadata. SQLite works for development.
-
-```bash
-# Start PostgreSQL and Redis
-docker compose up -d
-
-# Set the database URL in .env
-DATABASE_URL=postgres://user:password@localhost:5432/psstsecret
-
-# Run migrations
-python manage.py migrate
-```
+1. **Redis TTL** — each key is stored with a TTL matching the whisper's expiry. Redis evicts them automatically.
+2. **Atomic reveal counter** — each successful reveal decrements a Redis counter using `WATCH`/`MULTI`/`EXEC`. When the counter reaches zero the whisper is deleted in the same transaction (no race conditions, even under concurrent reveals).
+3. **Background thread** — runs every 60s, deletes expired DB rows and their Redis keys (defense-in-depth).
+4. **On-access cleanup** — if a user visits a whisper whose Redis key has vanished, the orphaned DB row is deleted immediately.
 
 ## Environment variables
 
@@ -102,8 +106,17 @@ python manage.py migrate
 
 | Variable | Description | Default |
 |---|---|---|
-| `SECURE_SSL_REDIRECT` | Redirect all HTTP requests to HTTPS. | `True` (production) / `False` (debug) |
 | `NUM_PROXIES` | Number of trusted reverse proxies in front of Django. Controls how `X-Forwarded-For` is parsed for IP-based restrictions. `0` = ignore the header and use `REMOTE_ADDR`. | `0` |
+| `CSRF_TRUSTED_ORIGINS` | Comma-separated list of origins (scheme + host) trusted for CSRF (e.g. `https://psst.example.com`). | _empty_ |
+
+### Email notifications
+
+| Variable | Description | Default |
+|---|---|---|
+| `PSST_ENABLE_EMAIL` | Enable email notifications (sender / creator notifications on creation and submission). | `False` |
+| `EMAIL_BACKEND` | Django email backend. Use `django.core.mail.backends.smtp.EmailBackend` for SMTP or `azure_communication_email.EmailBackend` for Azure Communication Services. | `django.core.mail.backends.console.EmailBackend` |
+| `DEFAULT_FROM_EMAIL` | From-address used for all outbound mail. | `noreply@localhost` |
+| `AZURE_COMMUNICATION_CONNECTION_STRING` | Azure Communication Services connection string. Only required when using the Azure email backend. | _empty_ |
 
 ### Authentication (SSO / allauth)
 
@@ -115,11 +128,11 @@ All authentication features are **disabled by default**. Set `ENABLE_AUTH=True` 
 | `ENABLE_LOCAL_LOGIN` | Allow username/password login (in addition to SSO providers). Only takes effect when `ENABLE_AUTH=True`. | `False` |
 | `PSST_FORCE_AUTH_VIEW` | Require authentication to **view** all whispers (overrides per-whisper setting). | `False` |
 | `PSST_FORCE_AUTH_SUBMIT` | Require authentication to **submit** to all receive-mode requests (overrides per-whisper setting). | `False` |
-| `EMAIL_BACKEND` | Django email backend for allauth. Only used when `ENABLE_AUTH=True`. | `django.core.mail.backends.console.EmailBackend` |
-| `ACCOUNT_EMAIL_VERIFICATION` | allauth email verification mode: `"mandatory"`, `"optional"`, or `"none"`. Only used when `ENABLE_AUTH=True`. | `"none"` |
-| `LOGIN_REQUIRED_EXEMPT_URLS` | Comma-separated list of regex patterns for paths that bypass the login requirement (matched without leading `/`). Only used when `ENABLE_AUTH=True`. | `login/,accounts/.*,i18n/.*,static/.*` |
-| `SOCIAL_AUTH_PROVIDERS` | Comma-separated list of allauth social provider names to enable (e.g. `google,github`). Only used when `ENABLE_AUTH=True`. | `[]` (empty) |
-| `{PROVIDER}_SOCIAL_AUTH_CONFIG` | JSON configuration for each social provider (uppercased provider name, e.g. `GOOGLE_SOCIAL_AUTH_CONFIG`). Only used when the provider is listed in `SOCIAL_AUTH_PROVIDERS`. | `{}` |
+| `ACCOUNT_DEFAULT_HTTP_PROTOCOL` | Protocol used by allauth when building absolute URLs in emails. | `https` (`http` in `DEBUG`) |
+| `ACCOUNT_EMAIL_VERIFICATION` | allauth email verification mode: `"mandatory"`, `"optional"`, or `"none"`. | `"none"` |
+| `LOGIN_REQUIRED_EXEMPT_URLS` | Comma-separated regex patterns for paths that bypass the login requirement (matched without leading `/`). | `login/,accounts/.*,i18n/.*,static/.*` |
+| `SOCIAL_AUTH_PROVIDERS` | Comma-separated list of allauth social provider names to enable (e.g. `google,github`). | _empty_ |
+| `{PROVIDER}_SOCIAL_AUTH_CONFIG` | JSON configuration for each social provider (uppercased provider name, e.g. `GOOGLE_SOCIAL_AUTH_CONFIG`). | `{}` |
 
 ### Rate limiting
 
@@ -129,11 +142,12 @@ All authentication features are **disabled by default**. Set `ENABLE_AUTH=True` 
 | `API_THROTTLE_RATE_CREATE` | Rate limit for whisper/request creation and submit API endpoints. | `20/minute` |
 | `THROTTLE_RATE_VIEW` | Rate limit for the whisper view page (per IP, cache-based). | `30/minute` |
 
-### Branding
+### Branding & build info
 
 | Variable | Description | Default |
 |---|---|---|
 | `BRAND_COLORS` | Tailwind color palette as JSON (shade → hex). | Teal palette |
+| `ABOUT_PAGE_PERSISTENCE_ENABLED` | When `True`, the about page describes Redis as persisted (use this if you have explicitly enabled Redis persistence). | `False` |
 
 Example custom brand colors (blue):
 
@@ -144,30 +158,48 @@ BRAND_COLORS='{"50":"#eff6ff","100":"#dbeafe","200":"#bfdbfe","300":"#93c5fd","4
 ## Project structure
 
 ```
-psst_secret/          Django project config (settings, urls, wsgi, asgi)
+psst_secret/             Django project config (settings, urls, wsgi, asgi)
 whispers/                Main app
-├── models.py         Whispers model (metadata only — no ciphertext fields)
-├── redis_store.py    Redis helpers for in-memory ciphertext storage
-├── views.py          API + page views (send, receive, submit)
-├── urls.py           URL routing
-├── admin.py          Django admin config
-├── middleware.py      No-cache middleware
-├── apps.py           App config + background cleanup thread
-├── management/       Management commands (cleanup_expired)
-└── migrations/       Database migrations
-static/js/crypto.js   Client-side AES-256-GCM encryption/decryption
-templates/            Django templates (Tailwind CSS)
+├── models.py            Whisper model (metadata only — no ciphertext fields)
+├── redis_store.py       Redis helpers for in-memory ciphertext + atomic reveal counter
+├── views.py             API + page views (create, reveal, submit)
+├── auth_views.py        Custom login page (allauth integration)
+├── serializers.py       DRF serializers for the JSON API
+├── email.py             Email notifications (Django SMTP or Azure Communication Services)
+├── constants.py         Expiry deltas shared between server and admin
+├── middleware.py        No-cache + login-required middleware
+├── apps.py              App config + background cleanup thread
+├── urls.py              URL routing
+├── admin.py             Django admin config
+├── management/          Management commands (e.g. cleanup_expired)
+├── templatetags/        Custom template tags (settings_value, to_json, …)
+├── tests/               pytest-django test suite
+└── migrations/          Database migrations
+static/js/crypto.js      Client-side AES-256-GCM encryption / decryption
+templates/               Django templates (Tailwind CSS)
+locale/                  Translations (English, Danish)
 ```
+
+## API
+
+A small JSON API is exposed alongside the HTML views. The OpenAPI schema is generated via [drf-spectacular](https://drf-spectacular.readthedocs.io/).
+
+| Method | Path | Purpose |
+|---|---|---|
+| `POST` | `/api/whisper` | Create a send-mode whisper (ciphertext + metadata) |
+| `POST` | `/api/whisper/request` | Create a receive-mode request |
+| `POST` | `/api/whisper/submit/<request_id>` | Submit ciphertext to a receive-mode request |
 
 ## Security properties
 
-- The server stores ciphertext, IV, and salt **only in Redis memory** — never on disk. Metadata (expiry, mode, flags) lives in PostgreSQL.
+- The server stores ciphertext, IV, and salt **only in Redis memory** — never on disk (unless persistence is explicitly enabled). Metadata (expiry, mode, flags, counter limit) lives in PostgreSQL.
 - The URL fragment (`#key`) is never sent to the server per the HTTP specification.
 - AES-256-GCM provides authenticated encryption — tampering is detected.
 - Password-derived keys use PBKDF2 with 600,000 iterations and SHA-256.
-- Burn-after-read secrets are erased from Redis and the database immediately upon first retrieval.
+- The reveal counter is decremented atomically in Redis (`WATCH`/`MULTI`/`EXEC`); when it reaches zero the whisper is deleted in the same transaction. Burn-after-read (`max_views=1`) is the default.
 - Redis runs with persistence disabled (`--save "" --appendonly no`) — all ciphertexts are lost on restart.
 - If Redis evicts a key before the DB row is cleaned up, the next access deletes the orphaned row automatically.
+- The app refuses to start in production (`DEBUG=False`) with the insecure default `SECRET_KEY`.
 
 ## License
 
