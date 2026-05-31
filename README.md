@@ -2,6 +2,9 @@
 
 A zero-knowledge encrypted secret-sharing tool. All encryption and decryption happens in the browser — the server never sees your plaintext. Encrypted data is stored only in volatile memory (Redis with persistence disabled) and never touches disk.
 
+## Demo
+<https://psst-secret-1-1-4.onrender.com/>
+
 ## Features
 
 - **Zero-knowledge architecture** — secrets are encrypted client-side with AES-256-GCM using the [Web Crypto API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API). The decryption key lives only in the URL fragment (`#key`), which is never sent to the server.
