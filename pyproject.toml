@@ -12,13 +12,13 @@ dependencies = [
     "drf-spectacular>=0.29.0",
     "psycopg2-binary>=2.9.12",
     "redis>=5.0.0",
-    "granian>=2.7.4",
+    "granian>=2.7.5",
     "django-better-azure-communication-email>=0.0.1",
 ]
 
 [dependency-groups]
 dev = [
-    "fakeredis>=2.35.1",
+    "fakeredis>=2.36.0",
     "pre-commit>=4.6.0",
     "pytest-django>=4.12.0",
     "pytest-env>=1.6.0",
