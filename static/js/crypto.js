@@ -350,6 +350,18 @@ async function handleCreate() {
         const passwordEl = document.getElementById('password');
         const password = passwordEl ? passwordEl.value : '';
 
+        // Defense-in-depth: re-check passphrase strength even if the UI gate
+        // was bypassed (e.g. via devtools). Empty passphrase is allowed because
+        // the field is optional.
+        if (password && window.PsstPasswordStrength) {
+            const check = window.PsstPasswordStrength.evaluate(password);
+            if (!check.allOk) {
+                throw new Error(
+                    'Passphrase does not meet the strength requirements shown below the field.'
+                );
+            }
+        }
+
         // Build the payload envelope
         let payload;
         if (isFileMode) {
@@ -458,6 +470,18 @@ async function handleCreateRequest() {
     try {
         const passwordEl = document.getElementById('password');
         const password = passwordEl ? passwordEl.value : '';
+
+        // Defense-in-depth: re-check passphrase strength even if the UI gate
+        // was bypassed (e.g. via devtools). Empty passphrase is allowed because
+        // the field is optional.
+        if (password && window.PsstPasswordStrength) {
+            const check = window.PsstPasswordStrength.evaluate(password);
+            if (!check.allOk) {
+                throw new Error(
+                    'Passphrase does not meet the strength requirements shown below the field.'
+                );
+            }
+        }
 
         let salt = '';
         let keyB64 = '';
