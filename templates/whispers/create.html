@@ -132,8 +132,34 @@
                     </label>
                     <input type="password" id="password" autocomplete="off"
                         class="w-full rounded-lg bg-gray-800 border border-gray-700 text-gray-100 px-3 py-2 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
-                        placeholder="{% trans "Extra protection…" %}">
-                    <p class="mt-1 text-xs text-gray-500">{% trans "Adds an extra layer of encryption. The recipient will need this password in addition to the link to decrypt the psst." %}</p>
+                        placeholder="{% trans "Use own password" %}">
+                    <p class="mt-1 text-xs text-gray-500">{% trans "Use your own password for encryption instead of the randomly generated one in the url fragment. The recipient will need this password in addition to the link to decrypt the psst." %}</p>
+                    <div id="password-strength-wrapper" class="mt-2 rounded-lg bg-gray-900/50 border border-gray-700 px-3 py-2">
+                        <p class="text-xs font-medium text-gray-400 mb-1">{% trans "Password requirements" %}</p>
+                        <ul id="password-strength" class="space-y-0.5 text-xs">
+                            <li data-rule="length" class="flex items-center gap-2 text-gray-500">
+                                <span class="psst-strength-icon inline-block w-4 text-center font-mono">·</span>
+                                <span>{% trans "At least 14 characters" %}</span>
+                            </li>
+                            <li data-rule="upper" class="flex items-center gap-2 text-gray-500">
+                                <span class="psst-strength-icon inline-block w-4 text-center font-mono">·</span>
+                                <span>{% trans "At least one uppercase letter (A–Z)" %}</span>
+                            </li>
+                            <li data-rule="lower" class="flex items-center gap-2 text-gray-500">
+                                <span class="psst-strength-icon inline-block w-4 text-center font-mono">·</span>
+                                <span>{% trans "At least one lowercase letter (a–z)" %}</span>
+                            </li>
+                            <li data-rule="digit" class="flex items-center gap-2 text-gray-500">
+                                <span class="psst-strength-icon inline-block w-4 text-center font-mono">·</span>
+                                <span>{% trans "At least one digit (0–9)" %}</span>
+                            </li>
+                            <li data-rule="special" class="flex items-center gap-2 text-gray-500">
+                                <span class="psst-strength-icon inline-block w-4 text-center font-mono">·</span>
+                                <span>{% trans "At least one special character (e.g. !@#$%&*)" %}</span>
+                            </li>
+                        </ul>
+                        <p id="password-strength-status" class="mt-1 text-xs text-gray-500"></p>
+                    </div>
                 </div>
                 <div>
                     <label for="allowed-cidr" class="block text-sm font-medium text-gray-300 mb-1">
@@ -271,7 +297,42 @@
 {% load static %}
 {% settings_value "DATA_UPLOAD_MAX_MEMORY_SIZE" as max_upload_size %}
 <script>window.PSST_MAX_UPLOAD_SIZE = {{ max_upload_size }};</script>
+<div id="password-strength-labels" class="hidden" aria-hidden="true"
+    data-ok="&#x2713;"
+    data-fail="&#x2717;"
+    data-neutral="&#xb7;"
+    data-status-empty="{% trans "Leave blank to share without a password." %}"
+    data-status-ok="{% trans "Strong password — all requirements met." %}"
+    data-status-missing="{% trans "{count} of 5 requirements still missing." %}"></div>
+<script src="{% static 'js/password-strength.js' %}"></script>
 <script src="{% static 'js/crypto.js' %}"></script>
+<script>
+    (function () {
+        var input = document.getElementById('password');
+        var list = document.getElementById('password-strength');
+        var status = document.getElementById('password-strength-status');
+        var labelsEl = document.getElementById('password-strength-labels');
+        if (!input || !list || !window.PsstPasswordStrength) return;
+        var labels = labelsEl ? {
+            ok: labelsEl.getAttribute('data-ok') || '',
+            fail: labelsEl.getAttribute('data-fail') || '',
+            neutral: labelsEl.getAttribute('data-neutral') || '',
+            statusEmpty: labelsEl.getAttribute('data-status-empty') || '',
+            statusOk: labelsEl.getAttribute('data-status-ok') || '',
+            statusMissing: labelsEl.getAttribute('data-status-missing') || '',
+        } : {};
+        window.PsstPasswordStrength.attach({
+            inputEl: input,
+            listEl: list,
+            statusEl: status,
+            criteriaLabels: labels,
+            buttons: [
+                document.getElementById('encrypt-btn'),
+                document.getElementById('request-btn'),
+            ],
+        });
+    })();
+</script>
 {% endblock %}
 
 {% block extra_head %}
