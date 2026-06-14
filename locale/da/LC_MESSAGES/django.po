@@ -784,12 +784,12 @@ msgstr "Efterlad feltet blank, for at dele uden et password"
 
 #: templates/whispers/create.html:305
 msgid "Strong password — all requirements met."
-msgstr ""
+msgstr "Stærk adgangskode — alle krav er opfyldt."
 
 #: templates/whispers/create.html:306
 #, python-brace-format
 msgid "{count} of 5 requirements still missing."
-msgstr ""
+msgstr "{count} af 5 krav mangler stadig."
 
 #: templates/whispers/expired.html:4
 msgid "Whisper Expired"
