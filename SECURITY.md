@@ -2,7 +2,7 @@
 
 ## Supported Versions
 
-Latest is the supported version, any prior versions are not supported, please check that the reported vulnerabillity is the latest version.
+Latest is the supported version, any prior versions are not supported, please check that the reported vulnerability is the latest version.
 
 ## Reporting a Vulnerability
 
