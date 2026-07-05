@@ -12,7 +12,7 @@ dependencies = [
     "drf-spectacular>=0.29.0",
     "psycopg2-binary>=2.9.12",
     "redis>=8.0.1",
-    "granian>=2.7.7",
+    "granian>=2.7.9",
     "django-better-azure-communication-email>=0.0.1",
 ]
 
