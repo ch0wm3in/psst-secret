@@ -5,14 +5,14 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.14,<3.15"
 dependencies = [
-    "django>=6.0.7",
+    "django>=6.1",
     "django-allauth[socialaccount]>=65.18.0",
     "django-environ>=0.14.0",
-    "djangorestframework>=3.17.1",
+    "djangorestframework>=3.17.2",
     "drf-spectacular>=0.30.0",
     "psycopg2-binary>=2.9.12",
     "redis>=8.1.0",
-    "granian>=2.7.9",
+    "granian>=2.8.1",
     "django-better-azure-communication-email>=0.0.1",
 ]
 
@@ -20,6 +20,6 @@ dependencies = [
 dev = [
     "fakeredis>=2.37.0",
     "pre-commit>=4.6.1",
-    "pytest-django>=4.12.0",
+    "pytest-django>=4.13.0",
     "pytest-env>=1.7.0",
 ]
