@@ -20,7 +20,7 @@ services:
 
  redis:
   restart: on-failure
-  image: redis:8.8.1
+  image: redis:8.10.0
   command: redis-server --save "" --appendonly no
   ports:
     - "6379:6379"
