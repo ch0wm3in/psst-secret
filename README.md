@@ -42,6 +42,7 @@ A zero-knowledge encrypted secret-sharing tool. All encryption and decryption ha
 
 - Python 3.14
 - Django 6.0+
+- Node.js 20+ and npm (local frontend builds only)
 - Redis 7+ (persistence disabled)
 - PostgreSQL 16+ (optional — SQLite works for development)
 
@@ -63,6 +64,8 @@ The app is served by [Granian](https://github.com/emmett-framework/granian) on p
 ```bash
 git clone https://github.com/ch0wm3in/psst-secret.git && cd psst-secret
 uv sync  # or: pip install -e .
+python manage.py tailwind install
+python manage.py tailwind build
 
 # Start Redis (no persistence — ciphertexts stay in RAM only)
 docker compose up -d redis
@@ -72,6 +75,17 @@ python manage.py runserver
 ```
 
 Open [http://localhost:8000](http://localhost:8000).
+
+While changing templates or frontend JavaScript, run the Tailwind watcher in a
+separate terminal:
+
+```bash
+python manage.py tailwind start
+```
+
+Tailwind and Alpine.js are installed from the locked npm dependencies in
+`theme/static_src/`. Production Docker builds compile both into local Django
+static assets, so the application does not depend on either CDN at runtime.
 
 ## Architecture
 
@@ -162,6 +176,9 @@ BRAND_COLORS='{"50":"#eff6ff","100":"#dbeafe","200":"#bfdbfe","300":"#93c5fd","4
 
 ```
 psst_secret/             Django project config (settings, urls, wsgi, asgi)
+theme/                   django-tailwind app and compiled frontend assets
+├── static_src/          Locked Tailwind and Alpine.js build dependencies
+└── static/              Generated CSS and JavaScript served by Django
 whispers/                Main app
 ├── models.py            Whisper model (metadata only — no ciphertext fields)
 ├── redis_store.py       Redis helpers for in-memory ciphertext + atomic reveal counter

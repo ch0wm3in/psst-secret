@@ -7,20 +7,17 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>{% block title %}psst-secret{% endblock %}</title>
         <link rel="icon" href="{% static 'favicon.svg' %}" type="image/svg+xml">
-        <script src="https://cdn.tailwindcss.com"></script>
-        <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
+        <link rel="stylesheet" href="{% static 'css/dist/styles.css' %}">
+        <script defer src="{% static 'js/alpine.min.js' %}"></script>
         {% load whispers_extras %}
-        <script>
-            tailwind.config = {
-                theme: {
-                    extend: {
-                        colors: {
-                            brand: {% settings_value "BRAND_COLORS" as brand_colors %}{{ brand_colors|to_json }}
-                        }
-                    }
-                }
+        {% settings_value "BRAND_COLORS" as brand_colors %}
+        <style>
+            :root {
+                {% for shade, color in brand_colors.items %}
+                --brand-{{ shade }}: {{ color }};
+                {% endfor %}
             }
-        </script>
+        </style>
         {% block extra_head %}{% endblock %}
     </head>
     <body class="h-full bg-gray-950 text-gray-100">
