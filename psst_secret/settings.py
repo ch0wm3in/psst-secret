@@ -179,8 +179,8 @@ SESSION_COOKIE_SAMESITE = "Lax"
 CSRF_COOKIE_SAMESITE = "Lax"
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_BROWSER_XSS_FILTER = True
-# Never send a Referer, so whisper/submit paths can't leak to other sites.
-SECURE_REFERRER_POLICY = "no-referrer"
+# Never send a Referer cross-site; "no-referrer" would make browsers send Origin: null and break CSRF.
+SECURE_REFERRER_POLICY = "same-origin"
 
 # Redis — ciphertext storage (never touches disk)
 REDIS_URL = env.str("REDIS_URL", default="redis://localhost:6379/0")
