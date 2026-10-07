@@ -8,6 +8,7 @@
         <title>{% block title %}psst-secret{% endblock %}</title>
         <link rel="icon" href="{% static 'favicon.svg' %}" type="image/svg+xml">
         <link rel="stylesheet" href="{% static 'css/dist/styles.css' %}">
+        <script src="{% url 'javascript-catalog' %}"></script>
         <script defer src="{% static 'js/alpine.min.js' %}"></script>
         {% load whispers_extras %}
         {% settings_value "BRAND_COLORS" as brand_colors %}

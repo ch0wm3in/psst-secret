@@ -123,7 +123,8 @@ This means encrypted data **never touches disk**. If Redis restarts, all ciphert
 
 | Variable | Description | Default |
 |---|---|---|
-| `NUM_PROXIES` | Number of trusted reverse proxies in front of Django. Controls how `X-Forwarded-For` is parsed for IP-based restrictions. `0` = ignore the header and use `REMOTE_ADDR`. | `0` |
+| `NUM_PROXIES` | Number of trusted reverse proxies in front of Django. Controls how `X-Forwarded-For` is parsed for IP-based restrictions and rate limiting. `0` = ignore the header and use `REMOTE_ADDR`. | `0` |
+| `MAX_UPLOAD_SIZE` | Maximum request body size in bytes (caps encrypted payload size). | `10000000` |
 | `CSRF_TRUSTED_ORIGINS` | Comma-separated list of origins (scheme + host) trusted for CSRF (e.g. `https://psst.example.com`). | _empty_ |
 
 ### Email notifications
@@ -171,6 +172,48 @@ Example custom brand colors (blue):
 ```bash
 BRAND_COLORS='{"50":"#eff6ff","100":"#dbeafe","200":"#bfdbfe","300":"#93c5fd","400":"#60a5fa","500":"#3b82f6","600":"#2563eb","700":"#1d4ed8","800":"#1e40af","900":"#1e3a8a","950":"#172554"}'
 ```
+
+## Translations
+
+The UI is available in English and Danish. Translations live in `locale/<lang>/LC_MESSAGES/` and are split into two catalogs:
+
+| Catalog | Covers | How to mark strings |
+|---|---|---|
+| `django.po` | Templates (including inline `<script>` blocks in templates) and Python code | `{% trans "…" %}` / `{% blocktrans %}` in templates, `gettext()` in Python |
+| `djangojs.po` | Standalone JavaScript files in `static/js/` | `gettext('…')`, and `interpolate(gettext('… %s …'), [value])` for dynamic values |
+
+JavaScript translations are served by Django's `JavaScriptCatalog` at `/jsi18n/`, which is loaded in `base.html` before any other script, so `gettext()` and `interpolate()` are available globally.
+
+Keep dynamic values out of the translatable text — never build sentences with string concatenation, since word order differs between languages:
+
+```js
+// Good
+interpolate(gettext('This whisper will be destroyed after %s views.'), [maxViews]);
+// Bad — cannot be translated correctly
+'This whisper will be destroyed after ' + maxViews + ' views.';
+```
+
+### Updating translations
+
+After adding or changing user-facing strings, regenerate both catalogs:
+
+```bash
+# Templates + Python
+python manage.py makemessages -l da --ignore='node_modules' --ignore='theme/static_src/*' --ignore='staticfiles/*' --ignore='.venv/*'
+
+# Standalone JavaScript
+python manage.py makemessages -l da -d djangojs --ignore='node_modules' --ignore='theme/*' --ignore='staticfiles/*' --ignore='.venv/*'
+```
+
+Then fill in the empty `msgstr ""` entries (and review any `#, fuzzy` ones) in `locale/da/LC_MESSAGES/django.po` and `djangojs.po`, and compile:
+
+```bash
+python manage.py compilemessages -l da
+```
+
+The Docker entrypoint runs `compilemessages` on startup, but commit the compiled `.mo` files as well so local development picks them up.
+
+To add a new language, add it to `LANGUAGES` in `psst_secret/settings.py` and run the commands above with `-l <code>`.
 
 ## Project structure
 

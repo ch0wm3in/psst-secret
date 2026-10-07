@@ -105,7 +105,7 @@ function renderFileList(rejected) {
         const remove = document.createElement('button');
         remove.type = 'button';
         remove.className = 'shrink-0 text-xs text-red-400 hover:text-red-300 underline';
-        remove.textContent = 'Remove';
+        remove.textContent = gettext('Remove');
         remove.onclick = (e) => { e.stopPropagation(); removeSelectedFile(i); };
         li.appendChild(meta);
         li.appendChild(remove);
@@ -114,12 +114,12 @@ function renderFileList(rejected) {
 
     if (total) {
         const cap = getMaxUploadSize();
-        total.textContent = 'Total: ' + formatSize(totalSelectedSize()) + ' / ' + formatSize(cap);
+        total.textContent = interpolate(gettext('Total: %s / %s'), [formatSize(totalSelectedSize()), formatSize(cap)]);
     }
 
     if (err) {
         if (rejected && rejected.length > 0) {
-            err.textContent = 'Skipped (would exceed ' + formatSize(getMaxUploadSize()) + ' total): ' + rejected.join(', ');
+            err.textContent = interpolate(gettext('Skipped (would exceed %s total): %s'), [formatSize(getMaxUploadSize()), rejected.join(', ')]);
             err.classList.remove('hidden');
         } else {
             err.classList.add('hidden');
@@ -296,6 +296,98 @@ async function decryptContent(ciphertextB64, ivB64, keyB64, password, saltB64) {
     return new TextDecoder().decode(decrypted);
 }
 
+// ---- Receive mode: X-Wing (ML-KEM-768 + X25519) + HKDF-SHA256 + AES-256-GCM ----
+// The public key is stored server-side; the submit link carries only its SHA-256
+// fingerprint, so the server cannot swap it. The view link carries the key seed.
+
+function pqKem() {
+    if (!window.PsstPQ) throw new Error(gettext('Post-quantum crypto module failed to load.'));
+    return window.PsstPQ.kem;
+}
+
+async function sha256B64(bytes) {
+    return bufToBase64(await crypto.subtle.digest('SHA-256', bytes));
+}
+
+async function hkdfAesKey(sharedSecret, usage) {
+    const ikm = await crypto.subtle.importKey('raw', sharedSecret, 'HKDF', false, ['deriveKey']);
+    return crypto.subtle.deriveKey(
+        {
+            name: 'HKDF',
+            hash: 'SHA-256',
+            salt: new Uint8Array(32),
+            info: new TextEncoder().encode('psst-receive-v2'),
+        },
+        ikm,
+        { name: 'AES-GCM', length: 256 },
+        false,
+        [usage]
+    );
+}
+
+/** Generate the request key pair. Returns { seedB64, publicKeyB64, fingerprintB64 }. */
+async function generateRequestKeyPair() {
+    const kem = pqKem();
+    const seed = crypto.getRandomValues(new Uint8Array(kem.lengths.seed));
+    const { publicKey } = kem.keygen(seed);
+    return {
+        seedB64: bufToBase64(seed),
+        publicKeyB64: bufToBase64(publicKey),
+        fingerprintB64: await sha256B64(publicKey),
+    };
+}
+
+/** Encrypt plaintext to the request's public key after checking it against the link fingerprint. */
+async function sealForRecipient(plaintext, publicKeyB64, fingerprintB64) {
+    const kem = pqKem();
+    const publicKey = new Uint8Array(base64ToBuf(publicKeyB64));
+    if (await sha256B64(publicKey) !== fingerprintB64) {
+        throw new Error(gettext('The request key does not match the link. The link may be incomplete or tampered with.'));
+    }
+    const { cipherText, sharedSecret } = kem.encapsulate(publicKey);
+    const key = await hkdfAesKey(sharedSecret, 'encrypt');
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const ct = await crypto.subtle.encrypt(
+        { name: 'AES-GCM', iv }, key, new TextEncoder().encode(plaintext)
+    );
+    return {
+        ciphertext: bufToBase64(ct),
+        iv: bufToBase64(iv),
+        encapsulated_key: bufToBase64(cipherText),
+    };
+}
+
+/** Decrypt a receive-mode payload with the request's key seed. */
+async function openFromSender(data, seedB64) {
+    const kem = pqKem();
+    const { secretKey } = kem.keygen(new Uint8Array(base64ToBuf(seedB64)));
+    const sharedSecret = kem.decapsulate(
+        new Uint8Array(base64ToBuf(data.encapsulated_key)), secretKey
+    );
+    const key = await hkdfAesKey(sharedSecret, 'decrypt');
+    const pt = await crypto.subtle.decrypt(
+        { name: 'AES-GCM', iv: base64ToBuf(data.iv) }, key, base64ToBuf(data.ciphertext)
+    );
+    return new TextDecoder().decode(pt);
+}
+
+/** Encrypt the request private key with a password. Returns { wrappedKey, wrappedKeyIv, salt }. */
+async function wrapPrivateKey(privB64, password) {
+    const { key, saltB64 } = await deriveKey(password);
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const wrapped = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, base64ToBuf(privB64));
+    return { wrappedKey: bufToBase64(wrapped), wrappedKeyIv: bufToBase64(iv), salt: saltB64 };
+}
+
+/** Decrypt a password-wrapped request private key. Throws on wrong password. */
+async function unwrapPrivateKey(wrappedKeyB64, wrappedKeyIvB64, password, saltB64) {
+    const { key } = await deriveKey(password, saltB64);
+    const raw = await crypto.subtle.decrypt(
+        { name: 'AES-GCM', iv: base64ToBuf(wrappedKeyIvB64) }, key, base64ToBuf(wrappedKeyB64)
+    );
+    return bufToBase64(raw);
+}
+
 /**
  * Read the max-views policy selected on the create page.
  * Returns an int: 0 = unlimited, 1 = burn, N = destroy after N reveals.
@@ -332,19 +424,19 @@ async function handleCreate() {
     const plaintext = whisperEl.value.trim();
 
     if (!isFileMode && !plaintext) {
-        errorEl.textContent = 'Please enter some content or select a file to encrypt.';
+        errorEl.textContent = gettext('Please enter some content or select a file to encrypt.');
         errorEl.classList.remove('hidden');
         return;
     }
 
     if (isFileMode && totalSelectedSize() > getMaxUploadSize()) {
-        errorEl.textContent = 'Selected files exceed the maximum total size of ' + formatSize(getMaxUploadSize()) + '.';
+        errorEl.textContent = interpolate(gettext('Selected files exceed the maximum total size of %s.'), [formatSize(getMaxUploadSize())]);
         errorEl.classList.remove('hidden');
         return;
     }
 
     btn.disabled = true;
-    btn.textContent = 'Encrypting…';
+    btn.textContent = gettext('Encrypting…');
 
     try {
         const passwordEl = document.getElementById('password');
@@ -357,7 +449,7 @@ async function handleCreate() {
             const check = window.PsstPasswordStrength.evaluate(password);
             if (!check.allOk) {
                 throw new Error(
-                    'Passphrase does not meet the strength requirements shown below the field.'
+                    gettext('Passphrase does not meet the strength requirements shown below the field.')
                 );
             }
         }
@@ -400,7 +492,7 @@ async function handleCreate() {
         });
 
         if (!response.ok) {
-            let msg = 'Server error (' + response.status + ')';
+            let msg = interpolate(gettext('Server error (%s)'), [response.status]);
             try { const err = await response.json(); msg = err.error || msg; } catch(e) {}
             throw new Error(msg);
         }
@@ -421,9 +513,9 @@ async function handleCreate() {
         const burnWarnText = document.getElementById('burn-warning-text');
         if (burnWarn && maxViews > 0) {
             if (maxViews === 1) {
-                burnWarnText.textContent = 'This whisper will be destroyed after being viewed once.';
+                burnWarnText.textContent = gettext('This whisper will be destroyed after being viewed once.');
             } else {
-                burnWarnText.textContent = 'This whisper will be destroyed after ' + maxViews + ' views.';
+                burnWarnText.textContent = interpolate(gettext('This whisper will be destroyed after %s views.'), [maxViews]);
             }
             burnWarn.classList.remove('hidden');
         }
@@ -431,11 +523,11 @@ async function handleCreate() {
         formEl.classList.add('hidden');
         resultEl.classList.remove('hidden');
     } catch (e) {
-        errorEl.textContent = 'Error: ' + e.message;
+        errorEl.textContent = interpolate(gettext('Error: %s'), [e.message]);
         errorEl.classList.remove('hidden');
     } finally {
         btn.disabled = false;
-        btn.textContent = '🔒 Encrypt & Share';
+        btn.textContent = '🔒 ' + gettext('Encrypt & Share');
     }
 }
 
@@ -446,8 +538,8 @@ function copyUrl() {
     const urlInput = document.getElementById('result-url');
     navigator.clipboard.writeText(urlInput.value).then(() => {
         const btn = document.getElementById('copy-btn');
-        btn.textContent = 'Copied!';
-        setTimeout(() => btn.textContent = 'Copy', 2000);
+        btn.textContent = gettext('Copied!');
+        setTimeout(() => btn.textContent = gettext('Copy'), 2000);
     });
 }
 
@@ -465,7 +557,7 @@ async function handleCreateRequest() {
     const maxViews = readMaxViews();
 
     btn.disabled = true;
-    btn.textContent = 'Creating…';
+    btn.textContent = gettext('Creating…');
 
     try {
         const passwordEl = document.getElementById('password');
@@ -478,32 +570,18 @@ async function handleCreateRequest() {
             const check = window.PsstPasswordStrength.evaluate(password);
             if (!check.allOk) {
                 throw new Error(
-                    'Passphrase does not meet the strength requirements shown below the field.'
+                    gettext('Passphrase does not meet the strength requirements shown below the field.')
                 );
             }
         }
 
+        const { seedB64, publicKeyB64, fingerprintB64 } = await generateRequestKeyPair();
         let salt = '';
-        let keyB64 = '';
-        let passwordVerifyToken = '';
-        let passwordVerifyIv = '';
+        let wrappedKey = '';
+        let wrappedKeyIv = '';
 
         if (password) {
-            // Password mode: generate salt, store on server
-            const derived = await deriveKey(password);
-            salt = derived.saltB64;
-
-            // Generate a verification token: encrypt a known string with the derived key
-            const verifyIv = crypto.getRandomValues(new Uint8Array(12));
-            const verifyPlaintext = new TextEncoder().encode('whisper-verify');
-            const verifyEncrypted = await crypto.subtle.encrypt(
-                { name: 'AES-GCM', iv: verifyIv }, derived.key, verifyPlaintext
-            );
-            passwordVerifyToken = bufToBase64(verifyEncrypted);
-            passwordVerifyIv = bufToBase64(verifyIv);
-        } else {
-            // Key mode: generate random key for URL fragment
-            keyB64 = await generateKey();
+            ({ wrappedKey, wrappedKeyIv, salt } = await wrapPrivateKey(seedB64, password));
         }
 
         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
@@ -514,9 +592,10 @@ async function handleCreateRequest() {
                 'X-CSRFToken': csrfToken,
             },
             body: JSON.stringify({
+                public_key: publicKeyB64,
                 salt,
-                password_verify_token: passwordVerifyToken,
-                password_verify_iv: passwordVerifyIv,
+                wrapped_key: wrappedKey,
+                wrapped_key_iv: wrappedKeyIv,
                 max_views: maxViews,
                 expiry: expiryEl.value,
                 allowed_cidr: (document.getElementById('allowed-cidr') || {}).value || '',
@@ -527,16 +606,16 @@ async function handleCreateRequest() {
         });
 
         if (!response.ok) {
-            let msg = 'Server error (' + response.status + ')';
+            let msg = interpolate(gettext('Server error (%s)'), [response.status]);
             try { const err = await response.json(); msg = err.error || msg; } catch(e) {}
             throw new Error(msg);
         }
 
         const data = await response.json();
 
-        // Build URLs with key fragment if not password-protected
-        const submitUrl = password ? data.submit_url : data.submit_url + '#' + keyB64;
-        const viewUrl = password ? data.view_url : data.view_url + '#' + keyB64;
+        // Submit link gets the public-key fingerprint; view link gets the key seed unless password-wrapped.
+        const submitUrl = data.submit_url + '#' + fingerprintB64;
+        const viewUrl = password ? data.view_url : data.view_url + '#' + seedB64;
 
         document.getElementById('submit-url').value = submitUrl;
         document.getElementById('view-url').value = viewUrl;
@@ -548,9 +627,9 @@ async function handleCreateRequest() {
         const rBurnWarnText = document.getElementById('receive-burn-warning-text');
         if (rBurnWarn && maxViews > 0) {
             if (maxViews === 1) {
-                rBurnWarnText.textContent = 'The whisper will be destroyed after you view it once.';
+                rBurnWarnText.textContent = gettext('The whisper will be destroyed after you view it once.');
             } else {
-                rBurnWarnText.textContent = 'The whisper will be destroyed after ' + maxViews + ' views.';
+                rBurnWarnText.textContent = interpolate(gettext('The whisper will be destroyed after %s views.'), [maxViews]);
             }
             rBurnWarn.classList.remove('hidden');
         }
@@ -558,11 +637,11 @@ async function handleCreateRequest() {
         formEl.classList.add('hidden');
         document.getElementById('receive-result').classList.remove('hidden');
     } catch (e) {
-        errorEl.textContent = 'Error: ' + e.message;
+        errorEl.textContent = interpolate(gettext('Error: %s'), [e.message]);
         errorEl.classList.remove('hidden');
     } finally {
         btn.disabled = false;
-        btn.textContent = '🔗 Create Request';
+        btn.textContent = '🔗 ' + gettext('Create Request');
     }
 }
 
@@ -583,50 +662,23 @@ async function handleSubmit() {
     const plaintext = whisperEl.value.trim();
 
     if (!isFileMode && !plaintext) {
-        errorEl.textContent = 'Please enter some content or select a file to encrypt.';
+        errorEl.textContent = gettext('Please enter some content or select a file to encrypt.');
         errorEl.classList.remove('hidden');
         return;
     }
 
     if (isFileMode && totalSelectedSize() > getMaxUploadSize()) {
-        errorEl.textContent = 'Selected files exceed the maximum total size of ' + formatSize(getMaxUploadSize()) + '.';
+        errorEl.textContent = interpolate(gettext('Selected files exceed the maximum total size of %s.'), [formatSize(getMaxUploadSize())]);
         errorEl.classList.remove('hidden');
         return;
     }
 
     btn.disabled = true;
-    btn.textContent = 'Encrypting…';
+    btn.textContent = gettext('Encrypting…');
 
     try {
-        const isPasswordProtected = !!requestData.salt;
-        const password = isPasswordProtected
-            ? (document.getElementById('password') ? document.getElementById('password').value : '')
-            : '';
-
-        if (isPasswordProtected && !password) {
-            errorEl.textContent = 'Password is required for this request.';
-            errorEl.classList.remove('hidden');
-            btn.disabled = false;
-            btn.textContent = '🔒 Encrypt & Submit';
-            return;
-        }
-
-        // Validate password using the verification token before encrypting
-        if (isPasswordProtected && requestData.password_verify_token) {
-            try {
-                const derived = await deriveKey(password, requestData.salt);
-                await crypto.subtle.decrypt(
-                    { name: 'AES-GCM', iv: base64ToBuf(requestData.password_verify_iv) },
-                    derived.key,
-                    base64ToBuf(requestData.password_verify_token)
-                );
-            } catch (e) {
-                errorEl.textContent = 'Wrong password. Please check with the requester and try again.';
-                errorEl.classList.remove('hidden');
-                btn.disabled = false;
-                btn.textContent = '🔒 Encrypt & Submit';
-                return;
-            }
+        if (!keyB64) {
+            throw new Error(gettext('No encryption key found in URL. The link may be incomplete.'));
         }
 
         // Build the payload envelope (same format as send mode)
@@ -640,40 +692,21 @@ async function handleSubmit() {
             });
         }
 
-        // Encrypt: use password+salt or key from URL fragment
-        let ciphertext, iv;
-        if (isPasswordProtected) {
-            const derived = await deriveKey(password, requestData.salt);
-            const key = derived.key;
-            const ivBuf = crypto.getRandomValues(new Uint8Array(12));
-            const encoded = new TextEncoder().encode(payload);
-            const encrypted = await crypto.subtle.encrypt(
-                { name: 'AES-GCM', iv: ivBuf }, key, encoded
-            );
-            ciphertext = bufToBase64(encrypted);
-            iv = bufToBase64(ivBuf);
-        } else {
-            if (!keyB64) {
-                throw new Error('No encryption key found in URL. The link may be incomplete.');
-            }
-            const result = await encryptContent(payload, keyB64);
-            ciphertext = result.ciphertext;
-            iv = result.iv;
-        }
+        const sealed = await sealForRecipient(payload, requestData.public_key, keyB64);
 
         // Submit to server
         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-        const response = await fetch('/api/whisper/submit/' + requestData.request_id, {
+        const response = await fetch('/api/whisper/submit/' + requestData.submit_token, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRFToken': csrfToken,
             },
-            body: JSON.stringify({ ciphertext, iv }),
+            body: JSON.stringify(sealed),
         });
 
         if (!response.ok) {
-            let msg = 'Server error (' + response.status + ')';
+            let msg = interpolate(gettext('Server error (%s)'), [response.status]);
             try { const err = await response.json(); msg = err.error || msg; } catch(e) {}
             throw new Error(msg);
         }
@@ -681,10 +714,10 @@ async function handleSubmit() {
         formEl.classList.add('hidden');
         document.getElementById('submit-success').classList.remove('hidden');
     } catch (e) {
-        errorEl.textContent = 'Error: ' + e.message;
+        errorEl.textContent = interpolate(gettext('Error: %s'), [e.message]);
         errorEl.classList.remove('hidden');
     } finally {
         btn.disabled = false;
-        btn.textContent = '🔒 Encrypt & Submit';
+        btn.textContent = '🔒 ' + gettext('Encrypt & Submit');
     }
 }

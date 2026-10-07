@@ -31,8 +31,10 @@ def store_crypto(
     ciphertext="",
     iv="",
     salt="",
-    password_verify_token="",
-    password_verify_iv="",
+    public_key="",
+    wrapped_key="",
+    wrapped_key_iv="",
+    encapsulated_key="",
 ):
     """Store crypto fields in Redis with a TTL (seconds)."""
     payload = json.dumps(
@@ -40,8 +42,10 @@ def store_crypto(
             "ciphertext": ciphertext,
             "iv": iv,
             "salt": salt,
-            "password_verify_token": password_verify_token,
-            "password_verify_iv": password_verify_iv,
+            "public_key": public_key,
+            "wrapped_key": wrapped_key,
+            "wrapped_key_iv": wrapped_key_iv,
+            "encapsulated_key": encapsulated_key,
         }
     )
     get_client().setex(_key(whisper_id), int(ttl_seconds), payload)

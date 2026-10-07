@@ -144,8 +144,10 @@ class RedisStoreTests(TestCase):
         self.assertEqual(data["ciphertext"], "ct")
         self.assertEqual(data["iv"], "iv_val")
         self.assertEqual(data["salt"], "s")
-        self.assertEqual(data["password_verify_token"], "")
-        self.assertEqual(data["password_verify_iv"], "")
+        self.assertEqual(data["wrapped_key"], "")
+        self.assertEqual(data["wrapped_key_iv"], "")
+        self.assertEqual(data["encapsulated_key"], "")
+        self.assertEqual(data["public_key"], "")
 
     def test_get_crypto_returns_none_when_missing(self):
         self.assertIsNone(redis_store.get_crypto(uuid.uuid4()))
@@ -189,17 +191,17 @@ class RedisStoreTests(TestCase):
         # Should not raise
         redis_store.delete_crypto(uuid.uuid4())
 
-    def test_store_crypto_password_fields(self):
+    def test_store_crypto_wrapped_key_fields(self):
         wid = uuid.uuid4()
         redis_store.store_crypto(
             wid,
             3600,
-            password_verify_token="tok",
-            password_verify_iv="piv",
+            wrapped_key="wk",
+            wrapped_key_iv="wkiv",
         )
         data = redis_store.get_crypto(wid)
-        self.assertEqual(data["password_verify_token"], "tok")
-        self.assertEqual(data["password_verify_iv"], "piv")
+        self.assertEqual(data["wrapped_key"], "wk")
+        self.assertEqual(data["wrapped_key_iv"], "wkiv")
 
     def test_stored_data_is_valid_json(self):
         """Guard against serialisation changes in redis-py updates."""
@@ -558,16 +560,42 @@ class ApiCreateRequestTests(TestCase):
     def _post(self, payload):
         return self.client.post(
             "/api/whisper/request",
-            data=json.dumps(payload),
+            data=json.dumps({"public_key": "pk", **payload}),
             content_type="application/json",
         )
 
+    def test_public_key_required(self):
+        resp = self.client.post(
+            "/api/whisper/request", data="{}", content_type="application/json"
+        )
+        self.assertEqual(resp.status_code, 400)
+
+    def test_submit_page_exposes_public_key(self):
+        data = self._post({}).json()
+        token = data["submit_url"].rsplit("/", 1)[1]
+        resp = self.client.get(f"/submit/{token}")
+        self.assertEqual(resp.context["request_data"]["public_key"], "pk")
+
     def test_create_request_returns_urls(self):
-        resp = self._post({"salt": "s"})
+        resp = self._post({})
         self.assertEqual(resp.status_code, 200)
         data = resp.json()
         self.assertIn("submit_url", data)
         self.assertIn("view_url", data)
+
+    def test_submit_url_does_not_reveal_view_id(self):
+        data = self._post({}).json()
+        w = Whisper.objects.get(id=data["id"])
+        self.assertNotIn(data["id"], data["submit_url"])
+        self.assertIn(str(w.submit_token), data["submit_url"])
+        self.assertIn(data["id"], data["view_url"])
+
+    def test_password_fields_must_be_provided_together(self):
+        self.assertEqual(self._post({"salt": "s"}).status_code, 400)
+        resp = self._post({"salt": "s", "wrapped_key": "wk", "wrapped_key_iv": "iv"})
+        self.assertEqual(resp.status_code, 200)
+        crypto = redis_store.get_crypto(resp.json()["id"])
+        self.assertEqual(crypto["wrapped_key"], "wk")
 
     def test_creates_receive_mode_whisper(self):
         resp = self._post({})
@@ -598,35 +626,51 @@ class SubmitWhisperFlowTests(TestCase):
     def _create_request(self, **kwargs):
         defaults = {
             "mode": "receive",
+            "submit_token": uuid.uuid4(),
             "expiry_option": "1d",
             "expires_at": timezone.now() + timedelta(days=1),
         }
         defaults.update(kwargs)
         w = Whisper.objects.create(**defaults)
-        redis_store.store_crypto(w.id, 86400, salt="s")
+        redis_store.store_crypto(w.id, 86400)
         return w
+
+    def _submit(self, w, payload=None):
+        if payload is None:
+            payload = {"ciphertext": "ct", "iv": "iv", "encapsulated_key": "epk"}
+        return self.client.post(
+            f"/api/whisper/submit/{w.submit_token}",
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
 
     # -- submit page --
 
     def test_submit_page_renders(self):
         w = self._create_request()
-        resp = self.client.get(f"/submit/{w.id}")
+        resp = self.client.get(f"/submit/{w.submit_token}")
         self.assertEqual(resp.status_code, 200)
+        self.assertNotContains(resp, str(w.id))
+
+    def test_submit_page_rejects_view_id(self):
+        w = self._create_request()
+        resp = self.client.get(f"/submit/{w.id}")
+        self.assertEqual(resp.status_code, 404)
 
     def test_submit_page_expired(self):
         w = self._create_request(expires_at=timezone.now() - timedelta(seconds=1))
-        resp = self.client.get(f"/submit/{w.id}")
+        resp = self.client.get(f"/submit/{w.submit_token}")
         self.assertEqual(resp.status_code, 410)
 
     def test_submit_page_ip_blocked(self):
         w = self._create_request(allowed_cidr="192.168.1.0/24")
-        resp = self.client.get(f"/submit/{w.id}")
+        resp = self.client.get(f"/submit/{w.submit_token}")
         self.assertEqual(resp.status_code, 403)
 
     def test_submit_page_already_submitted(self):
         w = self._create_request()
         redis_store.update_crypto(w.id, ciphertext="ct", iv="iv")
-        resp = self.client.get(f"/submit/{w.id}")
+        resp = self.client.get(f"/submit/{w.submit_token}")
         self.assertEqual(resp.status_code, 200)
         self.assertTemplateUsed(resp, "whispers/submitted.html")
 
@@ -634,51 +678,52 @@ class SubmitWhisperFlowTests(TestCase):
 
     def test_api_submit_success(self):
         w = self._create_request()
-        resp = self.client.post(
-            f"/api/whisper/submit/{w.id}",
-            data=json.dumps({"ciphertext": "ct", "iv": "iv"}),
-            content_type="application/json",
-        )
+        resp = self._submit(w)
         self.assertEqual(resp.status_code, 200)
         self.assertTrue(resp.json()["success"])
         data = redis_store.get_crypto(w.id)
         self.assertEqual(data["ciphertext"], "ct")
+        self.assertEqual(data["encapsulated_key"], "epk")
 
-    def test_api_submit_missing_fields(self):
+    def test_api_submit_rejects_view_id(self):
         w = self._create_request()
         resp = self.client.post(
             f"/api/whisper/submit/{w.id}",
-            data=json.dumps({"ciphertext": "ct"}),
+            data=json.dumps({"ciphertext": "ct", "iv": "iv", "encapsulated_key": "e"}),
             content_type="application/json",
         )
+        self.assertEqual(resp.status_code, 404)
+
+    def test_reveal_rejects_submit_token(self):
+        w = self._create_request()
+        self._submit(w)
+        self.assertEqual(self.client.get(f"/whisper/{w.submit_token}").status_code, 404)
+        self.assertEqual(
+            self.client.post(f"/whisper/{w.submit_token}").status_code, 404
+        )
+        self.assertEqual(redis_store.get_crypto(w.id)["ciphertext"], "ct")
+
+    def test_api_submit_missing_fields(self):
+        w = self._create_request()
+        resp = self._submit(w, {"ciphertext": "ct", "iv": "iv"})
         self.assertEqual(resp.status_code, 400)
 
     def test_api_submit_duplicate(self):
         w = self._create_request()
         redis_store.update_crypto(w.id, ciphertext="ct", iv="iv")
-        resp = self.client.post(
-            f"/api/whisper/submit/{w.id}",
-            data=json.dumps({"ciphertext": "ct2", "iv": "iv2"}),
-            content_type="application/json",
+        resp = self._submit(
+            w, {"ciphertext": "ct2", "iv": "iv2", "encapsulated_key": "e2"}
         )
         self.assertEqual(resp.status_code, 409)
 
     def test_api_submit_expired(self):
         w = self._create_request(expires_at=timezone.now() - timedelta(seconds=1))
-        resp = self.client.post(
-            f"/api/whisper/submit/{w.id}",
-            data=json.dumps({"ciphertext": "ct", "iv": "iv"}),
-            content_type="application/json",
-        )
+        resp = self._submit(w)
         self.assertEqual(resp.status_code, 410)
 
     def test_api_submit_ip_blocked(self):
         w = self._create_request(allowed_cidr="192.168.1.0/24")
-        resp = self.client.post(
-            f"/api/whisper/submit/{w.id}",
-            data=json.dumps({"ciphertext": "ct", "iv": "iv"}),
-            content_type="application/json",
-        )
+        resp = self._submit(w)
         self.assertEqual(resp.status_code, 403)
 
     # -- view after submit --
@@ -698,16 +743,13 @@ class SubmitWhisperFlowTests(TestCase):
         self.assertIsNotNone(crypto)
         self.assertEqual(crypto["ciphertext"], "")
 
-        submit_resp = self.client.post(
-            f"/api/whisper/submit/{w.id}",
-            data=json.dumps({"ciphertext": "ct", "iv": "iv"}),
-            content_type="application/json",
-        )
+        submit_resp = self._submit(w)
         self.assertEqual(submit_resp.status_code, 200)
 
         reveal_resp = self.client.post(f"/whisper/{w.id}")
         self.assertEqual(reveal_resp.status_code, 200)
         self.assertEqual(reveal_resp.json()["ciphertext"], "ct")
+        self.assertEqual(reveal_resp.json()["encapsulated_key"], "epk")
 
     def test_browser_reveal_pending_request_renders_pending_page(self):
         w = self._create_request(max_views=1)
@@ -757,6 +799,10 @@ class PageRenderTests(TestCase):
     def test_about_page(self):
         resp = self.client.get("/about")
         self.assertEqual(resp.status_code, 200)
+
+    def test_no_referrer_policy(self):
+        resp = self.client.get("/")
+        self.assertEqual(resp["Referrer-Policy"], "no-referrer")
 
 
 # ---------------------------------------------------------------------------

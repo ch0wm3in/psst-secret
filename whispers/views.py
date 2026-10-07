@@ -1,5 +1,6 @@
 import ipaddress
 import logging
+import uuid
 from urllib.parse import urlencode
 
 from django.conf import settings
@@ -353,6 +354,9 @@ class RevealWhisperView(APIView):
             "ciphertext": crypto["ciphertext"],
             "iv": crypto["iv"],
             "salt": crypto["salt"],
+            "encapsulated_key": crypto.get("encapsulated_key", ""),
+            "wrapped_key": crypto.get("wrapped_key", ""),
+            "wrapped_key_iv": crypto.get("wrapped_key_iv", ""),
             "view_count": count,
             "max_views": whisper.max_views,
             "remaining_views": remaining,
@@ -372,15 +376,15 @@ class RevealWhisperView(APIView):
 
 
 @require_GET
-def submit_whisper(request, request_id):
+def submit_whisper(request, submit_token):
     """
     Render the submit page for a receive-mode request.
     A third party visits this to enter a whisper for the operator.
     """
-    whisper = get_object_or_404(Whisper, id=request_id, mode="receive")
+    whisper = get_object_or_404(Whisper, submit_token=submit_token, mode="receive")
 
     if whisper.is_expired:
-        redis_store.delete_crypto(request_id)
+        redis_store.delete_crypto(whisper.id)
         whisper.delete()
         return render(request, "whispers/expired.html", status=410)
 
@@ -392,7 +396,7 @@ def submit_whisper(request, request_id):
     if not check_ip_allowed(request, whisper):
         return render(request, "whispers/forbidden.html", status=403)
 
-    crypto = redis_store.get_crypto(request_id)
+    crypto = redis_store.get_crypto(whisper.id)
     if crypto is None:
         whisper.delete()
         return render(request, "whispers/expired.html", status=410)
@@ -405,12 +409,9 @@ def submit_whisper(request, request_id):
         "whispers/submit.html",
         {
             "burn_after_read": whisper.burn_after_read,
-            "salt": crypto.get("salt", ""),
             "request_data": {
-                "request_id": str(whisper.id),
-                "salt": crypto.get("salt", ""),
-                "password_verify_token": crypto.get("password_verify_token", ""),
-                "password_verify_iv": crypto.get("password_verify_iv", ""),
+                "submit_token": str(whisper.submit_token),
+                "public_key": crypto.get("public_key", ""),
             },
         },
     )
@@ -456,6 +457,7 @@ class CreateRequestView(APIView):
 
         whisper = Whisper.objects.create(
             mode="receive",
+            submit_token=uuid.uuid4(),
             max_views=d["max_views"],
             allowed_cidr=d["allowed_cidr"],
             require_auth_view=require_auth_view,
@@ -469,14 +471,17 @@ class CreateRequestView(APIView):
             whisper.id,
             delta.total_seconds(),
             salt=d["salt"],
-            password_verify_token=d["password_verify_token"],
-            password_verify_iv=d["password_verify_iv"],
+            public_key=d["public_key"],
+            wrapped_key=d["wrapped_key"],
+            wrapped_key_iv=d["wrapped_key_iv"],
         )
 
         return Response(
             {
                 "id": str(whisper.id),
-                "submit_url": request.build_absolute_uri(f"/submit/{whisper.id}"),
+                "submit_url": request.build_absolute_uri(
+                    f"/submit/{whisper.submit_token}"
+                ),
                 "view_url": request.build_absolute_uri(f"/whisper/{whisper.id}"),
             }
         )
@@ -497,11 +502,11 @@ class SubmitWhisperView(APIView):
         request=SubmitWhisperSerializer,
         responses={200: SubmitWhisperResponseSerializer},
     )
-    def post(self, request, request_id):
-        whisper = get_object_or_404(Whisper, id=request_id, mode="receive")
+    def post(self, request, submit_token):
+        whisper = get_object_or_404(Whisper, submit_token=submit_token, mode="receive")
 
         if whisper.is_expired:
-            redis_store.delete_crypto(request_id)
+            redis_store.delete_crypto(whisper.id)
             whisper.delete()
             return Response(
                 {"error": "This request has expired"}, status=status.HTTP_410_GONE
@@ -520,7 +525,7 @@ class SubmitWhisperView(APIView):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
-        crypto = redis_store.get_crypto(request_id)
+        crypto = redis_store.get_crypto(whisper.id)
         if crypto is None:
             whisper.delete()
             return Response(
@@ -542,7 +547,12 @@ class SubmitWhisperView(APIView):
             )
 
         d = serializer.validated_data
-        redis_store.update_crypto(request_id, ciphertext=d["ciphertext"], iv=d["iv"])
+        redis_store.update_crypto(
+            whisper.id,
+            ciphertext=d["ciphertext"],
+            iv=d["iv"],
+            encapsulated_key=d["encapsulated_key"],
+        )
 
         if whisper.notify_email:
             view_url = request.build_absolute_uri(f"/whisper/{whisper.id}")
