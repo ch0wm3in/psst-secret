@@ -800,9 +800,9 @@ class PageRenderTests(TestCase):
         resp = self.client.get("/about")
         self.assertEqual(resp.status_code, 200)
 
-    def test_no_referrer_policy(self):
+    def test_referrer_policy_same_origin(self):
         resp = self.client.get("/")
-        self.assertEqual(resp["Referrer-Policy"], "no-referrer")
+        self.assertEqual(resp["Referrer-Policy"], "same-origin")
 
 
 # ---------------------------------------------------------------------------
