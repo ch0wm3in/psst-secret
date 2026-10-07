@@ -4,6 +4,8 @@ WORKDIR /app/theme/static_src
 COPY theme/static_src/package*.json ./
 RUN npm ci
 COPY theme/static_src ./
+COPY templates/ /app/templates/
+COPY static/js/ /app/static/js/
 RUN npm run build
 
 FROM python:3.14-slim-trixie
