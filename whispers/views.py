@@ -212,7 +212,9 @@ class RevealWhisperView(APIView):
 
     @extend_schema(exclude=True)
     def get(self, request, whisper_id):
-        whisper = get_object_or_404(Whisper, id=whisper_id)
+        whisper = Whisper.objects.filter(id=whisper_id).first()
+        if whisper is None:
+            return render(request, "whispers/burned.html", status=404)
 
         # Check expiry — delete from DB and Redis
         if whisper.is_expired:
@@ -252,21 +254,28 @@ class RevealWhisperView(APIView):
     )
     def post(self, request, whisper_id):
         whisper = get_object_or_404(Whisper, id=whisper_id)
+        should_render = bool(request.GET.get("render"))
 
         if whisper.is_expired:
             redis_store.delete_crypto(whisper_id)
             whisper.delete()
+            if should_render:
+                return render(request, "whispers/expired.html", status=410)
             return Response(
                 {"error": "This whisper has expired"}, status=status.HTTP_410_GONE
             )
 
         if _requires_auth_view(whisper) and not request.user.is_authenticated:
+            if should_render:
+                return _redirect_to_login(request)
             return Response(
                 {"error": "Authentication required"},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
         if whisper.mode == "send" and not check_ip_allowed(request, whisper):
+            if should_render:
+                return render(request, "whispers/forbidden.html", status=403)
             return Response(
                 {"error": "Access denied from your IP address"},
                 status=status.HTTP_403_FORBIDDEN,
@@ -278,10 +287,16 @@ class RevealWhisperView(APIView):
             crypto = redis_store.get_crypto(whisper_id)
             if crypto is None:
                 whisper.delete()
+                if should_render:
+                    return render(request, "whispers/expired.html", status=410)
                 return Response(
                     {"error": "This whisper has expired"}, status=status.HTTP_410_GONE
                 )
             if not crypto.get("ciphertext"):
+                if should_render:
+                    return render(
+                        request, "whispers/pending.html", {"whisper": whisper}
+                    )
                 return Response(
                     {"error": "No content has been submitted yet"},
                     status=status.HTTP_404_NOT_FOUND,
@@ -292,6 +307,8 @@ class RevealWhisperView(APIView):
         )
         if crypto is None:
             whisper.delete()
+            if should_render:
+                return render(request, "whispers/expired.html", status=410)
             return Response(
                 {"error": "This whisper has expired"}, status=status.HTTP_410_GONE
             )
@@ -310,7 +327,7 @@ class RevealWhisperView(APIView):
             "remaining_views": remaining,
         }
 
-        if request.GET.get("render"):
+        if should_render:
             return render(
                 request,
                 "whispers/view.html",
