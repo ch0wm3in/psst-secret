@@ -749,6 +749,10 @@ class PageRenderTests(TestCase):
     def test_create_page(self):
         resp = self.client.get("/")
         self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'href="/static/css/dist/styles.css"')
+        self.assertContains(resp, 'src="/static/js/alpine.min.js"')
+        self.assertNotContains(resp, "cdn.tailwindcss.com")
+        self.assertNotContains(resp, "cdn.jsdelivr.net")
 
     def test_about_page(self):
         resp = self.client.get("/about")

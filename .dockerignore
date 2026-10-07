@@ -74,6 +74,7 @@ target/
 .env
 .venv/
 venv/
+**/node_modules/
 
 # PyCharm
 .idea
