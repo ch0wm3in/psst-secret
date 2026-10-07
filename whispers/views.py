@@ -9,6 +9,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_GET
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
+from rest_framework.parsers import FormParser, JSONParser
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.throttling import AnonRateThrottle
@@ -199,29 +200,18 @@ class RevealWhisperView(APIView):
     """
     View and reveal a whisper.
 
-    GET: Show a confirmation page. After reveal, the user is redirected
-    back with ?revealed=1 and the decrypted data comes from sessionStorage.
+    GET: Show a confirmation page.
     POST: Return the crypto payload as JSON. For burn-after-read whispers,
-    the whisper is permanently deleted.
+    the whisper is permanently deleted. Browser form posts with ?render=1
+    render the payload directly without copying it through Web Storage.
     """
 
     permission_classes = [AllowAny]
+    parser_classes = [JSONParser, FormParser]
     throttle_classes = [WhisperViewThrottle]
 
     @extend_schema(exclude=True)
     def get(self, request, whisper_id):
-        # After reveal: crypto data was stored in sessionStorage by the
-        # confirm page; the whisper may already be deleted (burn case).
-        if request.GET.get("revealed"):
-            return render(
-                request,
-                "whispers/view.html",
-                {
-                    "burn_after_read": bool(request.GET.get("burn")),
-                    "paste_data": None,
-                },
-            )
-
         whisper = get_object_or_404(Whisper, id=whisper_id)
 
         # Check expiry — delete from DB and Redis
@@ -311,16 +301,26 @@ class RevealWhisperView(APIView):
 
         remaining = max(whisper.max_views - count, 0) if whisper.max_views > 0 else 0
 
-        return Response(
-            {
-                "ciphertext": crypto["ciphertext"],
-                "iv": crypto["iv"],
-                "salt": crypto["salt"],
-                "view_count": count,
-                "max_views": whisper.max_views,
-                "remaining_views": remaining,
-            }
-        )
+        paste_data = {
+            "ciphertext": crypto["ciphertext"],
+            "iv": crypto["iv"],
+            "salt": crypto["salt"],
+            "view_count": count,
+            "max_views": whisper.max_views,
+            "remaining_views": remaining,
+        }
+
+        if request.GET.get("render"):
+            return render(
+                request,
+                "whispers/view.html",
+                {
+                    "burn_after_read": whisper.burn_after_read,
+                    "paste_data": paste_data,
+                },
+            )
+
+        return Response(paste_data)
 
 
 @require_GET

@@ -18,54 +18,24 @@
     <h1 class="text-2xl font-bold text-white">{% trans "View Whisper" %}</h1>
     <p class="text-gray-400 max-w-md mx-auto">{% trans "Click below to decrypt and view this whisper." %}</p>
     {% endif %}
-    <button id="reveal-btn" onclick="revealWhisper()"
-        class="inline-block mt-4 px-6 py-2 rounded-lg bg-brand-600 hover:bg-brand-500 text-white font-semibold transition">
-        🔓 {% trans "Reveal whisper" %}
-    </button>
-    <div id="error" class="hidden text-sm text-red-400 mt-2"></div>
+    <form id="reveal-form" method="post" action="{{ reveal_url }}?render=1" onsubmit="prepareReveal()">
+        {% csrf_token %}
+        <button id="reveal-btn" type="submit"
+            class="inline-block mt-4 px-6 py-2 rounded-lg bg-brand-600 hover:bg-brand-500 text-white font-semibold transition">
+            🔓 {% trans "Reveal whisper" %}
+        </button>
+    </form>
 </div>
 
 <script>
-    async function revealWhisper() {
+    function prepareReveal() {
         const btn = document.getElementById('reveal-btn');
-        const errorEl = document.getElementById('error');
         btn.disabled = true;
         btn.textContent = '{% trans "Loading…" %}';
-        errorEl.classList.add('hidden');
-
-        try {
-            const resp = await fetch("{{ reveal_url }}", {
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': '{{ csrf_token }}',
-                    'Content-Type': 'application/json',
-                },
-            });
-
-            if (!resp.ok) {
-                let msg = 'Error (' + resp.status + ')';
-                try { const body = await resp.json(); msg = body.error || msg; } catch(e) {}
-                throw new Error(msg);
-            }
-
-            const data = await resp.json();
-            // Store the revealed data in sessionStorage so the view page can pick it up.
-            sessionStorage.setItem('revealed_paste_data', JSON.stringify(data));
-            // Build redirect URL: query param must come before the hash fragment.
-            const url = new URL(window.location.href);
-            url.searchParams.set('revealed', '1');
-            {% if whisper.burn_after_read %}
-            url.searchParams.set('burn', '1');
-            {% endif %}
-            // Pass the max_views policy through so the view page can render the banner.
-            url.searchParams.set('max_views', '{{ whisper.max_views }}');
-            window.location.replace(url.toString());
-        } catch (e) {
-            errorEl.textContent = e.message;
-            errorEl.classList.remove('hidden');
-            btn.disabled = false;
-            btn.textContent = '🔓 {% trans "Reveal whisper" %}';
-        }
+        const form = document.getElementById('reveal-form');
+        const url = new URL(form.action, window.location.href);
+        url.hash = window.location.hash;
+        form.action = url.toString();
     }
 </script>
 {% endblock %}

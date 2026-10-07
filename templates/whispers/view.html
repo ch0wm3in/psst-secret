@@ -102,16 +102,6 @@
 <script>
     let pasteData = JSON.parse(document.getElementById("paste-data").textContent);
 
-    // Burn-after-read: crypto data arrives via sessionStorage (set by the
-    // confirm_burn page after a POST reveal), not embedded in the HTML.
-    if (!pasteData) {
-        const revealed = sessionStorage.getItem('revealed_paste_data');
-        if (revealed) {
-            pasteData = JSON.parse(revealed);
-            sessionStorage.removeItem('revealed_paste_data');
-        }
-    }
-
     function renderViewCountBanner() {
         if (!pasteData) return;
         const count = pasteData.view_count;
