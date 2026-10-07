@@ -468,9 +468,7 @@ class ViewWhisperTests(TestCase):
         resp = self.client.post(f"/whisper/{w.id}")
 
         self.assertEqual(resp.status_code, 403)
-        self.assertEqual(
-            resp.json()["error"], "Access denied from your IP address"
-        )
+        self.assertEqual(resp.json()["error"], "Access denied from your IP address")
 
     def test_browser_reveal_missing_payload_renders_expired_page(self):
         w = self._create_whisper()
