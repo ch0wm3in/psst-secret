@@ -369,6 +369,7 @@ class ViewWhisperTests(TestCase):
     def test_view_nonexistent_whisper(self):
         resp = self.client.get(f"/whisper/{uuid.uuid4()}")
         self.assertEqual(resp.status_code, 404)
+        self.assertTemplateUsed(resp, "whispers/burned.html")
 
     def test_view_expired_whisper(self):
         w = self._create_whisper(expires_at=timezone.now() - timedelta(seconds=1))
@@ -394,9 +395,99 @@ class ViewWhisperTests(TestCase):
         self.assertEqual(data["remaining_views"], 0)
         # Whisper is now gone
         self.assertFalse(Whisper.objects.filter(id=w.id).exists())
+        # Revisiting the browser URL shows the burned page, not a JSON 404.
+        revisit = self.client.get(f"/whisper/{w.id}")
+        self.assertEqual(revisit.status_code, 404)
+        self.assertTemplateUsed(revisit, "whispers/burned.html")
+        self.assertEqual(revisit["Content-Type"], "text/html; charset=utf-8")
         # Second reveal should 404
         resp3 = self.client.post(f"/whisper/{w.id}")
         self.assertEqual(resp3.status_code, 404)
+
+    def test_browser_reveal_renders_large_payload_without_web_storage(self):
+        ciphertext = "x" * (6 * 1024 * 1024)
+        w = self._create_whisper(max_views=1)
+        redis_store.update_crypto(w.id, ciphertext=ciphertext)
+
+        resp = self.client.post(
+            f"/whisper/{w.id}?render=1",
+            data="",
+            content_type="application/x-www-form-urlencoded",
+        )
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertTemplateUsed(resp, "whispers/view.html")
+        self.assertEqual(resp.context["paste_data"]["ciphertext"], ciphertext)
+        self.assertNotContains(resp, "sessionStorage")
+        self.assertFalse(Whisper.objects.filter(id=w.id).exists())
+
+    def test_browser_reveal_expired_renders_expired_page(self):
+        w = self._create_whisper(expires_at=timezone.now() - timedelta(seconds=1))
+
+        resp = self.client.post(f"/whisper/{w.id}?render=1")
+
+        self.assertEqual(resp.status_code, 410)
+        self.assertTemplateUsed(resp, "whispers/expired.html")
+
+    def test_api_reveal_expired_returns_json(self):
+        w = self._create_whisper(expires_at=timezone.now() - timedelta(seconds=1))
+
+        resp = self.client.post(f"/whisper/{w.id}")
+
+        self.assertEqual(resp.status_code, 410)
+        self.assertEqual(resp.json()["error"], "This whisper has expired")
+
+    def test_browser_reveal_requires_auth_redirects_to_login(self):
+        w = self._create_whisper(require_auth_view=True)
+
+        resp = self.client.post(f"/whisper/{w.id}?render=1")
+
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn(settings.LOGIN_URL, resp.url)
+        self.assertIn("next=", resp.url)
+
+    def test_api_reveal_requires_auth_returns_json(self):
+        w = self._create_whisper(require_auth_view=True)
+
+        resp = self.client.post(f"/whisper/{w.id}")
+
+        self.assertEqual(resp.status_code, 403)
+        self.assertEqual(resp.json()["error"], "Authentication required")
+
+    def test_browser_reveal_ip_denial_renders_forbidden_page(self):
+        w = self._create_whisper(allowed_cidr="192.168.1.0/24")
+
+        resp = self.client.post(f"/whisper/{w.id}?render=1")
+
+        self.assertEqual(resp.status_code, 403)
+        self.assertTemplateUsed(resp, "whispers/forbidden.html")
+
+    def test_api_reveal_ip_denial_returns_json(self):
+        w = self._create_whisper(allowed_cidr="192.168.1.0/24")
+
+        resp = self.client.post(f"/whisper/{w.id}")
+
+        self.assertEqual(resp.status_code, 403)
+        self.assertEqual(resp.json()["error"], "Access denied from your IP address")
+
+    def test_browser_reveal_missing_payload_renders_expired_page(self):
+        w = self._create_whisper()
+        redis_store.delete_crypto(w.id)
+
+        resp = self.client.post(f"/whisper/{w.id}?render=1")
+
+        self.assertEqual(resp.status_code, 410)
+        self.assertTemplateUsed(resp, "whispers/expired.html")
+        self.assertFalse(Whisper.objects.filter(id=w.id).exists())
+
+    def test_api_reveal_missing_payload_returns_json(self):
+        w = self._create_whisper()
+        redis_store.delete_crypto(w.id)
+
+        resp = self.client.post(f"/whisper/{w.id}")
+
+        self.assertEqual(resp.status_code, 410)
+        self.assertEqual(resp.json()["error"], "This whisper has expired")
 
     def test_max_views_three_destroys_on_third(self):
         w = self._create_whisper(max_views=3)
@@ -617,6 +708,17 @@ class SubmitWhisperFlowTests(TestCase):
         reveal_resp = self.client.post(f"/whisper/{w.id}")
         self.assertEqual(reveal_resp.status_code, 200)
         self.assertEqual(reveal_resp.json()["ciphertext"], "ct")
+
+    def test_browser_reveal_pending_request_renders_pending_page(self):
+        w = self._create_request(max_views=1)
+
+        resp = self.client.post(f"/whisper/{w.id}?render=1")
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertTemplateUsed(resp, "whispers/pending.html")
+        crypto = redis_store.get_crypto(w.id)
+        self.assertIsNotNone(crypto)
+        self.assertEqual(crypto["ciphertext"], "")
 
     def test_view_after_submit(self):
         w = self._create_request()

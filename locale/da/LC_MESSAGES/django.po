@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-13 17:26+0000\n"
+"POT-Creation-Date: 2026-10-07 10:37+0000\n"
 "PO-Revision-Date: 2026-04-17 15:26+0000\n"
 "Last-Translator: \n"
 "Language-Team: Danish\n"
@@ -26,14 +26,8 @@ msgid "Page not found"
 msgstr "Side ikke fundet"
 
 #: templates/404.html:10
-#, fuzzy
-#| msgid ""
-#| "The whisper you're looking for has passed its expiration time and has "
-#| "been permanently deleted."
 msgid "The page you're looking for doesn't exist or may have been removed."
-msgstr ""
-"Whisperen, du leder efter, har overskredet sin udløbstid og er blevet "
-"slettet permanent."
+msgstr "Siden du leder efter eksisterer ikke, eller den er blevet flyttet."
 
 #: templates/404.html:12
 msgid "Go to homepage"
@@ -422,11 +416,11 @@ msgstr ""
 msgid "Click below to decrypt and view this whisper."
 msgstr "Klik forneden for at dekryptere og se denne whisper"
 
-#: templates/whispers/confirm.html:23 templates/whispers/confirm.html:67
+#: templates/whispers/confirm.html:25
 msgid "Reveal whisper"
 msgstr "Vis whisper"
 
-#: templates/whispers/confirm.html:33
+#: templates/whispers/confirm.html:34
 msgid "Loading…"
 msgstr "Indlæser…"
 
@@ -607,8 +601,9 @@ msgid ""
 "in the url fragment. The recipient will need this password in addition to "
 "the link to decrypt the psst."
 msgstr ""
-"Brug dit eget password til kryptering i stedet for den tilfældige generede en, i url fragmentet. Modtageren skal bruge denne adgangskode "
-"ud over linket for at dekryptere en whisper."
+"Brug dit eget password til kryptering i stedet for den tilfældige generede "
+"en, i url fragmentet. Modtageren skal bruge denne adgangskode ud over linket "
+"for at dekryptere en whisper."
 
 #: templates/whispers/create.html:138
 msgid "Password requirements"
@@ -852,8 +847,6 @@ msgid "Sign in with"
 msgstr "Login med"
 
 #: templates/whispers/login.html:71
-#, fuzzy
-#| msgid "No sign-in providers configured."
 msgid "No sign-in methods configured."
 msgstr "Ingen login ubydere konfigureret"
 
@@ -987,7 +980,7 @@ msgid ""
 "This whisper has been burned — it can never be viewed again. Download it now."
 msgstr "Denne whisper er brændt — den kan aldrig vises igen. Download den nu."
 
-#: templates/whispers/view.html:68 templates/whispers/view.html:227
+#: templates/whispers/view.html:68 templates/whispers/view.html:217
 msgid "Decrypted File"
 msgstr "Dekrypteret fil"
 
@@ -1004,39 +997,39 @@ msgid "The link may be incomplete or the whisper may have been tampered with."
 msgstr ""
 "Linket kan være ufuldstændigt, eller whisperen kan være blevet manipuleret."
 
-#: templates/whispers/view.html:122
+#: templates/whispers/view.html:112
 msgid "View"
 msgstr "Visning"
 
-#: templates/whispers/view.html:122
+#: templates/whispers/view.html:112
 msgid "this whisper has unlimited views"
 msgstr "denne whisper har ubegrænsede visninger"
 
-#: templates/whispers/view.html:124
+#: templates/whispers/view.html:114
 msgid "Final view"
 msgstr "Sidste visning"
 
-#: templates/whispers/view.html:124
+#: templates/whispers/view.html:114
 msgid "this whisper has now been destroyed"
 msgstr "denne whisper er nu blevet slettet"
 
-#: templates/whispers/view.html:127
+#: templates/whispers/view.html:117
 msgid "Viewed"
 msgstr "Vist"
 
-#: templates/whispers/view.html:127
+#: templates/whispers/view.html:117
 msgid "view(s) remaining"
 msgstr "visning(er) tilbage"
 
-#: templates/whispers/view.html:217
+#: templates/whispers/view.html:207
 msgid "Download"
 msgstr "Download"
 
-#: templates/whispers/view.html:231
+#: templates/whispers/view.html:221
 msgid "Decrypted Files"
 msgstr "Dekrypterede filer"
 
-#: templates/whispers/view.html:283
+#: templates/whispers/view.html:273
 msgid "Wrong password. Please try again."
 msgstr "Forkert adgangskode. Venligst prøv igen"
 
