@@ -23,6 +23,13 @@ class Whisper(models.Model):
         RECEIVE = "receive", "Receive"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    submit_token = models.UUIDField(
+        null=True,
+        blank=True,
+        unique=True,
+        editable=False,
+        help_text="Write-only capability for receive-mode submit links (distinct from id)",
+    )
     mode = models.CharField(
         max_length=7,
         choices=ModeChoices.choices,

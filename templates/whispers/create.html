@@ -277,7 +277,7 @@
             </div>
 
             <div id="receive-password-notice" class="hidden text-sm text-brand-300">
-                🔑 {% trans "This request is password-protected. Share the password separately with the sender." %}
+                🔑 {% trans "This request is password-protected. You will need the password to open the view link. Do not share it with the sender." %}
             </div>
             <div id="receive-burn-warning" class="hidden text-sm text-amber-400">
                 ⚠️ <span id="receive-burn-warning-text">{% trans "The whisper will be destroyed after you view it once." %}</span>
@@ -305,6 +305,7 @@
     data-status-ok="{% trans "Strong password — all requirements met." %}"
     data-status-missing="{% trans "{count} of 5 requirements still missing." %}"></div>
 <script src="{% static 'js/password-strength.js' %}"></script>
+<script src="{% static 'js/pqc.min.js' %}"></script>
 <script src="{% static 'js/crypto.js' %}"></script>
 <script>
     (function () {
@@ -401,8 +402,8 @@
         const urlInput = document.getElementById(inputId);
         navigator.clipboard.writeText(urlInput.value).then(() => {
             const btn = document.getElementById(btnId);
-            btn.textContent = 'Copied!';
-            setTimeout(() => btn.textContent = 'Copy', 2000);
+            btn.textContent = '{% trans "Copied!" %}';
+            setTimeout(() => btn.textContent = '{% trans "Copy" %}', 2000);
         });
     }
 

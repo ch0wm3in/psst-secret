@@ -1,4 +1,5 @@
 import json
+import uuid
 from datetime import timedelta
 from unittest.mock import patch
 
@@ -208,23 +209,28 @@ class ReceiveModeEmailTests(TestCase):
     def _create_request(self, **kwargs):
         defaults = {
             "mode": "receive",
+            "submit_token": uuid.uuid4(),
             "expiry_option": "1d",
             "expires_at": timezone.now() + timedelta(days=1),
         }
         defaults.update(kwargs)
         w = Whisper.objects.create(**defaults)
-        redis_store.store_crypto(w.id, 86400, salt="s")
+        redis_store.store_crypto(w.id, 86400)
         return w
+
+    def _submit(self, w):
+        return self.client.post(
+            f"/api/whisper/submit/{w.submit_token}",
+            data=json.dumps({"ciphertext": "ct", "iv": "iv", "encapsulated_key": "e"}),
+            content_type="application/json",
+        )
 
     def test_email_sent_on_create_request_with_notify_email(self):
         """Creating a receive request should NOT immediately send email."""
         resp = self.client.post(
             "/api/whisper/request",
             data=json.dumps(
-                {
-                    "salt": "s",
-                    "notify_email": "creator@example.com",
-                }
+                {"public_key": "pk", "notify_email": "creator@example.com"}
             ),
             content_type="application/json",
         )
@@ -235,11 +241,7 @@ class ReceiveModeEmailTests(TestCase):
     def test_email_sent_on_submit(self):
         """Submitting to a receive request should notify the creator."""
         w = self._create_request(notify_email="creator@example.com")
-        resp = self.client.post(
-            f"/api/whisper/submit/{w.id}",
-            data=json.dumps({"ciphertext": "ct", "iv": "iv"}),
-            content_type="application/json",
-        )
+        resp = self._submit(w)
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(len(mail.outbox), 1)
         msg = mail.outbox[0]
@@ -252,11 +254,7 @@ class ReceiveModeEmailTests(TestCase):
     def test_no_email_on_submit_when_no_notify_email(self):
         """No email if notify_email is empty."""
         w = self._create_request(notify_email="")
-        resp = self.client.post(
-            f"/api/whisper/submit/{w.id}",
-            data=json.dumps({"ciphertext": "ct", "iv": "iv"}),
-            content_type="application/json",
-        )
+        resp = self._submit(w)
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(len(mail.outbox), 0)
 
@@ -264,10 +262,7 @@ class ReceiveModeEmailTests(TestCase):
         resp = self.client.post(
             "/api/whisper/request",
             data=json.dumps(
-                {
-                    "salt": "s",
-                    "notify_email": "creator@example.com",
-                }
+                {"public_key": "pk", "notify_email": "creator@example.com"}
             ),
             content_type="application/json",
         )
@@ -278,11 +273,7 @@ class ReceiveModeEmailTests(TestCase):
     def test_submit_email_url_does_not_contain_fragment(self):
         """The emailed URL must NOT include the decryption key (fragment)."""
         w = self._create_request(notify_email="creator@example.com")
-        resp = self.client.post(
-            f"/api/whisper/submit/{w.id}",
-            data=json.dumps({"ciphertext": "ct", "iv": "iv"}),
-            content_type="application/json",
-        )
+        resp = self._submit(w)
         self.assertEqual(resp.status_code, 200)
         msg = mail.outbox[0]
         # The URL line should not have a '#' fragment appended

@@ -1,0 +1,118 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-07 15:36+0000\n"
+"PO-Revision-Date: 2026-10-07 15:40+0000\n"
+"Last-Translator: \n"
+"Language-Team: Danish\n"
+"Language: da\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: static/js/crypto.js:108
+msgid "Remove"
+msgstr "Fjern"
+
+#: static/js/crypto.js:117
+#, javascript-format
+msgid "Total: %s / %s"
+msgstr "I alt: %s / %s"
+
+#: static/js/crypto.js:122
+#, javascript-format
+msgid "Skipped (would exceed %s total): %s"
+msgstr "Sprunget over (ville overskride %s i alt): %s"
+
+#: static/js/crypto.js:304
+msgid "Post-quantum crypto module failed to load."
+msgstr "Post-kvante-kryptomodulet kunne ikke indlæses."
+
+#: static/js/crypto.js:345
+msgid ""
+"The request key does not match the link. The link may be incomplete or "
+"tampered with."
+msgstr ""
+"Forespørgslens nøgle matcher ikke linket. Linket kan være ufuldstændigt "
+"eller manipuleret."
+
+#: static/js/crypto.js:427 static/js/crypto.js:665
+msgid "Please enter some content or select a file to encrypt."
+msgstr "Indtast noget indhold, eller vælg en fil, der skal krypteres."
+
+#: static/js/crypto.js:433 static/js/crypto.js:671
+#, javascript-format
+msgid "Selected files exceed the maximum total size of %s."
+msgstr "De valgte filer overskrider den maksimale samlede størrelse på %s."
+
+#: static/js/crypto.js:439 static/js/crypto.js:677
+msgid "Encrypting…"
+msgstr "Krypterer…"
+
+#: static/js/crypto.js:452 static/js/crypto.js:573
+msgid ""
+"Passphrase does not meet the strength requirements shown below the field."
+msgstr "Adgangskoden opfylder ikke kravene, der vises under feltet."
+
+#: static/js/crypto.js:495 static/js/crypto.js:609 static/js/crypto.js:709
+#, javascript-format
+msgid "Server error (%s)"
+msgstr "Serverfejl (%s)"
+
+#: static/js/crypto.js:516
+msgid "This whisper will be destroyed after being viewed once."
+msgstr "Denne whisper bliver slettet, når den er blevet vist én gang."
+
+#: static/js/crypto.js:518
+#, javascript-format
+msgid "This whisper will be destroyed after %s views."
+msgstr "Denne whisper bliver slettet efter %s visninger."
+
+#: static/js/crypto.js:526 static/js/crypto.js:640 static/js/crypto.js:717
+#, javascript-format
+msgid "Error: %s"
+msgstr "Fejl: %s"
+
+#: static/js/crypto.js:530
+msgid "Encrypt & Share"
+msgstr "Krypter og del"
+
+#: static/js/crypto.js:541
+msgid "Copied!"
+msgstr "Kopieret!"
+
+#: static/js/crypto.js:542
+msgid "Copy"
+msgstr "Kopiér"
+
+#: static/js/crypto.js:560
+msgid "Creating…"
+msgstr "Opretter…"
+
+#: static/js/crypto.js:630
+msgid "The whisper will be destroyed after you view it once."
+msgstr "Whisperen bliver slettet, efter du har set den én gang."
+
+#: static/js/crypto.js:632
+#, javascript-format
+msgid "The whisper will be destroyed after %s views."
+msgstr "Whisperen bliver slettet efter %s visninger."
+
+#: static/js/crypto.js:644
+msgid "Create Request"
+msgstr "Opret forespørgsel"
+
+#: static/js/crypto.js:681
+msgid "No encryption key found in URL. The link may be incomplete."
+msgstr "Ingen krypteringsnøgle fundet i URL'en. Linket kan være ufuldstændigt."
+
+#: static/js/crypto.js:721
+msgid "Encrypt & Submit"
+msgstr "Krypter og indsend"

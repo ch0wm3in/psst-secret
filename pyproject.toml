@@ -20,6 +20,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     "fakeredis>=2.37.0",
+    "polib>=1.2.0",
     "pre-commit>=4.6.2",
     "pytest-django>=4.14.0",
     "pytest-env>=1.7.0",

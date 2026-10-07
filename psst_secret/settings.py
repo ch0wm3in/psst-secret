@@ -156,13 +156,21 @@ STATIC_URL = "static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
+# Content-hashed filenames so browsers never run stale JS after a deploy.
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.ManifestStaticFilesStorage"
+    },
+}
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
-DATA_UPLOAD_MAX_MEMORY_SIZE = 50000000  # 50 MB, to allow larger secrets
+DATA_UPLOAD_MAX_MEMORY_SIZE = env.int("MAX_UPLOAD_SIZE", default=10_000_000)
 
 # ── Security hardening (production) ──────────────────────────────────────
 SESSION_COOKIE_SECURE = not DEBUG
@@ -171,6 +179,8 @@ SESSION_COOKIE_SAMESITE = "Lax"
 CSRF_COOKIE_SAMESITE = "Lax"
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_BROWSER_XSS_FILTER = True
+# Never send a Referer, so whisper/submit paths can't leak to other sites.
+SECURE_REFERRER_POLICY = "no-referrer"
 
 # Redis — ciphertext storage (never touches disk)
 REDIS_URL = env.str("REDIS_URL", default="redis://localhost:6379/0")
@@ -179,6 +189,15 @@ REDIS_URL = env.str("REDIS_URL", default="redis://localhost:6379/0")
 # get_client_ip() only trusts X-Forwarded-For from known infrastructure.
 # 0 = no proxy (use REMOTE_ADDR directly); 1 = one reverse proxy; etc.
 NUM_PROXIES = env.int("NUM_PROXIES", default=0)
+
+# Shared cache so throttle counters are consistent across workers.
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": REDIS_URL,
+        "KEY_PREFIX": "cache",
+    }
+}
 
 # Per-whisper authentication options
 # When True, all whispers force authentication for view/submit
@@ -221,6 +240,8 @@ REST_FRAMEWORK = {
     "DEFAULT_PARSER_CLASSES": [
         "rest_framework.parsers.JSONParser",
     ],
+    # Without this DRF trusts any client-supplied X-Forwarded-For for throttling.
+    "NUM_PROXIES": NUM_PROXIES,
     "DEFAULT_THROTTLE_CLASSES": [
         "rest_framework.throttling.AnonRateThrottle",
     ],
@@ -316,6 +337,7 @@ if ENABLE_AUTH:
             r"login/",  # custom login page
             r"accounts/.*",  # allauth auth flow
             r"i18n/.*",  # language switching
+            r"jsi18n/",  # JavaScript translation catalog
             r"static/.*",  # static files
         ],
     )

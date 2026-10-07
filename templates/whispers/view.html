@@ -98,6 +98,7 @@
 {{ paste_data|json_script:"paste-data" }}
 
 {% load static %}
+<script src="{% static 'js/pqc.min.js' %}"></script>
 <script src="{% static 'js/crypto.js' %}"></script>
 <script>
     let pasteData = JSON.parse(document.getElementById("paste-data").textContent);
@@ -219,7 +220,7 @@
             document.getElementById('download-all-row').classList.add('hidden');
         } else {
             heading.textContent = '{% trans "Decrypted Files" %}';
-            meta.textContent = decryptedFiles.length + ' files — ' + fmtSize(totalBytes) + ' total';
+            meta.textContent = interpolate('{% trans "%s files — %s total" %}', [decryptedFiles.length, fmtSize(totalBytes)]);
             document.getElementById('download-all-row').classList.remove('hidden');
         }
 
@@ -253,6 +254,18 @@
         navigator.clipboard.writeText(document.getElementById("decrypted-content").textContent);
     }
 
+    async function decryptPayload(keyB64, password) {
+        if (pasteData.encapsulated_key) {
+            const privB64 = password
+                ? await unwrapPrivateKey(pasteData.wrapped_key, pasteData.wrapped_key_iv, password, pasteData.salt)
+                : keyB64;
+            return openFromSender(pasteData, privB64);
+        }
+        return password
+            ? decryptContent(pasteData.ciphertext, pasteData.iv, null, password, pasteData.salt)
+            : decryptContent(pasteData.ciphertext, pasteData.iv, keyB64);
+    }
+
     async function decryptWithPassword() {
         const password = document.getElementById("view-password").value;
         if (!password) return;
@@ -263,9 +276,7 @@
         document.getElementById("decrypting").classList.remove("hidden");
 
         try {
-            const plaintext = await decryptContent(
-                pasteData.ciphertext, pasteData.iv, null, password, pasteData.salt
-            );
+            const plaintext = await decryptPayload(null, password);
             handleDecrypted(plaintext);
         } catch (e) {
             document.getElementById("decrypting").classList.add("hidden");
@@ -277,7 +288,7 @@
     }
 
     if (!pasteData) {
-        showError("No encrypted data available. The psst may have already been viewed.");
+        showError("{% trans "No encrypted data available. The psst may have already been viewed." %}");
     } else {
         const keyB64 = window.location.hash.substring(1);
         const isPasswordProtected = !!pasteData.salt;
@@ -289,16 +300,16 @@
             }
 
             if (!keyB64) {
-                showError("No decryption key found in URL. The link may be incomplete.");
+                showError("{% trans "No decryption key found in URL. The link may be incomplete." %}");
                 return;
             }
 
             document.getElementById("decrypting").classList.remove("hidden");
             try {
-                const plaintext = await decryptContent(pasteData.ciphertext, pasteData.iv, keyB64);
+                const plaintext = await decryptPayload(keyB64);
                 handleDecrypted(plaintext);
             } catch (e) {
-                showError("Decryption failed. The link may be incomplete or corrupted.");
+                showError("{% trans "Decryption failed. The link may be incomplete or corrupted." %}");
             }
         })();
     }

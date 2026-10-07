@@ -14,8 +14,10 @@
     <section class="space-y-3">
         <h2 class="text-xl font-semibold text-brand-400">{% trans "How It Works" %}</h2>
         <div class="rounded-lg bg-gray-800 border border-gray-700 p-5 space-y-4 text-sm text-gray-300 leading-relaxed">
-            <p>{% trans 'psst-secret ensures that <strong class="text-white">your whispers never exist in plaintext on our server</strong>. All encryption and decryption happens entirely in your browser using the <a href="https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API" class="text-brand-400 underline hover:text-brand-300" target="_blank">Web Crypto API</a>.' %}</p>
+            <p>{% trans 'psst-secret ensures that <strong class="text-white">your whispers never exist in plaintext on our server</strong>. All encryption and decryption happens entirely in your browser using the <a href="https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API" class="text-brand-400 underline hover:text-brand-300" target="_blank" rel="noopener noreferrer">Web Crypto API</a>.' %}</p>
 
+            <h3 class="text-base font-semibold text-white pt-2">📤 {% trans "Send Mode" %}</h3>
+            <p>{% trans "Share a whisper with someone. The key travels only inside the link you share." %}</p>
             <div class="grid gap-4 sm:grid-cols-2">
                 <div class="rounded-lg bg-gray-900 p-4 space-y-2">
                     <h3 class="font-semibold text-white">🔒 {% trans "Creating a Whisper" %}</h3>
@@ -37,6 +39,32 @@
                     </ol>
                 </div>
             </div>
+            <p class="text-gray-400">⚛️ {% trans "Send mode uses only symmetric encryption (<strong class='text-gray-200'>AES-256-GCM</strong>), which is not broken by quantum computers. The known quantum attack on symmetric ciphers (Grover's algorithm) at most halves the effective key strength, leaving 128 bits — still far beyond reach. Shor's algorithm, the real quantum threat, only affects public-key cryptography, which send mode does not use." %}</p>
+
+            <h3 class="text-base font-semibold text-white pt-4 border-t border-gray-700">📥 {% trans "Receive Mode" %}</h3>
+            <p>{% trans 'Ask someone to send a whisper <em>to you</em>. Receive mode uses public-key encryption, so the person submitting can encrypt but never decrypt.' %}</p>
+            <div class="grid gap-4 sm:grid-cols-2">
+                <div class="rounded-lg bg-gray-900 p-4 space-y-2">
+                    <h3 class="font-semibold text-white">🔑 {% trans "Creating a Request" %}</h3>
+                    <ol class="list-decimal list-inside space-y-1 text-gray-400">
+                        <li>{% trans 'Your browser generates a key pair using <strong class="text-gray-200">X-Wing</strong>, a hybrid of <strong class="text-gray-200">ML-KEM-768</strong> (post-quantum, FIPS 203) and <strong class="text-gray-200">X25519</strong>' %}</li>
+                        <li>{% trans "The public key is stored on the server. The submit link contains only its fingerprint, so the server cannot swap in a key of its own" %}</li>
+                        <li>{% trans "The private key seed stays in your view link fragment (or is encrypted with your password)" %}</li>
+                        <li>{% trans "You share the submit link and keep the view link" %}</li>
+                    </ol>
+                </div>
+                <div class="rounded-lg bg-gray-900 p-4 space-y-2">
+                    <h3 class="font-semibold text-white">🔓 {% trans "Submitting & Viewing" %}</h3>
+                    <ol class="list-decimal list-inside space-y-1 text-gray-400">
+                        <li>{% trans "The sender opens the submit link and types their whisper" %}</li>
+                        <li>{% trans "The sender's browser encrypts to your public key and uploads only the ciphertext" %}</li>
+                        <li>{% trans "You open your view link" %}</li>
+                        <li>{% trans "Only your view link can decrypt it" %}</li>
+                    </ol>
+                </div>
+            </div>
+            <p class="text-gray-400">{% trans "The submit link and view link use different identifiers. Someone who gets hold of the submit link cannot find, read, or burn the submitted whisper." %}</p>
+            <p class="text-gray-400">⚛️ {% trans "Because the key exchange is hybrid, the whisper stays protected as long as either algorithm holds — including against attackers who record traffic today and hope to decrypt it with a quantum computer later." %}</p>
         </div>
     </section>
 
@@ -44,7 +72,7 @@
     <section class="space-y-3">
         <h2 class="text-xl font-semibold text-brand-400">{% trans "Why the URL Fragment?" %}</h2>
         <div class="rounded-lg bg-gray-800 border border-gray-700 p-5 text-sm text-gray-300 leading-relaxed space-y-2">
-            <p>{% trans "The decryption key is stored after the <code class='bg-gray-900 px-1.5 py-0.5 rounded text-brand-300'>#</code> in the URL. Per the HTTP specification, <strong class='text-white'>the URL fragment is never sent to the server</strong> — it's processed only by the browser. This means:" %}</p>
+            <p>{% trans "The decryption key is stored after the <code class='bg-gray-900 px-1.5 py-0.5 rounded text-brand-300'>#</code> in the URL, known as the fragment. The URI specification (<a href='https://www.rfc-editor.org/rfc/rfc3986#section-3.5' class='text-brand-400 underline hover:text-brand-300' target='_blank' rel='noopener noreferrer'>RFC 3986 §3.5</a>) reserves the fragment for processing by the browser, and the HTTP specification (<a href='https://www.rfc-editor.org/rfc/rfc9110#section-7.1' class='text-brand-400 underline hover:text-brand-300' target='_blank' rel='noopener noreferrer'>RFC 9110 §7.1</a>) excludes it from the request — so <strong class='text-white'>the URL fragment is never sent to the server</strong>. This means:" %}</p>
             <ul class="list-disc list-inside space-y-1 text-gray-400 ml-2">
                 <li>{% trans "The server never receives the decryption key" %}</li>
                 <li>{% trans "The key doesn't appear in server logs or analytics" %}</li>
@@ -62,6 +90,7 @@
                 <li>{% trans 'The encryption key is derived from your password using <strong class="text-gray-200">PBKDF2</strong> (600,000 iterations, SHA-256)' %}</li>
                 <li>{% trans 'A random <strong class="text-gray-200">salt</strong> is generated and stored on the server (useless without the password)' %}</li>
                 <li>{% trans "The URL contains <em>no key fragment</em> — only the password holder can decrypt" %}</li>
+                <li>{% trans "For receive requests, the password protects your private key instead. The sender does not need it — only you do, to open the view link" %}</li>
                 <li>{% trans "This provides an extra layer of security for highly sensitive data" %}</li>
             </ul>
         </div>
@@ -88,11 +117,15 @@
                 <p class="text-sm text-gray-400">{% trans "Industry-standard authenticated encryption. Provides both confidentiality and integrity — any tampering with the ciphertext is detected." %}</p>
             </div>
             <div class="rounded-lg bg-gray-800 border border-gray-700 p-4">
+                <h3 class="font-semibold text-white mb-1">⚛️ {% trans "Post-Quantum Ready" %}</h3>
+                <p class="text-sm text-gray-400">{% trans "Send mode uses 256-bit symmetric keys, which remain secure against quantum computers. Receive mode uses the hybrid ML-KEM-768 + X25519 key exchange." %}</p>
+            </div>
+            <div class="rounded-lg bg-gray-800 border border-gray-700 p-4 sm:col-span-2">
                 <h3 class="font-semibold text-white mb-1">🚫 {% trans "Zero Knowledge" %}</h3>
                 {% if persistence_enabled %}
-                <p class="text-sm text-gray-400">{% trans "The server stores only ciphertext, IV, and optional salt in Redis. It has no ability to decrypt your data, even under compulsion." %}</p>
+                <p class="text-sm text-gray-400">{% trans "The server stores only encrypted data and public key material in Redis. It has no ability to decrypt your data, even under compulsion." %}</p>
                 {% else %}
-                <p class="text-sm text-gray-400">{% trans "The server stores only ciphertext, IV, and optional salt — and only in volatile memory (Redis). It has no ability to decrypt your data, even under compulsion." %}</p>
+                <p class="text-sm text-gray-400">{% trans "The server stores only encrypted data and public key material — and only in volatile memory (Redis). It has no ability to decrypt your data, even under compulsion." %}</p>
                 {% endif %}
             </div>
         </div>
@@ -118,7 +151,11 @@
                     <tbody class="text-gray-300">
                         <tr class="border-b border-gray-700/50"><td class="py-2 pr-4 font-mono text-brand-300">ciphertext</td><td class="py-2">{% trans "Your encrypted data (useless without the key)" %}</td></tr>
                         <tr class="border-b border-gray-700/50"><td class="py-2 pr-4 font-mono text-brand-300">iv</td><td class="py-2">{% trans "Random initialization vector for AES-GCM" %}</td></tr>
-                        <tr><td class="py-2 pr-4 font-mono text-brand-300">salt</td><td class="py-2">{% trans "PBKDF2 salt (only if password-protected)" %}</td></tr>
+                        <tr class="border-b border-gray-700/50"><td class="py-2 pr-4 font-mono text-brand-300">salt</td><td class="py-2">{% trans "PBKDF2 salt (only if password-protected)" %}</td></tr>
+                        <tr class="border-b border-gray-700/50"><td class="py-2 pr-4 font-mono text-brand-300">public_key</td><td class="py-2">{% trans "Receive mode: your X-Wing public key (can only encrypt)" %}</td></tr>
+                        <tr class="border-b border-gray-700/50"><td class="py-2 pr-4 font-mono text-brand-300">encapsulated_key</td><td class="py-2">{% trans "Receive mode: the sender's key encapsulation (useless without your private key)" %}</td></tr>
+                        <tr class="border-b border-gray-700/50"><td class="py-2 pr-4 font-mono text-brand-300">wrapped_key</td><td class="py-2">{% trans "Receive mode: your private key seed encrypted with your password (only if password-protected)" %}</td></tr>
+                        <tr><td class="py-2 pr-4 font-mono text-brand-300">views</td><td class="py-2">{% trans "Reveal counter, used to enforce the view limit" %}</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -132,17 +169,21 @@
                         </tr>
                     </thead>
                     <tbody class="text-gray-300">
-                        <tr class="border-b border-gray-700/50"><td class="py-2 pr-4 font-mono text-brand-300">expires_at</td><td class="py-2">{% trans "When the whisper will be auto-deleted" %}</td></tr>
+                        <tr class="border-b border-gray-700/50"><td class="py-2 pr-4 font-mono text-brand-300">id</td><td class="py-2">{% trans "Random identifier used in the view link" %}</td></tr>
+                        <tr class="border-b border-gray-700/50"><td class="py-2 pr-4 font-mono text-brand-300">submit_token</td><td class="py-2">{% trans "Receive mode: separate random identifier used in the submit link" %}</td></tr>
+                        <tr class="border-b border-gray-700/50"><td class="py-2 pr-4 font-mono text-brand-300">created_at / expires_at</td><td class="py-2">{% trans "When the whisper was created and when it will be auto-deleted" %}</td></tr>
                         <tr class="border-b border-gray-700/50"><td class="py-2 pr-4 font-mono text-brand-300">max_views</td><td class="py-2">{% trans "Number of allowed reveals before destruction (1 = burn; 0 = unlimited)" %}</td></tr>
                         <tr class="border-b border-gray-700/50"><td class="py-2 pr-4 font-mono text-brand-300">mode</td><td class="py-2">{% trans "Send or receive" %}</td></tr>
-                        <tr><td class="py-2 pr-4 font-mono text-brand-300">allowed_cidr</td><td class="py-2">{% trans "IP/CIDR restriction" %}</td></tr>
+                        <tr class="border-b border-gray-700/50"><td class="py-2 pr-4 font-mono text-brand-300">allowed_cidr</td><td class="py-2">{% trans "IP/CIDR restriction" %}</td></tr>
+                        <tr class="border-b border-gray-700/50"><td class="py-2 pr-4 font-mono text-brand-300">require_auth_view / require_auth_submit</td><td class="py-2">{% trans "Whether signing in is required to view or submit" %}</td></tr>
+                        <tr><td class="py-2 pr-4 font-mono text-brand-300">notify_email</td><td class="py-2">{% trans "Email address to notify (only if you opt in)" %}</td></tr>
                     </tbody>
                 </table>
             </div>
             {% if persistence_enabled %}
-            <p class="text-xs text-gray-500">❌ {% trans "The server does <strong>not</strong> store: plaintext, encryption keys, passwords, or any identifying information. Encrypted data is stored in Redis with persistence enabled." %}</p>
+            <p class="text-xs text-gray-500">❌ {% trans "The server does <strong>not</strong> store: plaintext, encryption keys, private keys, or passwords. An email address is only stored if you opt in to notifications. Encrypted data is stored in Redis with persistence enabled." %}</p>
             {% else %}
-            <p class="text-xs text-gray-500">❌ {% trans "The server does <strong>not</strong> store: plaintext, encryption keys, passwords, or any identifying information. Encrypted data lives only in volatile memory and is lost if Redis restarts." %}</p>
+            <p class="text-xs text-gray-500">❌ {% trans "The server does <strong>not</strong> store: plaintext, encryption keys, private keys, or passwords. An email address is only stored if you opt in to notifications. Encrypted data lives only in volatile memory and is lost if Redis restarts." %}</p>
             {% endif %}
         </div>
     </section>
@@ -162,6 +203,9 @@
             <span class="px-3 py-1 rounded-full bg-gray-800 border border-gray-700 text-gray-300">Web Crypto API</span>
             <span class="px-3 py-1 rounded-full bg-gray-800 border border-gray-700 text-gray-300">AES-256-GCM</span>
             <span class="px-3 py-1 rounded-full bg-gray-800 border border-gray-700 text-gray-300">PBKDF2</span>
+            <span class="px-3 py-1 rounded-full bg-gray-800 border border-gray-700 text-gray-300">ML-KEM-768 + X25519 (X-Wing)</span>
+            <span class="px-3 py-1 rounded-full bg-gray-800 border border-gray-700 text-gray-300">HKDF-SHA256</span>
+            <span class="px-3 py-1 rounded-full bg-gray-800 border border-gray-700 text-gray-300">noble-post-quantum</span>
         </div>
     </section>
 

@@ -4,6 +4,7 @@ ci:
   skip:
     - django-migration-check
     - check-untracked-migrations
+    - check-translations
 exclude: .*migrations/
 
 repos:
@@ -63,4 +64,11 @@ repos:
       language: system
       name: Django Migration Check
       entry: python manage.py makemigrations --check
+      pass_filenames: false
+    - id: check-translations
+      language: system
+      name: Check for missing translations
+      entry: python scripts/check_translations.py
+      files: \.(py|html|txt|js|po)$
+      exclude: ^(theme/static/|staticfiles/)
       pass_filenames: false

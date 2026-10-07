@@ -42,13 +42,18 @@ class CreateWhisperResponseSerializer(serializers.Serializer):
 
 
 class CreateRequestSerializer(serializers.Serializer):
+    public_key = serializers.CharField(
+        max_length=2000,
+        help_text="X-Wing (ML-KEM-768 + X25519) public key, base64.",
+    )
     salt = serializers.CharField(max_length=50, default="", allow_blank=True)
-    password_verify_token = serializers.CharField(
-        max_length=500, default="", allow_blank=True
+    wrapped_key = serializers.CharField(
+        max_length=500,
+        default="",
+        allow_blank=True,
+        help_text="Request private key encrypted with a password-derived key.",
     )
-    password_verify_iv = serializers.CharField(
-        max_length=50, default="", allow_blank=True
-    )
+    wrapped_key_iv = serializers.CharField(max_length=50, default="", allow_blank=True)
     max_views = serializers.IntegerField(
         default=1,
         min_value=0,
@@ -63,6 +68,14 @@ class CreateRequestSerializer(serializers.Serializer):
     require_auth_submit = serializers.BooleanField(default=False)
     notify_email = serializers.EmailField(default="", allow_blank=True)
 
+    def validate(self, attrs):
+        fields = (attrs["salt"], attrs["wrapped_key"], attrs["wrapped_key_iv"])
+        if any(fields) and not all(fields):
+            raise serializers.ValidationError(
+                "salt, wrapped_key and wrapped_key_iv must be provided together"
+            )
+        return attrs
+
 
 class CreateRequestResponseSerializer(serializers.Serializer):
     id = serializers.UUIDField()
@@ -73,12 +86,16 @@ class CreateRequestResponseSerializer(serializers.Serializer):
 class SubmitWhisperSerializer(serializers.Serializer):
     ciphertext = serializers.CharField(max_length=70_000_000)
     iv = serializers.CharField(max_length=50)
+    encapsulated_key = serializers.CharField(max_length=2000)
 
 
 class RevealWhisperResponseSerializer(serializers.Serializer):
     ciphertext = serializers.CharField()
     iv = serializers.CharField()
     salt = serializers.CharField()
+    encapsulated_key = serializers.CharField(allow_blank=True)
+    wrapped_key = serializers.CharField(allow_blank=True)
+    wrapped_key_iv = serializers.CharField(allow_blank=True)
     view_count = serializers.IntegerField()
     max_views = serializers.IntegerField()
     remaining_views = serializers.IntegerField()

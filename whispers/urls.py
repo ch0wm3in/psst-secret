@@ -12,7 +12,7 @@ urlpatterns = [
         views.RevealWhisperView.as_view(),
         name="view",
     ),
-    path("submit/<uuid:request_id>", views.submit_whisper, name="submit"),
+    path("submit/<uuid:submit_token>", views.submit_whisper, name="submit"),
     path("api/whisper", views.CreateWhisperView.as_view(), name="api_create"),
     path(
         "api/whisper/request",
@@ -20,7 +20,7 @@ urlpatterns = [
         name="api_create_request",
     ),
     path(
-        "api/whisper/submit/<uuid:request_id>",
+        "api/whisper/submit/<uuid:submit_token>",
         views.SubmitWhisperView.as_view(),
         name="api_submit",
     ),
