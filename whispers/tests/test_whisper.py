@@ -398,6 +398,23 @@ class ViewWhisperTests(TestCase):
         resp3 = self.client.post(f"/whisper/{w.id}")
         self.assertEqual(resp3.status_code, 404)
 
+    def test_browser_reveal_renders_large_payload_without_web_storage(self):
+        ciphertext = "x" * (6 * 1024 * 1024)
+        w = self._create_whisper(max_views=1)
+        redis_store.update_crypto(w.id, ciphertext=ciphertext)
+
+        resp = self.client.post(
+            f"/whisper/{w.id}?render=1",
+            data="",
+            content_type="application/x-www-form-urlencoded",
+        )
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertTemplateUsed(resp, "whispers/view.html")
+        self.assertEqual(resp.context["paste_data"]["ciphertext"], ciphertext)
+        self.assertNotContains(resp, "sessionStorage")
+        self.assertFalse(Whisper.objects.filter(id=w.id).exists())
+
     def test_max_views_three_destroys_on_third(self):
         w = self._create_whisper(max_views=3)
         # First two reveals succeed, whisper survives.
