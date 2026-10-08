@@ -21,6 +21,12 @@ def _cleanup_loop():
             expired.delete()
         except Exception:
             pass
+        try:
+            from whispers.stats import prune_stats
+
+            prune_stats()
+        except Exception:
+            pass
         time.sleep(60)
 
 

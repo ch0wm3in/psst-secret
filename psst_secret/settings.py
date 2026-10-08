@@ -295,6 +295,8 @@ if PSST_ENABLE_EMAIL:
     )
 
 # Authentication with django-allauth (can be disabled if not needed) SSO
+PSST_ENABLE_STATS = env.bool("PSST_ENABLE_STATS", default=False)
+
 ENABLE_AUTH = env.bool("ENABLE_AUTH", default=False)
 if ENABLE_AUTH:
 

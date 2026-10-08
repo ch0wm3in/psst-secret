@@ -7,6 +7,7 @@ app_name = "whispers"
 urlpatterns = [
     path("", views.create, name="create"),
     path("about", views.about, name="about"),
+    path("stats", views.stats, name="stats"),
     path(
         "whisper/<uuid:whisper_id>",
         views.RevealWhisperView.as_view(),

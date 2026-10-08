@@ -19,6 +19,8 @@ class LoginRequiredMiddleware:
         self.exempt_patterns = [re.compile(p) for p in raw]
 
     def __call__(self, request):
+        if request.path_info == "/stats" and not settings.PSST_ENABLE_STATS:
+            return self.get_response(request)
         if not request.user.is_authenticated:
             path = request.path_info.lstrip("/")
             if not any(p.match(path) for p in self.exempt_patterns):

@@ -86,6 +86,31 @@ def update_crypto(whisper_id, **fields):
                 continue
 
 
+def submit_crypto_once(whisper_id, **fields):
+    client = get_client()
+    key = _key(whisper_id)
+    with client.pipeline() as pipe:
+        while True:
+            try:
+                pipe.watch(key)
+                raw = pipe.get(key)
+                if raw is None:
+                    return "missing"
+                data = json.loads(raw)
+                if data.get("ciphertext"):
+                    return "submitted"
+                ttl = pipe.pttl(key)
+                if ttl <= 0:
+                    return "missing"
+                data.update(fields)
+                pipe.multi()
+                pipe.set(key, json.dumps(data), keepttl=True)
+                pipe.execute()
+                return "accepted"
+            except redis.WatchError:
+                continue
+
+
 def get_and_delete_crypto(whisper_id):
     """Atomically get and delete the crypto blob (for burn-after-read).
     Returns the dict, or None if the key was already gone."""

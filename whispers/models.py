@@ -90,3 +90,16 @@ class Whisper(models.Model):
     @property
     def is_unlimited_views(self):
         return self.max_views == 0
+
+
+class HourlyWhisperStats(models.Model):
+    bucket_start = models.DateTimeField(primary_key=True)
+    sends = models.PositiveBigIntegerField(default=0)
+    receives = models.PositiveBigIntegerField(default=0)
+    reveals = models.PositiveBigIntegerField(default=0)
+    burn_after_read = models.PositiveBigIntegerField(default=0)
+    expiry_5m = models.PositiveBigIntegerField(default=0)
+    expiry_1h = models.PositiveBigIntegerField(default=0)
+    expiry_1d = models.PositiveBigIntegerField(default=0)
+    expiry_1w = models.PositiveBigIntegerField(default=0)
+    expiry_1M = models.PositiveBigIntegerField(default=0)

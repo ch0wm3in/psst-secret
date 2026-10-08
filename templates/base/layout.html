@@ -5,11 +5,11 @@
 <div class="min-h-full flex flex-col">
     <!-- Nav -->
     <nav class="border-b border-gray-800 bg-gray-900/50 backdrop-blur">
-        <div class="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+        <div class="max-w-4xl mx-auto px-4 py-4 flex flex-wrap gap-4 items-center justify-between">
             <a href="{% url 'whispers:create' %}" class="flex items-center gap-2 text-xl font-bold text-brand-400 hover:text-brand-300 transition">
                 🤫 psst-secret
             </a>
-            <span class="text-xs text-gray-500">{% trans "Zero-knowledge secret sharing" %}</span>
+            <span class="hidden lg:inline text-xs text-gray-500">{% trans "Zero-knowledge secret sharing" %}</span>
             <div class="flex items-center gap-4">
                 <form action="{% url 'set_language' %}" method="post" class="flex items-center">
                     {% csrf_token %}
@@ -24,6 +24,10 @@
                     </select>
                 </form>
                 <a href="{% url 'whispers:about' %}" class="text-sm text-gray-400 hover:text-brand-300 transition">{% trans "About" %}</a>
+                {% settings_value "PSST_ENABLE_STATS" as stats_enabled %}
+                {% if stats_enabled %}
+                <a href="{% url 'whispers:stats' %}" class="text-sm text-gray-400 hover:text-brand-300 transition" {% if request.resolver_match.url_name == 'stats' %}aria-current="page"{% endif %}>{% trans "Statistics" %}</a>
+                {% endif %}
                 {% settings_value "ENABLE_AUTH" as auth_enabled %}
                 {% if auth_enabled and user.is_authenticated %}
                 <!-- Profile menu -->

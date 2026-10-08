@@ -1,18 +1,291 @@
 import json
 import re
 import uuid
+from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
 from pathlib import Path
+from threading import Barrier
 from unittest.mock import patch
 
 import fakeredis
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.core.cache import cache
 from django.test import TestCase, override_settings
 from django.utils import timezone
 
 from whispers import redis_store
-from whispers.models import Whisper
+from whispers.models import HourlyWhisperStats, Whisper
+from whispers.stats import prune_stats, record_stats, stats_report
+
+
+class AnonymousStatsTests(TestCase):
+    def setUp(self):
+        cache.clear()
+        self.addCleanup(cache.clear)
+
+    @override_settings(
+        PSST_ENABLE_STATS=False,
+        ENABLE_AUTH=False,
+        MIDDLEWARE=[
+            middleware
+            for middleware in settings.MIDDLEWARE
+            if middleware != "whispers.middleware.LoginRequiredMiddleware"
+        ],
+    )
+    def test_disabled_navigation_is_hidden(self):
+        response = self.client.get("/about")
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'href="/stats"')
+
+    def test_concurrent_receive_submission_has_one_winner(self):
+        patcher, _client = _patch_redis()
+        whisper_id = uuid.uuid4()
+        barrier = Barrier(2)
+
+        def submit(ciphertext):
+            barrier.wait(timeout=5)
+            return redis_store.submit_crypto_once(whisper_id, ciphertext=ciphertext)
+
+        with patcher:
+            redis_store.store_crypto(whisper_id, 60)
+            with ThreadPoolExecutor(max_workers=2) as executor:
+                results = list(executor.map(submit, ("first", "second")))
+            self.assertCountEqual(results, ["accepted", "submitted"])
+
+    @override_settings(
+        PSST_ENABLE_STATS=True,
+        ENABLE_AUTH=False,
+        MIDDLEWARE=[
+            middleware
+            for middleware in settings.MIDDLEWARE
+            if middleware != "whispers.middleware.LoginRequiredMiddleware"
+        ],
+    )
+    def test_receive_disappears_before_acceptance(self):
+        patcher, _client = _patch_redis()
+        with patcher:
+            whisper = Whisper.objects.create(
+                mode="receive",
+                submit_token=uuid.uuid4(),
+                expires_at=timezone.now() + timedelta(days=1),
+            )
+            redis_store.store_crypto(whisper.id, 60)
+            with patch(
+                "whispers.redis_store.submit_crypto_once", return_value="missing"
+            ):
+                response = self.client.post(
+                    f"/api/whisper/submit/{whisper.submit_token}",
+                    data=json.dumps(
+                        {"ciphertext": "ct", "iv": "iv", "encapsulated_key": "epk"}
+                    ),
+                    content_type="application/json",
+                )
+            self.assertEqual(response.status_code, 410)
+            self.assertEqual(HourlyWhisperStats.objects.count(), 0)
+
+    def test_utc_boundaries_ties_and_average(self):
+        from datetime import datetime
+        from datetime import timezone as datetime_timezone
+
+        now = datetime(2026, 10, 8, 0, 30, tzinfo=datetime_timezone.utc)
+        HourlyWhisperStats.objects.create(
+            bucket_start=now.replace(hour=0, minute=0) - timedelta(days=1),
+            sends=2,
+            burn_after_read=1,
+            expiry_1d=2,
+        )
+        HourlyWhisperStats.objects.create(
+            bucket_start=now.replace(hour=0, minute=0), receives=2, expiry_5m=2
+        )
+        report = stats_report("1d", now)
+        self.assertEqual(report["total"], 4)
+        self.assertEqual(len(report["busiest_days"]), 2)
+        self.assertEqual(len(report["busiest_weekdays"]), 2)
+        self.assertEqual(report["burn_share"], 25)
+        self.assertAlmostEqual(report["average"], 4 / (24.5 / 24))
+        self.assertEqual(sum(item["count"] for item in report["expiry_choices"]), 4)
+        self.assertEqual(sum(item["count"] for item in report["weekdays"]), 4)
+
+    def test_all_range_boundaries_and_retention(self):
+        now = timezone.now().replace(minute=30, second=0, microsecond=0)
+        oldest = now - timedelta(days=365)
+        HourlyWhisperStats.objects.create(
+            bucket_start=oldest - timedelta(seconds=1), sends=999
+        )
+        for preset, days in (
+            ("1d", 1),
+            ("1w", 7),
+            ("1m", 30),
+            ("3m", 90),
+            ("6m", 180),
+            ("1y", 365),
+        ):
+            report = stats_report(preset, now)
+            expected = max((now - timedelta(days=days)).replace(minute=0), oldest)
+            self.assertEqual(report["start"], expected)
+            self.assertEqual(report["total"], 0)
+        self.assertFalse(HourlyWhisperStats.objects.exists())
+
+    @override_settings(
+        PSST_ENABLE_STATS=True,
+        ENABLE_AUTH=False,
+        MIDDLEWARE=[
+            middleware
+            for middleware in settings.MIDDLEWARE
+            if middleware != "whispers.middleware.LoginRequiredMiddleware"
+        ],
+    )
+    def test_public_page_and_presets(self):
+        for preset in ("1d", "1w", "1m", "3m", "6m", "1y", "invalid"):
+            response = self.client.get("/stats", {"range": preset})
+            self.assertEqual(response.status_code, 200)
+            self.assertContains(response, "Whisper statistics")
+            self.assertIn("no-store", response["Cache-Control"])
+
+    @override_settings(PSST_ENABLE_STATS=True, ENABLE_AUTH=True)
+    def test_authenticated_page(self):
+        user = User.objects.create_user(username="stats-reader")
+        self.client.force_login(user)
+        self.assertEqual(self.client.get("/stats").status_code, 200)
+
+    @override_settings(
+        PSST_ENABLE_STATS=True,
+        ENABLE_AUTH=False,
+        MIDDLEWARE=[
+            middleware
+            for middleware in settings.MIDDLEWARE
+            if middleware != "whispers.middleware.LoginRequiredMiddleware"
+        ],
+    )
+    def test_submission_and_reveal_hooks(self):
+        patcher, _client = _patch_redis()
+        with patcher:
+            send = self.client.post(
+                "/api/whisper",
+                data=json.dumps({"ciphertext": "ct", "iv": "iv", "expiry": "1d"}),
+                content_type="application/json",
+            )
+            self.assertEqual(send.status_code, 200)
+            self.assertEqual(
+                self.client.post(
+                    f"/whisper/{send.json()['id']}",
+                    data="{}",
+                    content_type="application/json",
+                ).status_code,
+                200,
+            )
+            whisper = Whisper.objects.create(
+                mode="receive",
+                submit_token=uuid.uuid4(),
+                expiry_option="5m",
+                expires_at=timezone.now() + timedelta(minutes=5),
+            )
+            redis_store.store_crypto(whisper.id, 300)
+            self.assertEqual(HourlyWhisperStats.objects.get().receives, 0)
+            payload = json.dumps(
+                {"ciphertext": "ct", "iv": "iv", "encapsulated_key": "epk"}
+            )
+            url = f"/api/whisper/submit/{whisper.submit_token}"
+            self.assertEqual(
+                self.client.post(
+                    url, data=payload, content_type="application/json"
+                ).status_code,
+                200,
+            )
+            self.assertEqual(
+                self.client.post(
+                    url, data=payload, content_type="application/json"
+                ).status_code,
+                409,
+            )
+            row = HourlyWhisperStats.objects.get()
+            self.assertEqual((row.sends, row.receives, row.reveals), (1, 1, 1))
+
+    @override_settings(PSST_ENABLE_STATS=False, ENABLE_AUTH=True)
+    def test_disabled_page_is_not_available(self):
+        self.assertEqual(self.client.get("/stats").status_code, 404)
+
+    @override_settings(
+        PSST_ENABLE_STATS=True, ENABLE_AUTH=True, LOGIN_REQUIRED_EXEMPT_URLS=[".*"]
+    )
+    def test_page_requires_auth_even_with_exemption(self):
+        response = self.client.get("/stats")
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("next=/stats", response.url)
+
+    def test_atomic_receive_acceptance(self):
+        patcher, client = _patch_redis()
+        with patcher:
+            whisper_id = uuid.uuid4()
+            redis_store.store_crypto(whisper_id, 60, public_key="public")
+            self.assertEqual(
+                redis_store.submit_crypto_once(whisper_id, ciphertext="first"),
+                "accepted",
+            )
+            self.assertEqual(
+                redis_store.submit_crypto_once(whisper_id, ciphertext="second"),
+                "submitted",
+            )
+            self.assertEqual(redis_store.get_crypto(whisper_id)["ciphertext"], "first")
+            self.assertGreater(client.ttl(redis_store._key(whisper_id)), 0)
+            redis_store.delete_crypto(whisper_id)
+            self.assertEqual(
+                redis_store.submit_crypto_once(whisper_id, ciphertext="third"),
+                "missing",
+            )
+
+    @override_settings(PSST_ENABLE_STATS=True)
+    def test_recording_failure_is_isolated(self):
+        with patch(
+            "whispers.stats.HourlyWhisperStats.objects.get_or_create",
+            side_effect=RuntimeError,
+        ):
+            record_stats("reveal")
+        self.assertEqual(HourlyWhisperStats.objects.count(), 0)
+
+    @override_settings(PSST_ENABLE_STATS=False)
+    def test_disabled_does_not_query(self):
+        with self.assertNumQueries(0):
+            record_stats("submission", mode="send", max_views=1, expiry="1d")
+
+    @override_settings(PSST_ENABLE_STATS=True)
+    def test_counters_are_hourly_and_anonymous(self):
+        record_stats("submission", mode="send", max_views=1, expiry="1d")
+        record_stats("submission", mode="receive", max_views=0, expiry="5m")
+        record_stats("reveal")
+        row = HourlyWhisperStats.objects.get()
+        self.assertEqual(
+            (row.sends, row.receives, row.reveals, row.burn_after_read), (1, 1, 1, 1)
+        )
+        self.assertEqual((row.expiry_1d, row.expiry_5m), (1, 1))
+        self.assertEqual(row.bucket_start.minute, 0)
+        self.assertFalse(any(field.is_relation for field in row._meta.fields))
+
+    @override_settings(PSST_ENABLE_STATS=False)
+    def test_retention_also_applies_when_disabled(self):
+        now = timezone.now()
+        HourlyWhisperStats.objects.create(
+            bucket_start=now - timedelta(days=365, seconds=1)
+        )
+        HourlyWhisperStats.objects.create(bucket_start=now - timedelta(days=365))
+        self.assertEqual(prune_stats(now), 1)
+        self.assertEqual(HourlyWhisperStats.objects.count(), 1)
+
+    def test_report_ranges_and_empty_state(self):
+        now = timezone.now().replace(minute=0, second=0, microsecond=0)
+        HourlyWhisperStats.objects.create(bucket_start=now - timedelta(days=2), sends=3)
+        HourlyWhisperStats.objects.create(
+            bucket_start=now - timedelta(hours=1), receives=2
+        )
+        self.assertEqual(stats_report("1d", now)["total"], 2)
+        self.assertEqual(stats_report("invalid", now)["total"], 5)
+        HourlyWhisperStats.objects.all().delete()
+        report = stats_report(now=now)
+        self.assertEqual(report["burn_share"], 0)
+        self.assertEqual(report["busiest_days"], [])
+        self.assertEqual(report["busiest_weekdays"], [])
+
 
 # ---------------------------------------------------------------------------
 # Helpers
