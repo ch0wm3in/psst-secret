@@ -1,0 +1,97 @@
+{% extends "base/layout.html" %}
+{% load i18n l10n %}
+
+{% block title %}psst-secret — {% trans "Statistics" %}{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <header class="flex flex-wrap items-end justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-white">{% trans "Whisper statistics" %}</h1>
+            <p class="mt-2 text-sm text-gray-400">{% trans "Anonymous totals · Hourly UTC aggregates · 365-day retention" %}</p>
+        </div>
+        <form method="get" class="flex items-center gap-3">
+            <label for="stats-range" class="text-sm text-gray-400">{% trans "Time range" %}</label>
+            <select id="stats-range" name="range" onchange="this.form.submit()" class="bg-gray-800 border border-gray-700 text-white text-sm rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500">
+                <option value="1d" {% if preset == '1d' %}selected{% endif %}>{% trans "1 day" %}</option>
+                <option value="1w" {% if preset == '1w' %}selected{% endif %}>{% trans "1 week" %}</option>
+                <option value="1m" {% if preset == '1m' %}selected{% endif %}>{% trans "1 month" %}</option>
+                <option value="3m" {% if preset == '3m' %}selected{% endif %}>{% trans "3 months" %}</option>
+                <option value="6m" {% if preset == '6m' %}selected{% endif %}>{% trans "6 months" %}</option>
+                <option value="1y" {% if preset == '1y' %}selected{% endif %}>{% trans "1 year" %}</option>
+            </select>
+            <noscript><button type="submit" class="text-brand-400">{% trans "Apply" %}</button></noscript>
+        </form>
+    </header>
+
+    <p class="text-xs text-gray-500 break-words">{{ start|date:"Y-m-d H:i" }} &ndash; {{ end|date:"Y-m-d H:i" }} UTC</p>
+
+    <dl class="grid grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-6 border-y border-gray-800 py-6">
+        <div class="min-w-0"><dt class="text-sm text-gray-400">{% trans "Whispers submitted" %}</dt><dd class="mt-2 text-2xl font-semibold text-brand-300 tabular-nums break-all">{{ total }}</dd></div>
+        <div class="min-w-0"><dt class="text-sm text-gray-400">{% trans "Sends" %}</dt><dd class="mt-2 text-2xl font-semibold text-white tabular-nums break-all">{{ sends }}</dd></div>
+        <div class="min-w-0"><dt class="text-sm text-gray-400">{% trans "Receives" %}</dt><dd class="mt-2 text-2xl font-semibold text-white tabular-nums break-all">{{ receives }}</dd></div>
+        <div class="min-w-0"><dt class="text-sm text-gray-400">{% trans "Successful reveals" %}</dt><dd class="mt-2 text-2xl font-semibold text-white tabular-nums break-all">{{ reveals }}</dd></div>
+    </dl>
+
+    <section class="space-y-4" aria-labelledby="trend-heading">
+        <div class="flex flex-wrap justify-between items-baseline gap-2">
+            <h2 id="trend-heading" class="text-lg font-semibold text-white">{% trans "Submission trend" %}</h2>
+            <span class="text-xs text-gray-400">{% if weekly_trend %}{% trans "Weekly totals" %}{% else %}{% trans "Daily totals" %}{% endif %}</span>
+        </div>
+        {% if total %}
+        <div class="flex items-end gap-1 h-40 border-b border-gray-700" aria-hidden="true">
+            {% for item in trend %}
+            <div class="flex-1 min-w-0 h-full flex items-end">
+                <div class="w-full bg-brand-500 rounded-t-sm" style="height: {{ item.height|unlocalize }}%" title="{{ item.start|date:'Y-m-d' }} – {{ item.end|date:'Y-m-d' }}: {{ item.count }}"></div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="flex justify-between text-xs text-gray-500" aria-hidden="true"><span>{{ start|date:"M j, Y" }}</span><span>{{ end|date:"M j, Y" }}</span></div>
+        {% else %}
+        <div class="border-y border-gray-800 py-10 text-center text-sm text-gray-400">{% trans "No whispers submitted in this period." %}</div>
+        {% endif %}
+        <details class="text-sm">
+            <summary class="cursor-pointer text-brand-400 hover:text-brand-300">{% trans "Daily totals" %}</summary>
+            <div class="max-h-64 overflow-auto mt-3 pr-4">
+                <table class="w-full text-left text-gray-300">
+                    <caption class="sr-only">{% trans "Daily submissions in UTC; first and last days may be partial." %}</caption>
+                    <thead><tr class="border-b border-gray-700"><th scope="col" class="py-2">{% trans "Date" %}</th><th scope="col" class="py-2 text-right">{% trans "Submitted" %}</th></tr></thead>
+                    <tbody>{% for item in daily %}<tr class="border-b border-gray-800"><th scope="row" class="py-2 font-normal">{{ item.day|date:"Y-m-d" }}</th><td class="py-2 text-right tabular-nums">{{ item.count }}</td></tr>{% endfor %}</tbody>
+                </table>
+            </div>
+        </details>
+    </section>
+
+    <dl class="grid sm:grid-cols-2 gap-6 border-y border-gray-800 py-6">
+        <div><dt class="text-sm text-gray-400">{% trans "Daily average" %}</dt><dd class="mt-2 text-xl font-semibold text-white">{{ average|floatformat:1 }}</dd></div>
+        <div><dt class="text-sm text-gray-400">{% trans "Burn-after-read share" %}</dt><dd class="mt-2 text-xl font-semibold text-amber-300">{{ burn_share|floatformat:1 }}%</dd></div>
+        <div><dt class="text-sm text-gray-400">{% trans "Busiest weekday" %}</dt><dd class="mt-2 text-base text-white">{% for name in busiest_weekdays %}{{ name }}{% if not forloop.last %}, {% endif %}{% empty %}{% trans "No submissions" %}{% endfor %}</dd></div>
+        <div><dt class="text-sm text-gray-400">{% trans "Busiest day" %}</dt><dd class="mt-2 text-base text-white max-h-24 overflow-auto">{% for day in busiest_days %}{{ day|date:"Y-m-d" }}{% if not forloop.last %}, {% endif %}{% empty %}{% trans "No submissions" %}{% endfor %}</dd></div>
+    </dl>
+
+    <div class="grid md:grid-cols-2 gap-8">
+        <section class="space-y-4" aria-labelledby="weekday-heading">
+            <h2 id="weekday-heading" class="text-lg font-semibold text-white">{% trans "Submissions by weekday" %}</h2>
+            <dl class="space-y-3">
+                {% for item in weekdays %}
+                <div><div class="flex justify-between gap-3 text-sm"><dt class="text-gray-400">{{ item.name }}</dt><dd class="text-gray-200 tabular-nums">{{ item.count }}</dd></div><div class="h-1.5 mt-1.5 bg-gray-800 rounded" aria-hidden="true"><div class="h-full bg-brand-500 rounded" style="width: {{ item.width|unlocalize }}%"></div></div></div>
+                {% endfor %}
+            </dl>
+        </section>
+        <section class="space-y-4" aria-labelledby="expiry-heading">
+            <h2 id="expiry-heading" class="text-lg font-semibold text-white">{% trans "Expiry choices" %}</h2>
+            <dl class="space-y-3">
+                {% for item in expiry_choices %}
+                <div><div class="flex justify-between gap-3 text-sm"><dt class="text-gray-400">{{ item.name }}</dt><dd class="text-gray-200 tabular-nums">{{ item.count }}</dd></div><div class="h-1.5 mt-1.5 bg-gray-800 rounded" aria-hidden="true"><div class="h-full bg-amber-400 rounded" style="width: {{ item.width|unlocalize }}%"></div></div></div>
+                {% endfor %}
+            </dl>
+        </section>
+    </div>
+
+    <footer class="border-t border-gray-800 pt-5 text-xs text-gray-500 space-y-2">
+        <p>{% trans "No whisper identifiers, content, IP addresses, or personal data are stored in statistics." %}</p>
+        <p>{% trans "Receives count completed submissions, not pending requests. Reveals count ciphertext deliveries, not unique readers or confirmed decryptions." %}</p>
+        <p>{% trans "The current hour and boundary days may be partial. Live totals can reveal aggregate activity on quiet instances." %}</p>
+    </footer>
+</div>
+{% endblock %}

@@ -4,6 +4,8 @@ import uuid
 from urllib.parse import urlencode
 
 from django.conf import settings
+from django.contrib.auth.views import redirect_to_login
+from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -30,6 +32,7 @@ from .serializers import (
     SubmitWhisperResponseSerializer,
     SubmitWhisperSerializer,
 )
+from .stats import record_stats, stats_report
 
 logger = logging.getLogger(__name__)
 
@@ -157,6 +160,17 @@ def about(request):
     )
 
 
+@require_GET
+def stats(request):
+    if not settings.PSST_ENABLE_STATS:
+        raise Http404
+    if settings.ENABLE_AUTH and not request.user.is_authenticated:
+        return redirect_to_login(request.get_full_path(), settings.LOGIN_URL)
+    return render(
+        request, "whispers/stats.html", stats_report(request.GET.get("range", "1w"))
+    )
+
+
 class CreateWhisperView(APIView):
     """
     Create a new encrypted whisper.
@@ -209,6 +223,13 @@ class CreateWhisperView(APIView):
         )
 
         whisper_url = request.build_absolute_uri(f"/whisper/{whisper.id}")
+
+        record_stats(
+            "submission",
+            mode="send",
+            max_views=whisper.max_views,
+            expiry=whisper.expiry_option,
+        )
 
         if d["notify_email"]:
             send_whisper_created_email(d["notify_email"], whisper_url)
@@ -344,6 +365,8 @@ class RevealWhisperView(APIView):
                 api_status=status.HTTP_410_GONE,
                 render_status=410,
             )
+
+        record_stats("reveal")
 
         if exhausted:
             whisper.delete()
@@ -547,11 +570,28 @@ class SubmitWhisperView(APIView):
             )
 
         d = serializer.validated_data
-        redis_store.update_crypto(
+        result = redis_store.submit_crypto_once(
             whisper.id,
             ciphertext=d["ciphertext"],
             iv=d["iv"],
             encapsulated_key=d["encapsulated_key"],
+        )
+
+        if result == "submitted":
+            return Response(
+                {"error": "Already submitted"}, status=status.HTTP_409_CONFLICT
+            )
+        if result == "missing":
+            whisper.delete()
+            return Response(
+                {"error": "This request has expired"}, status=status.HTTP_410_GONE
+            )
+
+        record_stats(
+            "submission",
+            mode="receive",
+            max_views=whisper.max_views,
+            expiry=whisper.expiry_option,
         )
 
         if whisper.notify_email:

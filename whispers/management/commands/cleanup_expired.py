@@ -3,6 +3,7 @@ from django.utils import timezone
 
 from whispers import redis_store
 from whispers.models import Whisper
+from whispers.stats import prune_stats
 
 
 class Command(BaseCommand):
@@ -16,6 +17,10 @@ class Command(BaseCommand):
             redis_store.delete_crypto(whisper_id)
 
         count, _ = expired.delete()
+        stats_count = prune_stats()
+        self.stdout.write(
+            self.style.SUCCESS(f"Deleted {stats_count} expired statistics bucket(s).")
+        )
         self.stdout.write(
             self.style.SUCCESS(f"Deleted {count} expired whisper(s).")
         )  # noqa: E501
