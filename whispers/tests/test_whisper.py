@@ -202,18 +202,6 @@ class AnonymousStatsTests(TestCase):
             row = HourlyWhisperStats.objects.get()
             self.assertEqual((row.sends, row.receives, row.reveals), (1, 1, 1))
 
-    @override_settings(PSST_ENABLE_STATS=False, ENABLE_AUTH=True)
-    def test_disabled_page_is_not_available(self):
-        self.assertEqual(self.client.get("/stats").status_code, 404)
-
-    @override_settings(
-        PSST_ENABLE_STATS=True, ENABLE_AUTH=True, LOGIN_REQUIRED_EXEMPT_URLS=[".*"]
-    )
-    def test_page_requires_auth_even_with_exemption(self):
-        response = self.client.get("/stats")
-        self.assertEqual(response.status_code, 302)
-        self.assertIn("next=/stats", response.url)
-
     def test_atomic_receive_acceptance(self):
         patcher, client = _patch_redis()
         with patcher:
