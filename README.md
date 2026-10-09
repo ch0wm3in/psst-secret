@@ -20,7 +20,7 @@ A privacy-focused, zero-knowledge app for sharing secrets securely. We call them
 - **Optional per-whisper auth** — individual whispers can require an authenticated viewer or submitter. Global overrides force auth for all whispers.
 - **Optional email notifications** — notify the receiver (send mode) or creator (receive mode) by email when a whisper is created or submitted. Supports Django's standard SMTP backend or Azure Communication Services.
 - **Opt-in anonymous statistics** — hourly aggregate submission and reveal counts, retained for 365 days, with relative time filters. Disabled by default; enable with `PSST_ENABLE_STATS=True`.
-- **Internationalization** — English and Danish (`da`) out of the box, with a per-request language switcher.
+- **Internationalization** — English, Danish (`da`), Czech (`cs`), Swedish (`sv`), and Filipino (Tagalog, `fil`) out of the box, with a per-request language switcher.
 - **No-cache headers** — middleware ensures browsers and proxies never cache whisper pages.
 
 ## How it works
@@ -208,7 +208,7 @@ BRAND_COLORS='{"50":"#eff6ff","100":"#dbeafe","200":"#bfdbfe","300":"#93c5fd","4
 
 ## Translations
 
-The UI is available in English and Danish. Translations live in `locale/<lang>/LC_MESSAGES/` and are split into two catalogs:
+The UI is available in English, Danish, Czech, Swedish, and Filipino (Tagalog). The language switcher keeps each language's native name: **English**, **Dansk**, **Čeština**, **Svenska**, and **Filipino**. Filipino uses the `fil` locale code. Translations live in `locale/<lang>/LC_MESSAGES/` and are split into two catalogs:
 
 | Catalog | Covers | How to mark strings |
 |---|---|---|
@@ -232,16 +232,17 @@ After adding or changing user-facing strings, regenerate both catalogs:
 
 ```bash
 # Templates + Python
-python manage.py makemessages -l da --ignore='node_modules' --ignore='theme/static_src/*' --ignore='staticfiles/*' --ignore='.venv/*'
+uv run --env-file .env python manage.py makemessages -l da -l cs -l sv -l fil --ignore='node_modules' --ignore='theme/static_src/*' --ignore='staticfiles/*' --ignore='.venv/*'
 
 # Standalone JavaScript
-python manage.py makemessages -l da -d djangojs --ignore='node_modules' --ignore='theme/*' --ignore='staticfiles/*' --ignore='.venv/*'
+uv run --env-file .env python manage.py makemessages -l da -l cs -l sv -l fil -d djangojs --ignore='node_modules' --ignore='theme/*' --ignore='staticfiles/*' --ignore='.venv/*'
 ```
 
-Then fill in the empty `msgstr ""` entries (and review any `#, fuzzy` ones) in `locale/da/LC_MESSAGES/django.po` and `djangojs.po`, and compile:
+Then fill in the empty `msgstr ""` entries (and review any `#, fuzzy` ones) in each language's `django.po` and `djangojs.po` catalogs, validate, and compile:
 
 ```bash
-python manage.py compilemessages -l da
+uv run --env-file .env python scripts/check_translations.py
+uv run --env-file .env python manage.py compilemessages -l da -l cs -l sv -l fil
 ```
 
 The Docker entrypoint runs `compilemessages` on startup, but commit the compiled `.mo` files as well so local development picks them up.
@@ -274,7 +275,7 @@ whispers/                Main app
 └── migrations/          Database migrations
 static/js/crypto.js      Client-side AES-256-GCM, X-Wing, HKDF-SHA256, and password protection
 templates/               Django templates (Tailwind CSS)
-locale/                  Translations (English, Danish)
+locale/                  Translations (Danish, Czech, Swedish, Filipino; English source strings)
 ```
 
 ## API
