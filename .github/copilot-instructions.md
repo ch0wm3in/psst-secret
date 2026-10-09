@@ -8,7 +8,7 @@ psst-secret is a Django 6 app for zero-knowledge sharing of encrypted secrets, w
 - `templates/`: Django templates using Tailwind classes. Pages extend `base/layout.html`.
 - `static/js/`: client-side cryptography and helpers. `crypto.js` uses the Web Crypto API with `gettext()` for translations.
 - `theme/static_src/`: locked Tailwind, Alpine.js, and noble-post-quantum builds. Never edit `theme/static/` or `staticfiles/` by hand.
-- `locale/da/LC_MESSAGES/`: Danish translations for `django.po` and `djangojs.po`, plus compiled `.mo` files.
+- `locale/da/LC_MESSAGES/`, `locale/cs/LC_MESSAGES/`, `locale/sv/LC_MESSAGES/`, and `locale/fil/LC_MESSAGES/`: Danish, Czech, Swedish, and Filipino (Tagalog) translations for `django.po` and `djangojs.po`, plus compiled `.mo` files.
 
 ## Commands
 Always run Python through `uv` and load `.env`:
@@ -28,10 +28,10 @@ Without `DEBUG=True` and a non-default `SECRET_KEY`, settings refuse to start; `
 Whenever user-facing strings are added or changed in templates, Python, or JavaScript:
 1. Mark them with `{% trans %}` or `{% blocktrans %}`, `gettext()`, or JavaScript `gettext()`/`interpolate()`. Never concatenate translated sentences.
 2. Regenerate both catalogs:
-   - `uv run --env-file .env python manage.py makemessages -l da --ignore='node_modules' --ignore='theme/static_src/*' --ignore='staticfiles/*' --ignore='.venv/*'`
-   - `uv run --env-file .env python manage.py makemessages -l da -d djangojs --ignore='node_modules' --ignore='theme/*' --ignore='staticfiles/*' --ignore='.venv/*'`
-3. Translate each empty `msgstr` into Danish. Review `#, fuzzy` entries, fix their translations, and remove the fuzzy flag.
-4. Run `uv run --env-file .env python scripts/check_translations.py` and `uv run --env-file .env python manage.py compilemessages -l da`. Commit the `.po` and `.mo` files.
+   - `uv run --env-file .env python manage.py makemessages -l da -l cs -l sv -l fil --ignore='node_modules' --ignore='theme/static_src/*' --ignore='staticfiles/*' --ignore='.venv/*'`
+   - `uv run --env-file .env python manage.py makemessages -l da -l cs -l sv -l fil -d djangojs --ignore='node_modules' --ignore='theme/*' --ignore='staticfiles/*' --ignore='.venv/*'`
+3. Translate each empty `msgstr` into the catalog's language (Danish, Czech, Swedish, or Filipino). Review `#, fuzzy` entries, fix their translations, and remove the fuzzy flag. Preserve format placeholders and HTML markup.
+4. Run `uv run --env-file .env python scripts/check_translations.py` and `uv run --env-file .env python manage.py compilemessages -l da -l cs -l sv -l fil`. Commit the `.po` and `.mo` files.
 
 ## Security and privacy
 - The server must never receive plaintext, decryption keys, private keys, or passwords. Key material stays in URL fragments or is encrypted client-side.

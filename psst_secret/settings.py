@@ -136,6 +136,9 @@ LANGUAGE_CODE = "en"
 LANGUAGES = [
     ("en", "English"),
     ("da", "Dansk"),
+    ("cs", "Čeština"),
+    ("sv", "Svenska"),
+    ("fil", "Filipino"),
 ]
 
 LOCALE_PATHS = [

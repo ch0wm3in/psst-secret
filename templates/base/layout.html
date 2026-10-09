@@ -15,11 +15,11 @@
                     {% csrf_token %}
                     <input name="next" type="hidden" value="{{ request.path }}">
                     {% get_current_language as LANGUAGE_CODE %}
-                    {% get_available_languages as LANGUAGES %}
+                    {% settings_value "LANGUAGES" as LANGUAGES %}
                     <select name="language" onchange="this.form.submit()"
                         class="bg-gray-800 border border-gray-700 text-gray-300 text-xs rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-brand-500 cursor-pointer">
                         {% for lang_code, lang_name in LANGUAGES %}
-                        <option value="{{ lang_code }}" {% if lang_code == LANGUAGE_CODE %}selected{% endif %}>{{ lang_name | capfirst }}</option>
+                        <option value="{{ lang_code }}" {% if lang_code == LANGUAGE_CODE %}selected{% endif %}>{% if lang_code == 'en' %}🇬🇧 {% elif lang_code == 'da' %}🇩🇰 {% elif lang_code == 'cs' %}🇨🇿 {% elif lang_code == 'sv' %}🇸🇪 {% elif lang_code == 'fil' %}🇵🇭 {% endif %}{{ lang_name | capfirst }}</option>
                         {% endfor %}
                     </select>
                 </form>
