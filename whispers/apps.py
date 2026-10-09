@@ -1,14 +1,18 @@
+import logging
 import threading
 import time
 
 from django.apps import AppConfig
 
+logger = logging.getLogger(__name__)
+
 
 def _cleanup_loop():
-    """Background loop that purges expired whispers every 60s."""
+    """Background loop that purges expired whispers and prunes stats(if enabled) every 60s."""
     from django.utils import timezone
 
     # Wait for DB to be ready
+    logger.info("Starting cleanup loop every 60 seconds")
     time.sleep(5)
     while True:
         try:
@@ -19,14 +23,14 @@ def _cleanup_loop():
             for whisper_id in expired.values_list("id", flat=True):
                 redis_store.delete_crypto(whisper_id)
             expired.delete()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.exception("Error cleaning up expired whispers: %s", e)
         try:
             from whispers.stats import prune_stats
 
             prune_stats()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.exception("Error pruning stats: %s", e)
         time.sleep(60)
 
 

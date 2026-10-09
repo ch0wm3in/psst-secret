@@ -4,7 +4,6 @@ import uuid
 from urllib.parse import urlencode
 
 from django.conf import settings
-from django.contrib.auth.views import redirect_to_login
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -164,8 +163,6 @@ def about(request):
 def stats(request):
     if not settings.PSST_ENABLE_STATS:
         raise Http404
-    if settings.ENABLE_AUTH and not request.user.is_authenticated:
-        return redirect_to_login(request.get_full_path(), settings.LOGIN_URL)
     return render(
         request, "whispers/stats.html", stats_report(request.GET.get("range", "1w"))
     )
