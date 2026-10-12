@@ -1,6 +1,13 @@
+import environ
+
 from whispers.apps import WhispersConfig
 
 from .settings import *  # noqa: F401, F403
+
+env = environ.Env(
+    # Set casting, default value
+    DEBUG=(bool, False)
+)
 
 
 class WhispersTestConfig(WhispersConfig):
@@ -27,8 +34,5 @@ STORAGES = {
     "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
 }
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": ":memory:",
-    }
+    "default": env.db_url("DATABASE_URL", default="sqlite:///:memory"),
 }
