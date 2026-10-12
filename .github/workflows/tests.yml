@@ -7,27 +7,29 @@ on:
   pull_request:
     branches: [main]
 
-jobs:
-  test:
-    runs-on: ubuntu-latest
+env:
+  DATABASE_URL: postgres://psst:psst@localhost:5432/psst_test
+  REDIS_URL: redis://localhost:6379/0
+  SECRET_KEY: test-secret-key-not-for-production
+  DEBUG: "true"
+  ENABLE_AUTH: "true"
+  ENABLE_LOCAL_LOGIN: "true"
+  POSTGRES_USER: psst
+  POSTGRES_PASSWORD: psst
+  POSTGRES_DB: psst_test
 
-    env:
-      DATABASE_URL: postgres://psst:psst@localhost:5432/psst_test
-      REDIS_URL: redis://localhost:6379/0
-      SECRET_KEY: test-secret-key-not-for-production
-      DEBUG: "true"
-      ENABLE_AUTH: "true"
-      ENABLE_LOCAL_LOGIN: "true"
-      POSTGRES_USER: psst
-      POSTGRES_PASSWORD: psst
-      POSTGRES_DB: psst_test
+jobs:
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Create .env for docker compose
+      - name: Create environment files
         run: |
+          touch .env.docker
           cat <<EOF > .env.docker
           POSTGRES_USER=$POSTGRES_USER
           POSTGRES_PASSWORD=$POSTGRES_PASSWORD
@@ -63,10 +65,93 @@ jobs:
         run: uv sync --locked
 
       - name: Run migrations
-        run: uv run python manage.py migrate --noinput
+        run: uv run --env-file .env python manage.py migrate --noinput
 
-      - name: Run tests
-        run: uv run pytest
+      - name: Run unit tests
+        run: uv run --env-file .env pytest --ignore=whispers/tests/browser -n 4
+
+      - name: Stop services
+        if: always()
+        run: docker compose down
+
+  e2e-tests:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Create environment files
+        run: |
+          touch .env.docker
+          cat <<EOF > .env.docker
+          POSTGRES_USER=$POSTGRES_USER
+          POSTGRES_PASSWORD=$POSTGRES_PASSWORD
+          POSTGRES_DB=$POSTGRES_DB
+          EOF
+
+      - name: Start services from docker-compose
+        run: docker compose up -d postgres redis
+
+      - name: Wait for PostgreSQL
+        run: |
+          for i in $(seq 1 30); do
+            docker compose exec -T postgres pg_isready -U "$POSTGRES_USER" && break
+            sleep 1
+          done
+
+      - name: Wait for Redis
+        run: |
+          for i in $(seq 1 30); do
+            docker compose exec -T redis redis-cli ping | grep -q PONG && break
+            sleep 1
+          done
+
+      - name: setup Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version-file: .python-version
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+
+      - name: Install dependencies
+        run: uv sync --locked
+
+      - name: Run migrations
+        run: uv run --env-file .env python manage.py migrate --noinput
+
+      - name: Set up Node.js for frontend assets
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+
+      - name: Install frontend build dependencies
+        working-directory: theme/static_src
+        run: npm ci
+
+      - name: Build frontend assets
+        run: uv run --env-file .env python manage.py tailwind build
+
+      - name: Install Playwright browsers
+        run: uv run --env-file .env playwright install --with-deps chromium firefox
+
+      - name: Run browser tests
+        run: >-
+          uv run --env-file .env pytest whispers/tests/browser --browser-tests
+          -n 4
+          --browser chromium --browser firefox
+          --tracing=retain-on-failure --screenshot=only-on-failure
+
+      - name: Upload browser failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: playwright-failures
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 3
 
       - name: Stop services
         if: always()

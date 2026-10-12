@@ -45,6 +45,7 @@ Whenever user-facing strings are added or changed in templates, Python, or JavaS
 - Read settings through `django.conf.settings`; do not import `psst_secret.settings` directly.
 - Tests use Django `TestCase` in `whispers/tests/`. Use `_patch_redis()` for fakeredis. `pytest.ini` sets `ENABLE_AUTH=True`, so tests without auth must remove `LoginRequiredMiddleware` with `_BASE_MIDDLEWARE` or an override. Clear the cache in tests that call throttled APIs.
 - Templates use the existing dark theme: `bg-gray-950/900/800`, `border-gray-700/800`, `text-gray-*`, and `brand-*`. Do not add CDNs or frontend dependencies.
+- When new functionality is added, make sure to write playwright tests to cover it.
 
 ## About page
 - The about page serves as a brief introduction to the project, its purpose, and key features.

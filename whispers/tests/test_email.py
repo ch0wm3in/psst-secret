@@ -31,6 +31,10 @@ _TEST_REST_FRAMEWORK = {
     },
 }
 
+_TEST_MAILERS = {
+    "default": {"BACKEND": "django.core.mail.backends.locmem.EmailBackend"}
+}
+
 
 def _fake_redis_client():
     return fakeredis.FakeRedis(decode_responses=True)
@@ -49,7 +53,7 @@ def _patch_redis():
 @override_settings(
     MIDDLEWARE=_BASE_MIDDLEWARE,
     REST_FRAMEWORK=_TEST_REST_FRAMEWORK,
-    EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
+    MAILERS=_TEST_MAILERS,
     PSST_ENABLE_EMAIL=True,
     DEFAULT_FROM_EMAIL="test@example.com",
 )
@@ -158,7 +162,7 @@ class SendModeEmailTests(TestCase):
 @override_settings(
     MIDDLEWARE=_BASE_MIDDLEWARE,
     REST_FRAMEWORK=_TEST_REST_FRAMEWORK,
-    EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
+    MAILERS=_TEST_MAILERS,
     PSST_ENABLE_EMAIL=False,
     DEFAULT_FROM_EMAIL="test@example.com",
 )
@@ -192,7 +196,7 @@ class SendModeEmailDisabledTests(TestCase):
 @override_settings(
     MIDDLEWARE=_BASE_MIDDLEWARE,
     REST_FRAMEWORK=_TEST_REST_FRAMEWORK,
-    EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
+    MAILERS=_TEST_MAILERS,
     PSST_ENABLE_EMAIL=True,
     DEFAULT_FROM_EMAIL="test@example.com",
 )

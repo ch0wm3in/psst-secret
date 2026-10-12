@@ -78,6 +78,9 @@ The app is served by [Granian](https://github.com/emmett-framework/granian) on p
 ```bash
 git clone https://github.com/ch0wm3in/psst-secret.git && cd psst-secret
 uv sync  # or: pip install -e .
+# Setup .env file
+# source the env file however you want
+source .venv/bin/activate
 python manage.py tailwind install
 python manage.py tailwind build
 
@@ -111,7 +114,7 @@ CSS changes. After editing a custom JavaScript source, rebuild it with:
 npm --prefix theme/static_src run build:custom
 ```
 
-Run `uv run --env-file .env python manage.py tailwind build` to rebuild all frontend
+Run `python manage.py tailwind build` to rebuild all frontend
 assets, then run `collectstatic` as usual for production deployments.
 
 ## Architecture
@@ -179,7 +182,7 @@ Buckets older than the rolling 365-day cutoff are removed by the existing backgr
 | Variable | Description | Default |
 |---|---|---|
 | `PSST_ENABLE_EMAIL` | Enable email notifications (sender / creator notifications on creation and submission). | `False` |
-| `EMAIL_BACKEND` | Django email backend. Use `django.core.mail.backends.smtp.EmailBackend` for SMTP or `azure_communication_email.EmailBackend` for Azure Communication Services. | `django.core.mail.backends.console.EmailBackend` |
+| `EMAIL_BACKEND` | Backend for `MAILERS["default"]`. This environment variable remains supported; the deprecated Django `EMAIL_BACKEND` setting is no longer used. Use `django.core.mail.backends.smtp.EmailBackend` for SMTP or `django_better_azure_communication_email.EmailBackend` for Azure Communication Services. | `django.core.mail.backends.console.EmailBackend` |
 | `DEFAULT_FROM_EMAIL` | From-address used for all outbound mail. | `noreply@localhost` |
 | `AZURE_COMMUNICATION_CONNECTION_STRING` | Azure Communication Services connection string. Only required when using the Azure email backend. | _empty_ |
 
@@ -216,7 +219,7 @@ checked while allowing creators to disable it. Set `PSST_FORCE_RECEIVE_ACCESS=Tr
 instead to make the restriction mandatory. These settings do not retroactively
 restrict existing requests.
 
-Run `uv run --env-file .env python manage.py migrate` after upgrading. Requests
+Run `python manage.py migrate` after upgrading. Requests
 created by signed-in users while this feature is enabled record their creator,
 even if the restriction is initially off. Older requests without a recorded creator
 cannot use the access editor. Anonymous callers cannot create restricted requests.
@@ -303,22 +306,90 @@ After adding or changing user-facing strings, regenerate both catalogs:
 
 ```bash
 # Templates + Python
-uv run --env-file .env python manage.py makemessages -l da -l cs -l sv -l fil --ignore='node_modules' --ignore='theme/static_src/*' --ignore='staticfiles/*' --ignore='.venv/*'
+python manage.py makemessages -l da -l cs -l sv -l fil --ignore='node_modules' --ignore='theme/static_src/*' --ignore='staticfiles/*' --ignore='.venv/*'
 
 # Standalone JavaScript
-uv run --env-file .env python manage.py makemessages -l da -l cs -l sv -l fil -d djangojs --ignore='node_modules' --ignore='theme/*' --ignore='staticfiles/*' --ignore='.venv/*'
+python manage.py makemessages -l da -l cs -l sv -l fil -d djangojs --ignore='node_modules' --ignore='theme/*' --ignore='staticfiles/*' --ignore='.venv/*'
 ```
 
 Then fill in the empty `msgstr ""` entries (and review any `#, fuzzy` ones) in each language's `django.po` and `djangojs.po` catalogs, validate, and compile:
 
 ```bash
-uv run --env-file .env python scripts/check_translations.py
-uv run --env-file .env python manage.py compilemessages -l da -l cs -l sv -l fil
+python scripts/check_translations.py
+python manage.py compilemessages -l da -l cs -l sv -l fil
 ```
 
 The Docker entrypoint runs `compilemessages` on startup, but commit the compiled `.mo` files as well so local development picks them up.
 
 To add a new language, add it to `LANGUAGES` in `psst_secret/settings.py` and run the commands above with `-l <code>`.
+
+## Testing
+
+Run the Django suite as usual. Browser cases are skipped unless explicitly enabled:
+
+```bash
+pytest -n 4
+```
+
+The Playwright tests in `whispers/tests/browser/` run real client-side encryption
+against an isolated Django live test server. They use a fresh fake Redis store per
+test and Django's test database, never the running application's data. With
+`pytest-xdist`, each worker gets its own database, browser, cache, and Redis state;
+live servers bind to random ports. The production cleanup loop is disabled by the
+test app configuration so it cannot interfere with test data. No separate
+development server or Redis service is needed. For a fully local run without
+PostgreSQL, select SQLite with `DATABASE_URL=sqlite:///:memory:` as shown below.
+
+Install the browser binaries once, and rebuild the frontend assets after changing
+JavaScript or templates (Node.js is required for the asset build):
+
+```bash
+uv sync --locked
+playwright install chromium firefox
+npm ci --prefix theme/static_src
+python manage.py tailwind build
+pytest whispers/tests/browser --browser-tests -n 4
+```
+
+On Linux, Playwright may require system libraries. Install them using
+`playwright install-deps chromium firefox`; this may require
+administrator privileges.
+
+Run both browser engines, keep failure screenshots and traces, or run the complete
+Django and browser suites together:
+
+```bash
+pytest whispers/tests/browser --browser-tests -n 4 --browser chromium --browser firefox --tracing=retain-on-failure --screenshot=only-on-failure
+pytest --browser-tests -n 4
+```
+
+Adjust `-n 4` to fit your machine's CPU and memory; use `-n 0` to run sequentially.
+For interactive debugging, use `-n 0 --headed`, or `-k <test_name>` to target a workflow. Open a
+failure trace with `playwright show-trace <path-to-trace.zip>`.
+Artifacts under `test-results/` are ignored by Git. They contain synthetic test
+plaintext, passwords, and keys, so treat them as sensitive if you adapt the suite
+to use other data. Never point these tests at a deployed instance.
+
+Browser coverage includes send and receive text/file round trips; individual and
+bulk downloads; passwords and retries; expiry, burns, and view limits; IP and
+authentication restrictions; approved-reader management and revocation; email
+notifications; clipboard actions; all supported languages; live statistics;
+desktop/mobile rendering; legacy payloads; and validation, network, and server
+errors. Security assertions cover fragment isolation, plaintext/password/key
+privacy, authenticated CSRF checks, ciphertext tampering, and safe text rendering.
+
+Browser tests complement, rather than replace, the Django tests for internal
+model/serializer behavior, concurrent Redis transitions, cleanup commands, and
+email failure handling. Real SSO providers, SMTP/Azure delivery, and production
+proxy/deployment configuration require separate integration testing. Browser
+sessions enable `DJANGO_ALLOW_ASYNC_UNSAFE` only inside the test process to allow
+Playwright's synchronous event loop to coexist with Django's synchronous test ORM;
+application settings are unchanged.
+
+Pull-request CI runs independent Unit Tests and E2E Tests jobs concurrently.
+The unit job excludes browser tests and uses four workers; the E2E job rebuilds
+frontend assets and runs Chromium and Firefox with four workers. Each job starts
+and cleans up its own services. Browser failure artifacts are retained for three days.
 
 ## Project structure
 
