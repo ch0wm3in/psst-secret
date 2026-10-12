@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psst-secret\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-12 07:38+0000\n"
+"POT-Creation-Date: 2026-10-12 08:53+0000\n"
 "PO-Revision-Date: 2026-10-09 07:02+0000\n"
 "Last-Translator: \n"
 "Language-Team: Czech\n"
@@ -343,14 +343,30 @@ msgid "This provides an extra layer of security for highly sensitive data"
 msgstr "To poskytuje další vrstvu zabezpečení pro vysoce citlivá data"
 
 #: templates/whispers/about.html:101
+msgid "Restricted receive access"
+msgstr "Omezený přístup v režimu přijímání"
+
+#: templates/whispers/about.html:102
+msgid ""
+"Receive requests can limit reading to their creator and approved accounts. "
+"The creator can update readers from the reveal link. Readers still need the "
+"full link and any password; removing access cannot revoke content already "
+"retrieved."
+msgstr ""
+"Žádosti o přijetí mohou omezit čtení na svého tvůrce a schválené účty. "
+"Tvůrce může upravit čtenáře prostřednictvím odkazu pro zobrazení. Čtenáři "
+"stále potřebují úplný odkaz a případné heslo; odebrání přístupu nemůže "
+"odvolat již získaný obsah."
+
+#: templates/whispers/about.html:108
 msgid "Security Features"
 msgstr "Bezpečnostní funkce"
 
-#: templates/whispers/about.html:104
+#: templates/whispers/about.html:111
 msgid "Burn After Reading"
 msgstr "Smazání po přečtení"
 
-#: templates/whispers/about.html:106
+#: templates/whispers/about.html:113
 msgid ""
 "Whispers marked as burn-after-read are <strong class=\"text-"
 "gray-300\">permanently deleted</strong> the moment they are viewed — not "
@@ -360,7 +376,7 @@ msgstr ""
 "class=\"text-gray-300\">trvale smazány</strong> — nejsou pouze označeny, "
 "skutečně zmizí."
 
-#: templates/whispers/about.html:108
+#: templates/whispers/about.html:115
 msgid ""
 "Whispers marked as burn-after-read are <strong class=\"text-"
 "gray-300\">permanently erased from memory</strong> the moment they are "
@@ -370,11 +386,11 @@ msgstr ""
 "class=\"text-gray-300\">trvale odstraněny z paměti</strong> — nejsou pouze "
 "označeny, skutečně zmizí."
 
-#: templates/whispers/about.html:112
+#: templates/whispers/about.html:119
 msgid "Auto-Expiry"
 msgstr "Automatické vypršení platnosti"
 
-#: templates/whispers/about.html:113
+#: templates/whispers/about.html:120
 msgid ""
 "All whispers require an expiration time (5 minutes to 1 month). Expired "
 "whispers are automatically evicted from Redis via TTL and continuously "
@@ -384,7 +400,7 @@ msgstr ""
 "měsíce). Whispery po vypršení platnosti Redis automaticky odstraní pomocí "
 "TTL a průběžně je maže proces na pozadí."
 
-#: templates/whispers/about.html:117
+#: templates/whispers/about.html:124
 msgid ""
 "Industry-standard authenticated encryption. Provides both confidentiality "
 "and integrity — any tampering with the ciphertext is detected."
@@ -392,11 +408,11 @@ msgstr ""
 "Standardní autentizované šifrování. Zajišťuje důvěrnost i integritu — "
 "jakákoli manipulace se zašifrovanými daty je odhalena."
 
-#: templates/whispers/about.html:120
+#: templates/whispers/about.html:127
 msgid "Post-Quantum Ready"
 msgstr "Připraveno na kvantové počítače"
 
-#: templates/whispers/about.html:121
+#: templates/whispers/about.html:128
 msgid ""
 "Send mode uses 256-bit symmetric keys, which remain secure against quantum "
 "computers. Receive mode uses the hybrid ML-KEM-768 + X25519 key exchange."
@@ -405,11 +421,11 @@ msgstr ""
 "i proti kvantovým počítačům. Režim přijímání používá hybridní výměnu klíčů "
 "ML-KEM-768 + X25519."
 
-#: templates/whispers/about.html:124
+#: templates/whispers/about.html:131
 msgid "Zero Knowledge"
 msgstr "Nulová znalost"
 
-#: templates/whispers/about.html:126
+#: templates/whispers/about.html:133
 msgid ""
 "The server stores only encrypted data and public key material in Redis. It "
 "has no ability to decrypt your data, even under compulsion."
@@ -417,7 +433,7 @@ msgstr ""
 "Server ukládá do Redis pouze zašifrovaná data a veřejné klíče. Vaše data "
 "nedokáže dešifrovat ani z donucení."
 
-#: templates/whispers/about.html:128
+#: templates/whispers/about.html:135
 msgid ""
 "The server stores only encrypted data and public key material — and only in "
 "volatile memory (Redis). It has no ability to decrypt your data, even under "
@@ -426,43 +442,43 @@ msgstr ""
 "Server ukládá pouze zašifrovaná data a veřejné klíče — a to jen do volatilní "
 "paměti (Redis). Vaše data nedokáže dešifrovat ani z donucení."
 
-#: templates/whispers/about.html:136
+#: templates/whispers/about.html:143
 msgid "What the Server Stores"
 msgstr "Co server ukládá"
 
-#: templates/whispers/about.html:140
+#: templates/whispers/about.html:147
 msgid "Redis (with persistence enabled)"
 msgstr "Redis (s povolenou perzistencí)"
 
-#: templates/whispers/about.html:142
+#: templates/whispers/about.html:149
 msgid "Redis (in-memory only — never touches disk)"
 msgstr "Redis (pouze v paměti — nikdy na disku)"
 
-#: templates/whispers/about.html:147 templates/whispers/about.html:167
+#: templates/whispers/about.html:154 templates/whispers/about.html:174
 msgid "Field"
 msgstr "Pole"
 
-#: templates/whispers/about.html:148 templates/whispers/about.html:168
+#: templates/whispers/about.html:155 templates/whispers/about.html:175
 msgid "Purpose"
 msgstr "Účel"
 
-#: templates/whispers/about.html:152
+#: templates/whispers/about.html:159
 msgid "Your encrypted data (useless without the key)"
 msgstr "Vaše zašifrovaná data (bez klíče nepoužitelná)"
 
-#: templates/whispers/about.html:153
+#: templates/whispers/about.html:160
 msgid "Random initialization vector for AES-GCM"
 msgstr "Náhodný inicializační vektor pro AES-GCM"
 
-#: templates/whispers/about.html:154
+#: templates/whispers/about.html:161
 msgid "PBKDF2 salt (only if password-protected)"
 msgstr "Sůl pro PBKDF2 (pouze při ochraně heslem)"
 
-#: templates/whispers/about.html:155
+#: templates/whispers/about.html:162
 msgid "Receive mode: your X-Wing public key (can only encrypt)"
 msgstr "Režim přijímání: váš veřejný klíč X-Wing (umožňuje pouze šifrování)"
 
-#: templates/whispers/about.html:156
+#: templates/whispers/about.html:163
 msgid ""
 "Receive mode: the sender's key encapsulation (useless without your private "
 "key)"
@@ -470,7 +486,7 @@ msgstr ""
 "Režim přijímání: zapouzdření klíče od odesílatele (bez vašeho soukromého "
 "klíče nepoužitelné)"
 
-#: templates/whispers/about.html:157
+#: templates/whispers/about.html:164
 msgid ""
 "Receive mode: your private key seed encrypted with your password (only if "
 "password-protected)"
@@ -478,51 +494,59 @@ msgstr ""
 "Režim přijímání: zárodek vašeho soukromého klíče zašifrovaný vaším heslem "
 "(pouze při ochraně heslem)"
 
-#: templates/whispers/about.html:158
+#: templates/whispers/about.html:165
 msgid "Reveal counter, used to enforce the view limit"
 msgstr "Počítadlo zobrazení pro vynucení jejich limitu"
 
-#: templates/whispers/about.html:163
+#: templates/whispers/about.html:170
 msgid "PostgreSQL (metadata only)"
 msgstr "PostgreSQL (pouze metadata)"
 
-#: templates/whispers/about.html:172
+#: templates/whispers/about.html:179
 msgid "Random identifier used in the view link"
 msgstr "Náhodný identifikátor použitý v odkazu pro zobrazení"
 
-#: templates/whispers/about.html:173
+#: templates/whispers/about.html:180
 msgid "Receive mode: separate random identifier used in the submit link"
 msgstr ""
 "Režim přijímání: samostatný náhodný identifikátor použitý v odkazu pro "
 "odeslání"
 
-#: templates/whispers/about.html:174
+#: templates/whispers/about.html:181
 msgid "When the whisper was created and when it will be auto-deleted"
 msgstr "Kdy byl whisper vytvořen a kdy bude automaticky smazán"
 
-#: templates/whispers/about.html:175
+#: templates/whispers/about.html:182
 msgid "Number of allowed reveals before destruction (1 = burn; 0 = unlimited)"
 msgstr ""
 "Počet povolených zobrazení před smazáním (1 = smazání po přečtení; 0 = "
 "neomezeně)"
 
-#: templates/whispers/about.html:176
+#: templates/whispers/about.html:183
 msgid "Send or receive"
 msgstr "Odesílání nebo přijímání"
 
-#: templates/whispers/about.html:177
+#: templates/whispers/about.html:184
 msgid "IP/CIDR restriction"
 msgstr "Omezení podle IP/CIDR"
 
-#: templates/whispers/about.html:178
+#: templates/whispers/about.html:185
 msgid "Whether signing in is required to view or submit"
 msgstr "Zda je k zobrazení nebo odeslání vyžadováno přihlášení"
 
-#: templates/whispers/about.html:179
+#: templates/whispers/about.html:187
+msgid ""
+"Receive mode: creator and approved reader account references (never included "
+"in statistics)"
+msgstr ""
+"Režim přijímání: odkazy na účty tvůrce a schválených čtenářů (nikdy nejsou "
+"zahrnuty ve statistikách)"
+
+#: templates/whispers/about.html:189
 msgid "Email address to notify (only if you opt in)"
 msgstr "E-mailová adresa pro upozornění (pouze pokud tuto možnost povolíte)"
 
-#: templates/whispers/about.html:184
+#: templates/whispers/about.html:194
 msgid ""
 "The server does <strong>not</strong> store: plaintext, encryption keys, "
 "private keys, or passwords. An email address is only stored if you opt in to "
@@ -532,7 +556,7 @@ msgstr ""
 "soukromé klíče ani hesla. E-mailová adresa se ukládá pouze při povolení "
 "upozornění. Zašifrovaná data se ukládají do Redis s povolenou perzistencí."
 
-#: templates/whispers/about.html:186
+#: templates/whispers/about.html:196
 msgid ""
 "The server does <strong>not</strong> store: plaintext, encryption keys, "
 "private keys, or passwords. An email address is only stored if you opt in to "
@@ -544,19 +568,19 @@ msgstr ""
 "upozornění. Zašifrovaná data existují pouze ve volatilní paměti a při "
 "restartu Redis se ztratí."
 
-#: templates/whispers/about.html:193
+#: templates/whispers/about.html:203
 msgid "Tech Stack"
 msgstr "Použité technologie"
 
-#: templates/whispers/about.html:197
+#: templates/whispers/about.html:207
 msgid "Redis (persistent)"
 msgstr "Redis (s perzistencí)"
 
-#: templates/whispers/about.html:199
+#: templates/whispers/about.html:209
 msgid "Redis (in-memory)"
 msgstr "Redis (v paměti)"
 
-#: templates/whispers/about.html:214
+#: templates/whispers/about.html:224
 msgid "Create a whisper"
 msgstr "Vytvořit whisper"
 
@@ -618,7 +642,7 @@ msgstr "Kliknutím níže tento whisper dešifrujete a zobrazíte."
 msgid "Reveal whisper"
 msgstr "Zobrazit whisper"
 
-#: templates/whispers/confirm.html:34
+#: templates/whispers/confirm.html:36
 msgid "Loading…"
 msgstr "Načítání…"
 
@@ -784,7 +808,7 @@ msgid "Password"
 msgstr "Heslo"
 
 #: templates/whispers/create.html:131 templates/whispers/create.html:167
-#: templates/whispers/create.html:208
+#: templates/whispers/create.html:224
 msgid "optional"
 msgstr "volitelné"
 
@@ -867,24 +891,38 @@ msgstr "Vyžadovat přihlášení pro odeslání"
 msgid "The person submitting a whisper to this request must be signed in."
 msgstr "Osoba odesílající whisper v rámci této žádosti musí být přihlášena."
 
-#: templates/whispers/create.html:206
-msgid "Notify recipient"
-msgstr "Upozornit příjemce"
+#: templates/whispers/create.html:206 templates/whispers/receive_access.html:8
+#: whispers/views.py:696
+msgid "Restricted receive access is required."
+msgstr "Omezený přístup v režimu přijímání je vyžadován."
 
-#: templates/whispers/create.html:207
-msgid "Notify me when submitted"
-msgstr "Upozornit mě po odeslání"
+#: templates/whispers/create.html:209 templates/whispers/receive_access.html:10
+msgid "Only me and approved readers"
+msgstr "Pouze já a schválení čtenáři"
 
-#: templates/whispers/create.html:212
+#: templates/whispers/create.html:212 templates/whispers/receive_access.html:13
+msgid "Additional readers (verified primary emails)"
+msgstr "Další čtenáři (ověřené hlavní e-mailové adresy)"
+
+#: templates/whispers/create.html:215 templates/whispers/create.html:228
+#: templates/whispers/receive_access.html:16
 msgid "recipient@example.com"
 msgstr "prijemce@example.com"
 
-#: templates/whispers/create.html:214
+#: templates/whispers/create.html:222
+msgid "Notify recipient"
+msgstr "Upozornit příjemce"
+
+#: templates/whispers/create.html:223
+msgid "Notify me when submitted"
+msgstr "Upozornit mě po odeslání"
+
+#: templates/whispers/create.html:230
 msgid ""
 "The recipient will be emailed a notification that a whisper is waiting. "
 "<strong>The email will NOT contain the decryption key</strong> — you must "
 "share the full link (with the key) separately. <strong>This option is not "
-"recommended, as it will must likely confuse the recipient more than just "
+"recommended, as it will most likely confuse the recipient more than just "
 "sending it directly on other channels</strong>"
 msgstr ""
 "Příjemce dostane e-mailové upozornění, že na něj čeká whisper. <strong>E-"
@@ -892,7 +930,7 @@ msgstr ""
 "musíte sdílet zvlášť. <strong>Tuto možnost nedoporučujeme, protože příjemce "
 "pravděpodobně zmate více než přímé odeslání odkazu jiným způsobem</strong>"
 
-#: templates/whispers/create.html:215
+#: templates/whispers/create.html:231
 msgid ""
 "You will be emailed when someone submits a whisper to your request. "
 "<strong>The email will NOT contain the decryption key</strong> — use the "
@@ -902,11 +940,11 @@ msgstr ""
 "<strong>E-mail NEBUDE obsahovat dešifrovací klíč</strong> — použijte odkaz "
 "pro zobrazení, který jste si uložili při vytváření žádosti."
 
-#: templates/whispers/create.html:225
+#: templates/whispers/create.html:241
 msgid "Whisper created!"
 msgstr "Whisper vytvořen!"
 
-#: templates/whispers/create.html:226
+#: templates/whispers/create.html:242
 msgid ""
 "Share this link. The decryption key is in the URL fragment and is "
 "<strong>never sent to the server</strong>."
@@ -914,13 +952,13 @@ msgstr ""
 "Sdílejte tento odkaz. Dešifrovací klíč je ve fragmentu URL a <strong>nikdy "
 "se neodesílá na server</strong>."
 
-#: templates/whispers/create.html:232 templates/whispers/create.html:262
-#: templates/whispers/create.html:273 templates/whispers/create.html:406
+#: templates/whispers/create.html:248 templates/whispers/create.html:278
+#: templates/whispers/create.html:289 templates/whispers/create.html:424
 #: templates/whispers/view.html:44
 msgid "Copy"
 msgstr "Kopírovat"
 
-#: templates/whispers/create.html:236
+#: templates/whispers/create.html:252
 msgid ""
 "This whisper is password-protected. The recipient will need the password to "
 "decrypt it."
@@ -928,19 +966,19 @@ msgstr ""
 "Tento whisper je chráněn heslem. Příjemce bude k jeho dešifrování potřebovat "
 "heslo."
 
-#: templates/whispers/create.html:239
+#: templates/whispers/create.html:255
 msgid "This whisper will be destroyed after being viewed once."
 msgstr "Tento whisper bude po jednom zobrazení smazán."
 
-#: templates/whispers/create.html:244 templates/whispers/create.html:288
+#: templates/whispers/create.html:260 templates/whispers/create.html:304
 msgid "Create another whisper"
 msgstr "Vytvořit další whisper"
 
-#: templates/whispers/create.html:251
+#: templates/whispers/create.html:267
 msgid "Request created!"
 msgstr "Žádost vytvořena!"
 
-#: templates/whispers/create.html:252
+#: templates/whispers/create.html:268
 msgid ""
 "Share the <strong>submit link</strong> with the person who should send you a "
 "whisper. Use the <strong>view link</strong> to retrieve it once they've "
@@ -950,15 +988,15 @@ msgstr ""
 "whisper. Po odeslání jej získáte pomocí <strong>odkazu pro zobrazení</"
 "strong>."
 
-#: templates/whispers/create.html:256
+#: templates/whispers/create.html:272
 msgid "Submit link — share this with the sender"
 msgstr "Odkaz pro odeslání — sdílejte jej s odesílatelem"
 
-#: templates/whispers/create.html:267
+#: templates/whispers/create.html:283
 msgid "View link — for you to retrieve the whisper"
 msgstr "Odkaz pro zobrazení — pro přečtení vašeho whisperu"
 
-#: templates/whispers/create.html:280
+#: templates/whispers/create.html:296
 msgid ""
 "This request is password-protected. You will need the password to open the "
 "view link. Do not share it with the sender."
@@ -966,24 +1004,24 @@ msgstr ""
 "Tato žádost je chráněna heslem. K otevření odkazu pro zobrazení budete "
 "potřebovat heslo. Nesdílejte jej s odesílatelem."
 
-#: templates/whispers/create.html:283
+#: templates/whispers/create.html:299
 msgid "The whisper will be destroyed after you view it once."
 msgstr "Whisper bude smazán, jakmile jej jednou zobrazíte."
 
-#: templates/whispers/create.html:304
+#: templates/whispers/create.html:320
 msgid "Leave blank to share without a password."
 msgstr "Pro sdílení bez hesla ponechte prázdné."
 
-#: templates/whispers/create.html:305
+#: templates/whispers/create.html:321
 msgid "Strong password — all requirements met."
 msgstr "Silné heslo — všechny požadavky jsou splněny."
 
-#: templates/whispers/create.html:306
+#: templates/whispers/create.html:322
 #, python-brace-format
 msgid "{count} of 5 requirements still missing."
 msgstr "Počet nesplněných požadavků z 5: {count}."
 
-#: templates/whispers/create.html:405
+#: templates/whispers/create.html:423
 msgid "Copied!"
 msgstr "Zkopírováno!"
 
@@ -1008,6 +1046,10 @@ msgstr "Přístup odepřen"
 #: templates/whispers/forbidden.html:9
 msgid "Access denied"
 msgstr "Přístup odepřen"
+
+#: templates/whispers/forbidden.html:10 whispers/views.py:409
+msgid "You do not have access to this whisper."
+msgstr "K tomuto whisperu nemáte přístup."
 
 #: templates/whispers/forbidden.html:10
 msgid "Your IP address is not allowed to access this whisper."
@@ -1070,6 +1112,14 @@ msgstr "Platnost této žádosti vyprší %(expires_at)s."
 #: templates/whispers/pending.html:15
 msgid "← Back to home"
 msgstr "← Zpět na úvodní stránku"
+
+#: templates/whispers/receive_access.html:4
+msgid "Reader access"
+msgstr "Přístup čtenářů"
+
+#: templates/whispers/receive_access.html:19
+msgid "Save access"
+msgstr "Uložit přístup"
 
 #: templates/whispers/stats.html:10
 msgid "Whisper statistics"
@@ -1299,7 +1349,7 @@ msgstr ""
 "Tento whisper byl smazán — už ho nikdy nebude možné zobrazit. Stáhněte si "
 "jej nyní."
 
-#: templates/whispers/view.html:68 templates/whispers/view.html:218
+#: templates/whispers/view.html:68 templates/whispers/view.html:220
 msgid "Decrypted File"
 msgstr "Dešifrovaný soubor"
 
@@ -1315,57 +1365,57 @@ msgstr "Dešifrování selhalo"
 msgid "The link may be incomplete or the whisper may have been tampered with."
 msgstr "Odkaz může být neúplný nebo mohlo dojít k manipulaci s whisperem."
 
-#: templates/whispers/view.html:113
+#: templates/whispers/view.html:115
 msgid "View"
 msgstr "Zobrazení"
 
-#: templates/whispers/view.html:113
+#: templates/whispers/view.html:115
 msgid "this whisper has unlimited views"
 msgstr "tento whisper má neomezený počet zobrazení"
 
-#: templates/whispers/view.html:115
+#: templates/whispers/view.html:117
 msgid "Final view"
 msgstr "Poslední zobrazení"
 
-#: templates/whispers/view.html:115
+#: templates/whispers/view.html:117
 msgid "this whisper has now been destroyed"
 msgstr "tento whisper byl právě smazán"
 
-#: templates/whispers/view.html:118
+#: templates/whispers/view.html:120
 msgid "Viewed"
 msgstr "Zobrazeno"
 
-#: templates/whispers/view.html:118
+#: templates/whispers/view.html:120
 msgid "view(s) remaining"
 msgstr "zbývajících zobrazení"
 
-#: templates/whispers/view.html:208
+#: templates/whispers/view.html:210
 msgid "Download"
 msgstr "Stáhnout"
 
-#: templates/whispers/view.html:222
+#: templates/whispers/view.html:224
 msgid "Decrypted Files"
 msgstr "Dešifrované soubory"
 
-#: templates/whispers/view.html:223
+#: templates/whispers/view.html:225
 #, python-format
 msgid "%%s files — %%s total"
 msgstr "Počet souborů: %%s — celkem %%s"
 
-#: templates/whispers/view.html:284
+#: templates/whispers/view.html:286
 msgid "Wrong password. Please try again."
 msgstr "Nesprávné heslo. Zkuste to znovu."
 
-#: templates/whispers/view.html:291
+#: templates/whispers/view.html:293
 msgid "No encrypted data available. The psst may have already been viewed."
 msgstr ""
 "Nejsou k dispozici žádná zašifrovaná data. Whisper již mohl být zobrazen."
 
-#: templates/whispers/view.html:303
+#: templates/whispers/view.html:305
 msgid "No decryption key found in URL. The link may be incomplete."
 msgstr "V URL nebyl nalezen dešifrovací klíč. Odkaz může být neúplný."
 
-#: templates/whispers/view.html:312
+#: templates/whispers/view.html:314
 msgid "Decryption failed. The link may be incomplete or corrupted."
 msgstr "Dešifrování selhalo. Odkaz může být neúplný nebo poškozený."
 
@@ -1404,3 +1454,19 @@ msgstr "5 minut"
 #: whispers/stats.py:119
 msgid "1 hour"
 msgstr "1 hodina"
+
+#: whispers/views.py:131
+msgid "Enter the verified primary email of each additional reader."
+msgstr "Zadejte ověřenou hlavní e-mailovou adresu každého dalšího čtenáře."
+
+#: whispers/views.py:609
+msgid "Receive reader restrictions are not enabled."
+msgstr "Omezení čtenářů v režimu přijímání nejsou povolena."
+
+#: whispers/views.py:613
+msgid "Sign in to manage reader access."
+msgstr "Pro správu přístupu čtenářů se přihlaste."
+
+#: whispers/views.py:617 whispers/views.py:702
+msgid "Enable restricted access before adding readers."
+msgstr "Před přidáním čtenářů zapněte omezený přístup."

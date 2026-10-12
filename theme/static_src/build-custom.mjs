@@ -5,6 +5,7 @@ await build({
     entryPoints: [
         fileURLToPath(new URL('../../static/js/crypto.js', import.meta.url)),
         fileURLToPath(new URL('../../static/js/password-strength.js', import.meta.url)),
+        fileURLToPath(new URL('../../static/js/receive-access.js', import.meta.url)),
     ],
     outdir: fileURLToPath(new URL('../static/js/', import.meta.url)),
     outExtension: { '.js': '.min.js' },

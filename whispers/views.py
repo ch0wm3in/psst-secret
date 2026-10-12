@@ -4,10 +4,12 @@ import uuid
 from urllib.parse import urlencode
 
 from django.conf import settings
+from django.db import transaction
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
+from django.utils.translation import gettext as _
 from django.views.decorators.http import require_GET
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
@@ -27,6 +29,7 @@ from .serializers import (
     CreateRequestSerializer,
     CreateWhisperResponseSerializer,
     CreateWhisperSerializer,
+    ReceiveAccessSerializer,
     RevealWhisperResponseSerializer,
     SubmitWhisperResponseSerializer,
     SubmitWhisperSerializer,
@@ -76,6 +79,8 @@ def check_ip_allowed(request, whisper):
 
 def _requires_auth_view(whisper):
     """Check whether viewing this whisper requires authentication."""
+    if whisper.mode == "receive" and whisper.creator_only:
+        return True
     if getattr(settings, "PSST_FORCE_AUTH_VIEW", False):
         return True
     return whisper.require_auth_view
@@ -86,6 +91,74 @@ def _requires_auth_submit(whisper):
     if getattr(settings, "PSST_FORCE_AUTH_SUBMIT", False):
         return True
     return whisper.require_auth_submit
+
+
+def _receive_access_enabled():
+    return getattr(settings, "ENABLE_AUTH", False) and getattr(
+        settings, "PSST_ENABLE_RECEIVE_ACCESS", False
+    )
+
+
+def _receive_reader_allowed(user, whisper):
+    if whisper.mode != "receive" or not whisper.creator_only:
+        return True
+    if not user.is_authenticated or not user.is_active:
+        return False
+    return (
+        whisper.creator_id == user.pk
+        or whisper.allowed_readers.filter(pk=user.pk).exists()
+    )
+
+
+def _resolve_receive_readers(emails):
+    from allauth.account.models import EmailAddress
+
+    readers = set()
+    for email in emails:
+        accounts = list(
+            EmailAddress.objects.filter(
+                email__iexact=email,
+                verified=True,
+                primary=True,
+                user__is_active=True,
+                user__email__iexact=email,
+            )
+            .values_list("user_id", flat=True)
+            .distinct()[:2]
+        )
+        if len(accounts) != 1:
+            raise ValueError(
+                _("Enter the verified primary email of each additional reader.")
+            )
+        readers.add(accounts[0])
+    return readers
+
+
+def _receive_access_data(whisper):
+    return {
+        "creator_only": whisper.creator_only,
+        "allowed_reader_emails": list(
+            whisper.allowed_readers.order_by("email").values_list("email", flat=True)
+        ),
+    }
+
+
+def _receive_access_context(request, whisper):
+    if (
+        _receive_access_enabled()
+        and request.user.is_authenticated
+        and whisper.mode == "receive"
+        and whisper.creator_id == request.user.pk
+    ):
+        return {
+            "manage_receive_access": True,
+            "force_receive_access": getattr(
+                settings, "PSST_FORCE_RECEIVE_ACCESS", False
+            ),
+            "receive_access": _receive_access_data(whisper),
+            "whisper": whisper,
+        }
+    return {}
 
 
 def _redirect_to_login(request):
@@ -145,6 +218,15 @@ def create(request):
             "force_auth_view": getattr(settings, "PSST_FORCE_AUTH_VIEW", False),
             "force_auth_submit": getattr(settings, "PSST_FORCE_AUTH_SUBMIT", False),
             "enable_email": getattr(settings, "PSST_ENABLE_EMAIL", False),
+            "enable_receive_access": _receive_access_enabled()
+            and request.user.is_authenticated,
+            "default_receive_access": getattr(
+                settings, "PSST_RECEIVE_ACCESS_DEFAULT", False
+            )
+            or getattr(settings, "PSST_FORCE_RECEIVE_ACCESS", False),
+            "force_receive_access": getattr(
+                settings, "PSST_FORCE_RECEIVE_ACCESS", False
+            ),
         },
     )
 
@@ -155,7 +237,10 @@ def about(request):
     return render(
         request,
         "whispers/about.html",
-        {"persistence_enabled": settings.ABOUT_PAGE_PERSISTENCE_ENABLED},
+        {
+            "persistence_enabled": settings.ABOUT_PAGE_PERSISTENCE_ENABLED,
+            "enable_receive_access": _receive_access_enabled(),
+        },
     )
 
 
@@ -259,6 +344,16 @@ class RevealWhisperView(APIView):
         if whisper is None:
             return render(request, "whispers/burned.html", status=404)
 
+        if not _receive_reader_allowed(request.user, whisper):
+            if not request.user.is_authenticated:
+                return _redirect_to_login(request)
+            return render(
+                request,
+                "whispers/forbidden.html",
+                {"reader_access_denied": True},
+                status=403,
+            )
+
         # Check expiry — delete from DB and Redis
         if whisper.is_expired:
             redis_store.delete_crypto(whisper_id)
@@ -280,7 +375,11 @@ class RevealWhisperView(APIView):
 
         # Receive mode: if no ciphertext yet, show pending page
         if whisper.mode == "receive" and not crypto.get("ciphertext"):
-            return render(request, "whispers/pending.html", {"whisper": whisper})
+            return render(
+                request,
+                "whispers/pending.html",
+                {"whisper": whisper, **_receive_access_context(request, whisper)},
+            )
 
         return render(
             request,
@@ -288,6 +387,7 @@ class RevealWhisperView(APIView):
             {
                 "whisper": whisper,
                 "reveal_url": request.path,
+                **_receive_access_context(request, whisper),
             },
         )
 
@@ -298,6 +398,19 @@ class RevealWhisperView(APIView):
     def post(self, request, whisper_id):
         whisper = get_object_or_404(Whisper, id=whisper_id)
         should_render = bool(request.GET.get("render"))
+
+        if not _receive_reader_allowed(request.user, whisper):
+            if not request.user.is_authenticated:
+                return _reveal_auth_response(request, should_render)
+            return _reveal_error_response(
+                request,
+                should_render,
+                template="whispers/forbidden.html",
+                error=_("You do not have access to this whisper."),
+                api_status=status.HTTP_403_FORBIDDEN,
+                render_status=403,
+                context={"reader_access_denied": True},
+            )
 
         if whisper.is_expired:
             redis_store.delete_crypto(whisper_id)
@@ -346,7 +459,10 @@ class RevealWhisperView(APIView):
                     error="No content has been submitted yet",
                     api_status=status.HTTP_404_NOT_FOUND,
                     render_status=200,
-                    context={"whisper": whisper},
+                    context={
+                        "whisper": whisper,
+                        **_receive_access_context(request, whisper),
+                    },
                 )
 
         crypto, count, exhausted = redis_store.increment_and_reveal(
@@ -389,6 +505,11 @@ class RevealWhisperView(APIView):
                 {
                     "burn_after_read": whisper.burn_after_read,
                     "paste_data": paste_data,
+                    **(
+                        _receive_access_context(request, whisper)
+                        if not exhausted
+                        else {}
+                    ),
                 },
             )
 
@@ -475,6 +596,32 @@ class CreateRequestView(APIView):
             or d["require_auth_submit"]
         )
 
+        access_enabled = _receive_access_enabled()
+        creator_only = access_enabled and (
+            getattr(settings, "PSST_FORCE_RECEIVE_ACCESS", False)
+            or d.get(
+                "creator_only", getattr(settings, "PSST_RECEIVE_ACCESS_DEFAULT", False)
+            )
+        )
+        emails = d.get("allowed_reader_emails", [])
+        if not access_enabled and (d.get("creator_only") or emails):
+            return Response(
+                {"error": _("Receive reader restrictions are not enabled.")}, status=400
+            )
+        if (creator_only or emails) and not request.user.is_authenticated:
+            return Response(
+                {"error": _("Sign in to manage reader access.")}, status=403
+            )
+        if emails and not creator_only:
+            return Response(
+                {"error": _("Enable restricted access before adding readers.")},
+                status=400,
+            )
+        try:
+            readers = _resolve_receive_readers(emails) if emails else set()
+        except ValueError as exc:
+            return Response({"error": str(exc)}, status=400)
+
         whisper = Whisper.objects.create(
             mode="receive",
             submit_token=uuid.uuid4(),
@@ -485,7 +632,14 @@ class CreateRequestView(APIView):
             expiry_option=d["expiry"],
             expires_at=expires_at,
             notify_email=d["notify_email"],
+            creator=(
+                request.user
+                if access_enabled and request.user.is_authenticated
+                else None
+            ),
+            creator_only=creator_only,
         )
+        whisper.allowed_readers.set(readers)
 
         redis_store.store_crypto(
             whisper.id,
@@ -505,6 +659,61 @@ class CreateRequestView(APIView):
                 "view_url": request.build_absolute_uri(f"/whisper/{whisper.id}"),
             }
         )
+
+
+class ReceiveAccessView(APIView):
+    permission_classes = [AllowAny]
+    parser_classes = [JSONParser]
+    throttle_classes = [WhisperViewThrottle]
+
+    def _get_whisper(self, request, whisper_id):
+        if not _receive_access_enabled() or not request.user.is_authenticated:
+            raise Http404
+        whisper = get_object_or_404(
+            Whisper, id=whisper_id, mode="receive", creator_id=request.user.pk
+        )
+        if whisper.is_expired or redis_store.get_crypto(whisper.id) is None:
+            raise Http404
+        return whisper
+
+    @extend_schema(responses={200: ReceiveAccessSerializer})
+    def get(self, request, whisper_id):
+        whisper = self._get_whisper(request, whisper_id)
+        return Response(_receive_access_data(whisper))
+
+    @extend_schema(
+        request=ReceiveAccessSerializer, responses={200: ReceiveAccessSerializer}
+    )
+    def patch(self, request, whisper_id):
+        whisper = self._get_whisper(request, whisper_id)
+        serializer = ReceiveAccessSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response({"error": _first_error(serializer.errors)}, status=400)
+        data = serializer.validated_data
+        forced = getattr(settings, "PSST_FORCE_RECEIVE_ACCESS", False)
+        if forced and data.get("creator_only") is False:
+            return Response(
+                {"error": _("Restricted receive access is required.")}, status=400
+            )
+        creator_only = forced or data.get("creator_only", whisper.creator_only)
+        emails = data.get("allowed_reader_emails")
+        if emails and not creator_only:
+            return Response(
+                {"error": _("Enable restricted access before adding readers.")},
+                status=400,
+            )
+        try:
+            readers = _resolve_receive_readers(emails) if emails is not None else None
+        except ValueError as exc:
+            return Response({"error": str(exc)}, status=400)
+        with transaction.atomic():
+            if not creator_only:
+                whisper.allowed_readers.clear()
+            elif readers is not None:
+                whisper.allowed_readers.set(readers)
+            whisper.creator_only = creator_only
+            whisper.save(update_fields=["creator_only"])
+        return Response(_receive_access_data(whisper))
 
 
 class SubmitWhisperView(APIView):

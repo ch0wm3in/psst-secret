@@ -1,5 +1,6 @@
 import uuid
 
+from django.conf import settings
 from django.db import models
 from django.utils import timezone
 
@@ -55,6 +56,19 @@ class Whisper(models.Model):
     require_auth_submit = models.BooleanField(
         default=False,
         help_text="Require authentication to submit to this receive-mode request",
+    )
+    creator = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name="created_whispers",
+    )
+    creator_only = models.BooleanField(default=False)
+    allowed_readers = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        blank=True,
+        related_name="readable_whispers",
     )
     notify_email = models.EmailField(
         max_length=254,
