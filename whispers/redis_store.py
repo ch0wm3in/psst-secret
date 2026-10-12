@@ -48,7 +48,7 @@ def store_crypto(
             "encapsulated_key": encapsulated_key,
         }
     )
-    get_client().setex(_key(whisper_id), int(ttl_seconds), payload)
+    get_client().set(_key(whisper_id), payload, ex=int(ttl_seconds))
 
 
 def get_crypto(whisper_id):
@@ -77,7 +77,7 @@ def update_crypto(whisper_id, **fields):
                 ttl = pipe.ttl(key)
                 pipe.multi()
                 if ttl and ttl > 0:
-                    pipe.setex(key, ttl, json.dumps(data))
+                    pipe.set(key, json.dumps(data), ex=ttl)
                 else:
                     pipe.set(key, json.dumps(data))
                 pipe.execute()
