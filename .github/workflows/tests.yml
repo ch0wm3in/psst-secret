@@ -28,7 +28,7 @@ jobs:
 
       - name: Create .env for docker compose
         run: |
-          cat <<EOF > .env
+          cat <<EOF > .env.docker
           POSTGRES_USER=$POSTGRES_USER
           POSTGRES_PASSWORD=$POSTGRES_PASSWORD
           POSTGRES_DB=$POSTGRES_DB
