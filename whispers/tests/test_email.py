@@ -27,6 +27,7 @@ _TEST_REST_FRAMEWORK = {
         "anon": "10000/minute",
         "whisper_create": "10000/minute",
         "whisper_view": "10000/minute",
+        "receive_access": "10000/minute",
     },
 }
 

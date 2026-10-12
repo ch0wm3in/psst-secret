@@ -255,6 +255,9 @@ REST_FRAMEWORK = {
         "anon": env.str("API_THROTTLE_RATE_ANON", default="60/minute"),
         "whisper_create": env.str("API_THROTTLE_RATE_CREATE", default="20/minute"),
         "whisper_view": env.str("THROTTLE_RATE_VIEW", default="30/minute"),
+        "receive_access": env.str(
+            "API_THROTTLE_RATE_RECEIVE_ACCESS", default="10/minute"
+        ),
     },
 }
 

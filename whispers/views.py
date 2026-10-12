@@ -16,7 +16,7 @@ from rest_framework import status
 from rest_framework.parsers import FormParser, JSONParser
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-from rest_framework.throttling import AnonRateThrottle
+from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
 from rest_framework.views import APIView
 
 from whispers.constants import EXPIRY_DELTAS
@@ -45,6 +45,18 @@ class WhisperCreateThrottle(AnonRateThrottle):
 
 class WhisperViewThrottle(AnonRateThrottle):
     scope = "whisper_view"
+
+
+class ReceiveAccessThrottle(UserRateThrottle):
+    scope = "receive_access"
+
+    def get_rate(self):
+        return settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"][self.scope]
+
+    def get_cache_key(self, request, view):
+        if not request.user.is_authenticated:
+            return None
+        return super().get_cache_key(request, view)
 
 
 def get_client_ip(request):
@@ -567,7 +579,7 @@ class CreateRequestView(APIView):
     """
 
     permission_classes = [AllowAny]
-    throttle_classes = [WhisperCreateThrottle]
+    throttle_classes = [WhisperCreateThrottle, ReceiveAccessThrottle]
     serializer_class = CreateRequestSerializer
 
     @extend_schema(
@@ -619,8 +631,15 @@ class CreateRequestView(APIView):
             )
         try:
             readers = _resolve_receive_readers(emails) if emails else set()
-        except ValueError as exc:
-            return Response({"error": str(exc)}, status=400)
+        except ValueError:
+            return Response(
+                {
+                    "error": _(
+                        "Enter the verified primary email of each additional reader."
+                    )
+                },
+                status=400,
+            )
 
         whisper = Whisper.objects.create(
             mode="receive",
@@ -664,7 +683,7 @@ class CreateRequestView(APIView):
 class ReceiveAccessView(APIView):
     permission_classes = [AllowAny]
     parser_classes = [JSONParser]
-    throttle_classes = [WhisperViewThrottle]
+    throttle_classes = [WhisperViewThrottle, ReceiveAccessThrottle]
 
     def _get_whisper(self, request, whisper_id):
         if not _receive_access_enabled() or not request.user.is_authenticated:
@@ -704,8 +723,15 @@ class ReceiveAccessView(APIView):
             )
         try:
             readers = _resolve_receive_readers(emails) if emails is not None else None
-        except ValueError as exc:
-            return Response({"error": str(exc)}, status=400)
+        except ValueError:
+            return Response(
+                {
+                    "error": _(
+                        "Enter the verified primary email of each additional reader."
+                    )
+                },
+                status=400,
+            )
         with transaction.atomic():
             if not creator_only:
                 whisper.allowed_readers.clear()
