@@ -65,10 +65,10 @@ jobs:
         run: uv sync --locked
 
       - name: Run migrations
-        run: uv run --env-file .env python manage.py migrate --noinput
+        run: uv run --env-file .env.docker python manage.py migrate --noinput
 
       - name: Run unit tests
-        run: uv run --env-file .env pytest --ignore=whispers/tests/browser -n 4
+        run: uv run --env-file .env.docker pytest --ignore=whispers/tests/browser -n 4
 
       - name: Stop services
         if: always()
@@ -120,7 +120,7 @@ jobs:
         run: uv sync --locked
 
       - name: Run migrations
-        run: uv run --env-file .env python manage.py migrate --noinput
+        run: uv run --env-file .env.docker python manage.py migrate --noinput
 
       - name: Set up Node.js for frontend assets
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -132,14 +132,14 @@ jobs:
         run: npm ci
 
       - name: Build frontend assets
-        run: uv run --env-file .env python manage.py tailwind build
+        run: uv run --env-file .env.docker python manage.py tailwind build
 
       - name: Install Playwright browsers
-        run: uv run --env-file .env playwright install --with-deps chromium firefox
+        run: uv run --env-file .env.docker playwright install --with-deps chromium firefox
 
       - name: Run browser tests
         run: >-
-          uv run --env-file .env pytest whispers/tests/browser --browser-tests
+          uv run --env-file .env.docker pytest whispers/tests/browser --browser-tests
           -n 4
           --browser chromium --browser firefox
           --tracing=retain-on-failure --screenshot=only-on-failure
