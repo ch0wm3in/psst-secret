@@ -87,7 +87,7 @@
 {% settings_value "DATA_UPLOAD_MAX_MEMORY_SIZE" as max_upload_size %}
 <script>window.PSST_MAX_UPLOAD_SIZE = {{ max_upload_size }};</script>
 <script src="{% static 'js/pqc.min.js' %}"></script>
-<script src="{% static 'js/crypto.js' %}"></script>
+<script src="{% static 'js/crypto.min.js' %}"></script>
 <script>
     const requestData = JSON.parse(document.getElementById("request-data").textContent);
     const keyB64 = window.location.hash.substring(1);

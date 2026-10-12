@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-08 14:23+0000\n"
+"POT-Creation-Date: 2026-10-12 07:38+0000\n"
 "PO-Revision-Date: 2026-04-17 15:26+0000\n"
 "Last-Translator: \n"
 "Language-Team: Danish\n"
@@ -886,13 +886,13 @@ msgid ""
 "<strong>The email will NOT contain the decryption key</strong> — you must "
 "share the full link (with the key) separately. <strong>This option is not "
 "recommended, as it will must likely confuse the recipient more than just "
-"sending it directly on other channels</strong"
+"sending it directly on other channels</strong>"
 msgstr ""
 "Modtageren får tilsendt en email notifikation om at en whisper afventer "
 "<strong>Emailen vil IKKE indholde dekrypterings nøglen</strong> — du skal "
 "selv dele det fulde link (med nøglen) separat <strong>Denne indstilling "
 "anbefales ikke, da det formentligt vil fovirre modtager mere end bare at "
-"sende det direkte via andre kanaler</strong"
+"sende det direkte via andre kanaler</strong>"
 
 #: templates/whispers/create.html:215
 msgid ""
@@ -1088,15 +1088,15 @@ msgstr "Anonyme totaler · Timeopdelte UTC-totaler · Opbevaring i 365 dage"
 msgid "Time range"
 msgstr "Tidsinterval"
 
-#: templates/whispers/stats.html:16 whispers/stats.py:88
+#: templates/whispers/stats.html:16 whispers/stats.py:120
 msgid "1 day"
 msgstr "1 dag"
 
-#: templates/whispers/stats.html:17 whispers/stats.py:88
+#: templates/whispers/stats.html:17 whispers/stats.py:121
 msgid "1 week"
 msgstr "1 uge"
 
-#: templates/whispers/stats.html:18 whispers/stats.py:88
+#: templates/whispers/stats.html:18 whispers/stats.py:122
 msgid "1 month"
 msgstr "1 måned"
 
@@ -1150,7 +1150,8 @@ msgstr "Ingen whispers indsendt i denne periode."
 
 #: templates/whispers/stats.html:57
 msgid "Daily submissions in UTC; first and last days may be partial."
-msgstr "Daglige indsendelser i UTC; første og sidste dag kan være ufuldstændige."
+msgstr ""
+"Daglige indsendelser i UTC; første og sidste dag kan være ufuldstændige."
 
 #: templates/whispers/stats.html:58
 msgid "Date"
@@ -1192,19 +1193,26 @@ msgstr "Valgte udløbstider"
 msgid ""
 "No whisper identifiers, content, IP addresses, or personal data are stored "
 "in statistics."
-msgstr "Ingen whisper-id'er, indhold, IP-adresser eller personoplysninger gemmes i statistikken."
+msgstr ""
+"Ingen whisper-id'er, indhold, IP-adresser eller personoplysninger gemmes i "
+"statistikken."
 
 #: templates/whispers/stats.html:93
 msgid ""
 "Receives count completed submissions, not pending requests. Reveals count "
 "ciphertext deliveries, not unique readers or confirmed decryptions."
-msgstr "Modtagelser tæller gennemførte indsendelser, ikke ventende forespørgsler. Visninger tæller levering af krypteret indhold, ikke unikke læsere eller bekræftede dekrypteringer."
+msgstr ""
+"Modtagelser tæller gennemførte indsendelser, ikke ventende forespørgsler. "
+"Visninger tæller levering af krypteret indhold, ikke unikke læsere eller "
+"bekræftede dekrypteringer."
 
 #: templates/whispers/stats.html:94
 msgid ""
 "The current hour and boundary days may be partial. Live totals can reveal "
 "aggregate activity on quiet instances."
-msgstr "Den aktuelle time og periodens første og sidste dag kan være ufuldstændige. Løbende totaler kan afsløre samlet aktivitet på instanser med lav aktivitet."
+msgstr ""
+"Den aktuelle time og periodens første og sidste dag kan være ufuldstændige. "
+"Løbende totaler kan afsløre samlet aktivitet på instanser med lav aktivitet."
 
 #: templates/whispers/submit.html:4 templates/whispers/submit.html:9
 msgid "Submit a Whisper"
@@ -1372,39 +1380,39 @@ msgid "Decryption failed. The link may be incomplete or corrupted."
 msgstr ""
 "Dekryptering mislykkedes. Linket kan være ufuldstændigt eller beskadiget."
 
-#: whispers/stats.py:76
+#: whispers/stats.py:92
 msgid "Monday"
 msgstr "Mandag"
 
-#: whispers/stats.py:76
+#: whispers/stats.py:93
 msgid "Tuesday"
 msgstr "Tirsdag"
 
-#: whispers/stats.py:76
+#: whispers/stats.py:94
 msgid "Wednesday"
 msgstr "Onsdag"
 
-#: whispers/stats.py:76
+#: whispers/stats.py:95
 msgid "Thursday"
 msgstr "Torsdag"
 
-#: whispers/stats.py:76
+#: whispers/stats.py:96
 msgid "Friday"
 msgstr "Fredag"
 
-#: whispers/stats.py:76
+#: whispers/stats.py:97
 msgid "Saturday"
 msgstr "Lørdag"
 
-#: whispers/stats.py:76
+#: whispers/stats.py:98
 msgid "Sunday"
 msgstr "Søndag"
 
-#: whispers/stats.py:88
+#: whispers/stats.py:118
 msgid "5 minutes"
 msgstr "5 minutter"
 
-#: whispers/stats.py:88
+#: whispers/stats.py:119
 msgid "1 hour"
 msgstr "1 time"
 
