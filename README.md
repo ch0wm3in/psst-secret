@@ -255,6 +255,14 @@ material remain in Redis, and private keys and passwords remain client-side.
 | `API_THROTTLE_RATE_ANON` | Global anonymous API rate limit (DRF format, e.g. `100/hour`). | `60/minute` |
 | `API_THROTTLE_RATE_CREATE` | Rate limit for whisper/request creation and submit API endpoints. | `20/minute` |
 | `THROTTLE_RATE_VIEW` | Rate limit for the whisper view page (per IP, cache-based). | `30/minute` |
+| `API_THROTTLE_RATE_RECEIVE_ACCESS` | Shared per-account limit for authenticated receive creation and access-management requests, including failed reader-email lookups. | `10/minute` |
+
+Reader-email validation reveals whether an address is eligible for access. Both
+receive creation and access-management requests share the limit above, keyed by
+the signed-in account rather than client IP. Invalid addresses consume the same
+budget as successful requests; exceeding it returns HTTP 429 before looking up
+reader accounts. Anonymous requests retain their existing per-IP limits. This
+limits account enumeration but does not eliminate the eligibility signal.
 
 ### Branding & build info
 
@@ -373,6 +381,7 @@ ciphertext or keys.
 - If Redis evicts a key before the DB row is cleaned up, the next access deletes the orphaned row automatically.
 - The app refuses to start in production (`DEBUG=False`) with the insecure default `SECRET_KEY`.
 - Receive reader restrictions are checked before Redis retrieval or reveal counting. They complement client-side encryption, rather than replacing possession of the decryption key.
+- Reader-validation failures return a fixed translated message, never internal exception details.
 
 ## License
 

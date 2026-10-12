@@ -295,6 +295,16 @@ _TEST_REST_FRAMEWORK = {
         "anon": "10000/minute",
         "whisper_create": "10000/minute",
         "whisper_view": "10000/minute",
+        "receive_access": "10000/minute",
+    },
+}
+
+
+_TEST_RECEIVE_ACCESS_THROTTLING = {
+    **_TEST_REST_FRAMEWORK,
+    "DEFAULT_THROTTLE_RATES": {
+        **_TEST_REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"],
+        "receive_access": "2/minute",
     },
 }
 
@@ -1100,6 +1110,56 @@ class ReceiveAccessTests(TestCase):
         self.assertEqual(whisper.creator, self.creator)
         self.assertTrue(self._restricted().creator_only)
 
+    @override_settings(REST_FRAMEWORK=_TEST_RECEIVE_ACCESS_THROTTLING)
+    def test_authenticated_creation_limits_email_lookups(self):
+        with patch(
+            "whispers.views._resolve_receive_readers", side_effect=ValueError
+        ) as resolve:
+            for _attempt in range(2):
+                response = self._create(
+                    creator_only=True, allowed_reader_emails=["missing@example.com"]
+                )
+                self.assertEqual(response.status_code, 400)
+            response = self._create(
+                creator_only=True, allowed_reader_emails=["missing@example.com"]
+            )
+            self.assertEqual(response.status_code, 429)
+            self.assertEqual(resolve.call_count, 2)
+
+    @override_settings(REST_FRAMEWORK=_TEST_RECEIVE_ACCESS_THROTTLING)
+    def test_access_updates_share_creation_limit_across_client_ips(self):
+        whisper = self._restricted()
+        with patch(
+            "whispers.views._resolve_receive_readers", side_effect=ValueError
+        ) as resolve:
+            response = self._update(
+                whisper, allowed_reader_emails=["missing@example.com"]
+            )
+            self.assertEqual(response.status_code, 400)
+            response = self.client.patch(
+                f"/api/whisper/{whisper.id}/access",
+                data=json.dumps({"allowed_reader_emails": ["missing@example.com"]}),
+                content_type="application/json",
+                REMOTE_ADDR="198.51.100.20",
+            )
+            self.assertEqual(response.status_code, 429)
+            self.assertEqual(resolve.call_count, 1)
+        self.assertEqual(whisper.allowed_readers.count(), 0)
+
+    @override_settings(REST_FRAMEWORK=_TEST_RECEIVE_ACCESS_THROTTLING)
+    def test_receive_access_limits_are_per_account(self):
+        for _attempt in range(2):
+            self.assertEqual(self._create().status_code, 200)
+        self.assertEqual(self._create().status_code, 429)
+        self.client.force_login(self.other)
+        self.assertEqual(self._create().status_code, 200)
+
+    @override_settings(REST_FRAMEWORK=_TEST_RECEIVE_ACCESS_THROTTLING)
+    def test_anonymous_creation_keeps_existing_throttle(self):
+        self.client.logout()
+        for _attempt in range(3):
+            self.assertEqual(self._create().status_code, 200)
+
     @override_settings(PSST_RECEIVE_ACCESS_DEFAULT=True)
     def test_default_can_be_disabled(self):
         self.assertTrue(
@@ -1175,6 +1235,33 @@ class ReceiveAccessTests(TestCase):
             ).status_code,
             200,
         )
+
+    def test_reader_validation_does_not_expose_exception_details(self):
+        whisper = self._restricted()
+        private_details = "Internal reader lookup failed at /private/database/path"
+        with patch(
+            "whispers.views._resolve_receive_readers",
+            side_effect=ValueError(private_details),
+        ):
+            responses = [
+                self._create(
+                    creator_only=True, allowed_reader_emails=[self.reader.email]
+                ),
+                self._update(whisper, allowed_reader_emails=[self.reader.email]),
+            ]
+        for response in responses:
+            self.assertEqual(response.status_code, 400)
+            self.assertEqual(
+                response.json(),
+                {
+                    "error": "Enter the verified primary email of each additional reader."
+                },
+            )
+            self.assertNotIn(private_details, response.content.decode())
+        self.assertEqual(Whisper.objects.count(), 1)
+        whisper.refresh_from_db()
+        self.assertTrue(whisper.creator_only)
+        self.assertEqual(whisper.allowed_readers.count(), 0)
 
     def test_disable_clears_readers(self):
         whisper = self._restricted()
