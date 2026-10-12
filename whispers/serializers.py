@@ -41,7 +41,16 @@ class CreateWhisperResponseSerializer(serializers.Serializer):
     url = serializers.URLField()
 
 
-class CreateRequestSerializer(serializers.Serializer):
+class ReceiveAccessSerializer(serializers.Serializer):
+    creator_only = serializers.BooleanField(required=False)
+    allowed_reader_emails = serializers.ListField(
+        child=serializers.EmailField(max_length=254),
+        max_length=20,
+        required=False,
+    )
+
+
+class CreateRequestSerializer(ReceiveAccessSerializer):
     public_key = serializers.CharField(
         max_length=2000,
         help_text="X-Wing (ML-KEM-768 + X25519) public key, base64.",

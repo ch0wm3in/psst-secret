@@ -94,6 +94,8 @@
     </div>
 </div>
 
+{% include "whispers/receive_access.html" %}
+
 <!-- Embedded encrypted data (server-rendered, auto-escaped by json_script) -->
 {{ paste_data|json_script:"paste-data" }}
 

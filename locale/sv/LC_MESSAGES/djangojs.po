@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psst-secret\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-09 07:50+0000\n"
+"POT-Creation-Date: 2026-10-12 08:39+0000\n"
 "PO-Revision-Date: 2026-10-09 07:50+0000\n"
 "Last-Translator: \n"
 "Language-Team: Swedish\n"
@@ -39,16 +39,16 @@ msgstr ""
 "Förfrågans nyckel stämmer inte med länken. Länken kan vara ofullständig "
 "eller manipulerad."
 
-#: static/js/crypto.js:427 static/js/crypto.js:665
+#: static/js/crypto.js:427 static/js/crypto.js:674
 msgid "Please enter some content or select a file to encrypt."
 msgstr "Ange innehåll eller välj en fil att kryptera."
 
-#: static/js/crypto.js:433 static/js/crypto.js:671
+#: static/js/crypto.js:433 static/js/crypto.js:680
 #, javascript-format
 msgid "Selected files exceed the maximum total size of %s."
 msgstr "De valda filerna överskrider den maximala sammanlagda storleken på %s."
 
-#: static/js/crypto.js:439 static/js/crypto.js:677
+#: static/js/crypto.js:439 static/js/crypto.js:686
 msgid "Encrypting…"
 msgstr "Krypterar…"
 
@@ -57,7 +57,7 @@ msgid ""
 "Passphrase does not meet the strength requirements shown below the field."
 msgstr "Lösenordet uppfyller inte styrkekraven som visas under fältet."
 
-#: static/js/crypto.js:495 static/js/crypto.js:609 static/js/crypto.js:709
+#: static/js/crypto.js:495 static/js/crypto.js:618 static/js/crypto.js:718
 #, javascript-format
 msgid "Server error (%s)"
 msgstr "Serverfel (%s)"
@@ -71,7 +71,7 @@ msgstr "Denna whisper raderas efter att ha visats en gång."
 msgid "This whisper will be destroyed after %s views."
 msgstr "Denna whisper raderas efter %s visningar."
 
-#: static/js/crypto.js:526 static/js/crypto.js:640 static/js/crypto.js:717
+#: static/js/crypto.js:526 static/js/crypto.js:649 static/js/crypto.js:726
 #, javascript-format
 msgid "Error: %s"
 msgstr "Fel: %s"
@@ -92,24 +92,37 @@ msgstr "Kopiera"
 msgid "Creating…"
 msgstr "Skapar…"
 
-#: static/js/crypto.js:630
+#: static/js/crypto.js:639
 msgid "The whisper will be destroyed after you view it once."
 msgstr "Whispern raderas när du har visat den en gång."
 
-#: static/js/crypto.js:632
+#: static/js/crypto.js:641
 #, javascript-format
 msgid "The whisper will be destroyed after %s views."
 msgstr "Whispern raderas efter %s visningar."
 
-#: static/js/crypto.js:644
+#: static/js/crypto.js:653
 msgid "Create Request"
 msgstr "Skapa förfrågan"
 
-#: static/js/crypto.js:681
+#: static/js/crypto.js:690
 msgid "No encryption key found in URL. The link may be incomplete."
 msgstr ""
 "Ingen krypteringsnyckel hittades i URL:en. Länken kan vara ofullständig."
 
-#: static/js/crypto.js:721
+#: static/js/crypto.js:730
 msgid "Encrypt & Submit"
 msgstr "Kryptera och skicka in"
+
+#: static/js/receive-access.js:37
+msgid "Saving…"
+msgstr "Sparar…"
+
+#: static/js/receive-access.js:52 static/js/receive-access.js:54
+#: static/js/receive-access.js:61
+msgid "Could not update access."
+msgstr "Det gick inte att uppdatera åtkomsten."
+
+#: static/js/receive-access.js:58
+msgid "Access updated."
+msgstr "Åtkomsten har uppdaterats."

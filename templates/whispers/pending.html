@@ -16,7 +16,14 @@
     </a>
 </div>
 
+{% include "whispers/receive_access.html" %}
+
 <script>
-    setTimeout(() => window.location.reload(), 5000);
+    setInterval(() => {
+        const form = document.getElementById('receive-access-form');
+        if (!form || (!form.matches(':focus-within') && form.dataset.dirty !== 'true' && form.dataset.saving !== 'true')) {
+            window.location.reload();
+        }
+    }, 5000);
 </script>
 {% endblock %}
