@@ -96,6 +96,13 @@
         </div>
     </section>
 
+    {% if enable_receive_access %}
+    <section class="space-y-3">
+        <h2 class="text-xl font-semibold text-brand-400">{% trans "Restricted receive access" %}</h2>
+        <p class="text-sm text-gray-300">{% trans "Receive requests can limit reading to their creator and approved accounts. The creator can update readers from the reveal link. Readers still need the full link and any password; removing access cannot revoke content already retrieved." %}</p>
+    </section>
+    {% endif %}
+
     <!-- Security Features -->
     <section class="space-y-3">
         <h2 class="text-xl font-semibold text-brand-400">{% trans "Security Features" %}</h2>
@@ -176,6 +183,9 @@
                         <tr class="border-b border-gray-700/50"><td class="py-2 pr-4 font-mono text-brand-300">mode</td><td class="py-2">{% trans "Send or receive" %}</td></tr>
                         <tr class="border-b border-gray-700/50"><td class="py-2 pr-4 font-mono text-brand-300">allowed_cidr</td><td class="py-2">{% trans "IP/CIDR restriction" %}</td></tr>
                         <tr class="border-b border-gray-700/50"><td class="py-2 pr-4 font-mono text-brand-300">require_auth_view / require_auth_submit</td><td class="py-2">{% trans "Whether signing in is required to view or submit" %}</td></tr>
+                        {% if enable_receive_access %}
+                        <tr class="border-b border-gray-700/50"><td class="py-2 pr-4 font-mono text-brand-300 break-words">creator / creator_only / allowed_readers</td><td class="py-2">{% trans "Receive mode: creator and approved reader account references (never included in statistics)" %}</td></tr>
+                        {% endif %}
                         <tr><td class="py-2 pr-4 font-mono text-brand-300">notify_email</td><td class="py-2">{% trans "Email address to notify (only if you opt in)" %}</td></tr>
                     </tbody>
                 </table>

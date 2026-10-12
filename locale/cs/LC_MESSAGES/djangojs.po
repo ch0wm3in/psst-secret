@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psst-secret\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-09 07:02+0000\n"
+"POT-Creation-Date: 2026-10-12 08:39+0000\n"
 "PO-Revision-Date: 2026-10-09 07:02+0000\n"
 "Last-Translator: \n"
 "Language-Team: Czech\n"
@@ -37,16 +37,16 @@ msgid ""
 "tampered with."
 msgstr "Klíč žádosti neodpovídá odkazu. Odkaz může být neúplný nebo pozměněný."
 
-#: static/js/crypto.js:427 static/js/crypto.js:665
+#: static/js/crypto.js:427 static/js/crypto.js:674
 msgid "Please enter some content or select a file to encrypt."
 msgstr "Zadejte obsah nebo vyberte soubor k zašifrování."
 
-#: static/js/crypto.js:433 static/js/crypto.js:671
+#: static/js/crypto.js:433 static/js/crypto.js:680
 #, javascript-format
 msgid "Selected files exceed the maximum total size of %s."
 msgstr "Vybrané soubory překračují maximální celkovou velikost %s."
 
-#: static/js/crypto.js:439 static/js/crypto.js:677
+#: static/js/crypto.js:439 static/js/crypto.js:686
 msgid "Encrypting…"
 msgstr "Šifrování…"
 
@@ -55,7 +55,7 @@ msgid ""
 "Passphrase does not meet the strength requirements shown below the field."
 msgstr "Heslo nesplňuje požadavky na sílu uvedené pod polem."
 
-#: static/js/crypto.js:495 static/js/crypto.js:609 static/js/crypto.js:709
+#: static/js/crypto.js:495 static/js/crypto.js:618 static/js/crypto.js:718
 #, javascript-format
 msgid "Server error (%s)"
 msgstr "Chyba serveru (%s)"
@@ -69,7 +69,7 @@ msgstr "Tento whisper bude po jednom zobrazení smazán."
 msgid "This whisper will be destroyed after %s views."
 msgstr "Tento whisper bude smazán po dosažení tohoto počtu zobrazení: %s."
 
-#: static/js/crypto.js:526 static/js/crypto.js:640 static/js/crypto.js:717
+#: static/js/crypto.js:526 static/js/crypto.js:649 static/js/crypto.js:726
 #, javascript-format
 msgid "Error: %s"
 msgstr "Chyba: %s"
@@ -90,23 +90,36 @@ msgstr "Kopírovat"
 msgid "Creating…"
 msgstr "Vytváření…"
 
-#: static/js/crypto.js:630
+#: static/js/crypto.js:639
 msgid "The whisper will be destroyed after you view it once."
 msgstr "Whisper bude smazán, jakmile jej jednou zobrazíte."
 
-#: static/js/crypto.js:632
+#: static/js/crypto.js:641
 #, javascript-format
 msgid "The whisper will be destroyed after %s views."
 msgstr "Whisper bude smazán po dosažení tohoto počtu zobrazení: %s."
 
-#: static/js/crypto.js:644
+#: static/js/crypto.js:653
 msgid "Create Request"
 msgstr "Vytvořit žádost"
 
-#: static/js/crypto.js:681
+#: static/js/crypto.js:690
 msgid "No encryption key found in URL. The link may be incomplete."
 msgstr "V URL nebyl nalezen šifrovací klíč. Odkaz může být neúplný."
 
-#: static/js/crypto.js:721
+#: static/js/crypto.js:730
 msgid "Encrypt & Submit"
 msgstr "Zašifrovat a odeslat"
+
+#: static/js/receive-access.js:37
+msgid "Saving…"
+msgstr "Ukládání…"
+
+#: static/js/receive-access.js:52 static/js/receive-access.js:54
+#: static/js/receive-access.js:61
+msgid "Could not update access."
+msgstr "Přístup se nepodařilo aktualizovat."
+
+#: static/js/receive-access.js:58
+msgid "Access updated."
+msgstr "Přístup byl aktualizován."

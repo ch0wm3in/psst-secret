@@ -295,6 +295,16 @@ _TEST_REST_FRAMEWORK = {
         "anon": "10000/minute",
         "whisper_create": "10000/minute",
         "whisper_view": "10000/minute",
+        "receive_access": "10000/minute",
+    },
+}
+
+
+_TEST_RECEIVE_ACCESS_THROTTLING = {
+    **_TEST_REST_FRAMEWORK,
+    "DEFAULT_THROTTLE_RATES": {
+        **_TEST_REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"],
+        "receive_access": "2/minute",
     },
 }
 
@@ -1044,6 +1054,320 @@ class SubmitWhisperFlowTests(TestCase):
 # ---------------------------------------------------------------------------
 # Page render tests
 # ---------------------------------------------------------------------------
+
+
+@override_settings(
+    MIDDLEWARE=_BASE_MIDDLEWARE,
+    REST_FRAMEWORK=_TEST_REST_FRAMEWORK,
+    ENABLE_AUTH=True,
+    PSST_ENABLE_RECEIVE_ACCESS=True,
+    PSST_RECEIVE_ACCESS_DEFAULT=False,
+    PSST_FORCE_RECEIVE_ACCESS=False,
+)
+class ReceiveAccessTests(TestCase):
+    def setUp(self):
+        from allauth.account.models import EmailAddress
+
+        cache.clear()
+        self.addCleanup(cache.clear)
+        self.patcher, self.redis = _patch_redis()
+        self.patcher.start()
+        self.addCleanup(self.patcher.stop)
+        self.addCleanup(setattr, redis_store, "_client", None)
+        self.creator = User.objects.create_user("creator", email="creator@example.com")
+        self.reader = User.objects.create_user("reader", email="reader@example.com")
+        self.other = User.objects.create_user("other", email="other@example.com")
+        EmailAddress.objects.create(
+            user=self.reader, email=self.reader.email, verified=True, primary=True
+        )
+        self.client.force_login(self.creator)
+
+    def _create(self, **options):
+        return self.client.post(
+            "/api/whisper/request",
+            data=json.dumps({"public_key": "pk", "max_views": 0, **options}),
+            content_type="application/json",
+        )
+
+    def _restricted(self):
+        response = self._create(creator_only=True)
+        self.assertEqual(response.status_code, 200)
+        whisper = Whisper.objects.get(pk=response.json()["id"])
+        redis_store.update_crypto(whisper.id, ciphertext="ct", iv="iv")
+        return whisper
+
+    def _update(self, whisper, **options):
+        return self.client.patch(
+            f"/api/whisper/{whisper.id}/access",
+            data=json.dumps(options),
+            content_type="application/json",
+        )
+
+    def test_opt_in_and_unrestricted_default(self):
+        response = self._create()
+        whisper = Whisper.objects.get(pk=response.json()["id"])
+        self.assertFalse(whisper.creator_only)
+        self.assertEqual(whisper.creator, self.creator)
+        self.assertTrue(self._restricted().creator_only)
+
+    @override_settings(REST_FRAMEWORK=_TEST_RECEIVE_ACCESS_THROTTLING)
+    def test_authenticated_creation_limits_email_lookups(self):
+        with patch(
+            "whispers.views._resolve_receive_readers", side_effect=ValueError
+        ) as resolve:
+            for _attempt in range(2):
+                response = self._create(
+                    creator_only=True, allowed_reader_emails=["missing@example.com"]
+                )
+                self.assertEqual(response.status_code, 400)
+            response = self._create(
+                creator_only=True, allowed_reader_emails=["missing@example.com"]
+            )
+            self.assertEqual(response.status_code, 429)
+            self.assertEqual(resolve.call_count, 2)
+
+    @override_settings(REST_FRAMEWORK=_TEST_RECEIVE_ACCESS_THROTTLING)
+    def test_access_updates_share_creation_limit_across_client_ips(self):
+        whisper = self._restricted()
+        with patch(
+            "whispers.views._resolve_receive_readers", side_effect=ValueError
+        ) as resolve:
+            response = self._update(
+                whisper, allowed_reader_emails=["missing@example.com"]
+            )
+            self.assertEqual(response.status_code, 400)
+            response = self.client.patch(
+                f"/api/whisper/{whisper.id}/access",
+                data=json.dumps({"allowed_reader_emails": ["missing@example.com"]}),
+                content_type="application/json",
+                REMOTE_ADDR="198.51.100.20",
+            )
+            self.assertEqual(response.status_code, 429)
+            self.assertEqual(resolve.call_count, 1)
+        self.assertEqual(whisper.allowed_readers.count(), 0)
+
+    @override_settings(REST_FRAMEWORK=_TEST_RECEIVE_ACCESS_THROTTLING)
+    def test_receive_access_limits_are_per_account(self):
+        for _attempt in range(2):
+            self.assertEqual(self._create().status_code, 200)
+        self.assertEqual(self._create().status_code, 429)
+        self.client.force_login(self.other)
+        self.assertEqual(self._create().status_code, 200)
+
+    @override_settings(REST_FRAMEWORK=_TEST_RECEIVE_ACCESS_THROTTLING)
+    def test_anonymous_creation_keeps_existing_throttle(self):
+        self.client.logout()
+        for _attempt in range(3):
+            self.assertEqual(self._create().status_code, 200)
+
+    @override_settings(PSST_RECEIVE_ACCESS_DEFAULT=True)
+    def test_default_can_be_disabled(self):
+        self.assertTrue(
+            Whisper.objects.get(pk=self._create().json()["id"]).creator_only
+        )
+        response = self._create(creator_only=False)
+        self.assertFalse(Whisper.objects.get(pk=response.json()["id"]).creator_only)
+
+    @override_settings(PSST_FORCE_RECEIVE_ACCESS=True)
+    def test_force_cannot_be_bypassed(self):
+        response = self._create(creator_only=False)
+        whisper = Whisper.objects.get(pk=response.json()["id"])
+        self.assertTrue(whisper.creator_only)
+        self.assertEqual(self._update(whisper, creator_only=False).status_code, 400)
+
+    def test_denied_reads_do_not_touch_redis(self):
+        whisper = self._restricted()
+        self.client.force_login(self.other)
+        with (
+            patch("whispers.views.redis_store.get_crypto") as get_crypto,
+            patch("whispers.views.redis_store.increment_and_reveal") as reveal,
+        ):
+            self.assertEqual(self.client.get(f"/whisper/{whisper.id}").status_code, 403)
+            for suffix in ("", "?render=1"):
+                self.assertEqual(
+                    self.client.post(f"/whisper/{whisper.id}{suffix}").status_code, 403
+                )
+            get_crypto.assert_not_called()
+            reveal.assert_not_called()
+        self.client.force_login(self.creator)
+        self.assertEqual(self.client.post(f"/whisper/{whisper.id}").status_code, 200)
+
+    def test_anonymous_cannot_create_or_reveal_restricted(self):
+        whisper = self._restricted()
+        self.client.logout()
+        self.assertEqual(self._create(creator_only=True).status_code, 403)
+        self.assertEqual(self.client.get(f"/whisper/{whisper.id}").status_code, 302)
+        self.assertEqual(self.client.post(f"/whisper/{whisper.id}").status_code, 403)
+
+    @override_settings(PSST_ENABLE_RECEIVE_ACCESS=False)
+    def test_disabled_feature_rejects_opt_in(self):
+        self.assertEqual(self._create(creator_only=True).status_code, 400)
+        self.assertEqual(self._create().status_code, 200)
+
+    def test_add_and_revoke_reader_without_consuming_reveal(self):
+        whisper = self._restricted()
+        response = self._update(whisper, allowed_reader_emails=["READER@example.com"])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["allowed_reader_emails"], [self.reader.email])
+        self.client.force_login(self.reader)
+        self.assertEqual(self.client.post(f"/whisper/{whisper.id}").status_code, 200)
+        self.assertEqual(self._update(whisper, creator_only=False).status_code, 404)
+        self.assertEqual(
+            self.client.get(f"/api/whisper/{whisper.id}/access").status_code, 404
+        )
+        self.client.force_login(self.creator)
+        self.assertEqual(
+            self._update(whisper, allowed_reader_emails=[]).status_code, 200
+        )
+        self.client.force_login(self.reader)
+        self.assertEqual(self.client.post(f"/whisper/{whisper.id}").status_code, 403)
+
+    def test_emails_validated_before_state_changes(self):
+        whisper = self._restricted()
+        for email in ("missing@example.com", self.other.email, "not-an-email"):
+            self.assertEqual(
+                self._update(whisper, allowed_reader_emails=[email]).status_code, 400
+            )
+        self.assertEqual(whisper.allowed_readers.count(), 0)
+        self.assertEqual(
+            self._create(
+                creator_only=True, allowed_reader_emails=[self.reader.email]
+            ).status_code,
+            200,
+        )
+
+    def test_reader_validation_does_not_expose_exception_details(self):
+        whisper = self._restricted()
+        private_details = "Internal reader lookup failed at /private/database/path"
+        with patch(
+            "whispers.views._resolve_receive_readers",
+            side_effect=ValueError(private_details),
+        ):
+            responses = [
+                self._create(
+                    creator_only=True, allowed_reader_emails=[self.reader.email]
+                ),
+                self._update(whisper, allowed_reader_emails=[self.reader.email]),
+            ]
+        for response in responses:
+            self.assertEqual(response.status_code, 400)
+            self.assertEqual(
+                response.json(),
+                {
+                    "error": "Enter the verified primary email of each additional reader."
+                },
+            )
+            self.assertNotIn(private_details, response.content.decode())
+        self.assertEqual(Whisper.objects.count(), 1)
+        whisper.refresh_from_db()
+        self.assertTrue(whisper.creator_only)
+        self.assertEqual(whisper.allowed_readers.count(), 0)
+
+    def test_disable_clears_readers(self):
+        whisper = self._restricted()
+        self._update(whisper, allowed_reader_emails=[self.reader.email])
+        self.assertEqual(self._update(whisper, creator_only=False).status_code, 200)
+        whisper.refresh_from_db()
+        self.assertFalse(whisper.creator_only)
+        self.assertEqual(whisper.allowed_readers.count(), 0)
+
+    def test_expired_or_send_whispers_cannot_be_managed(self):
+        whisper = self._restricted()
+        whisper.expires_at = timezone.now() - timedelta(seconds=1)
+        whisper.save(update_fields=["expires_at"])
+        self.assertEqual(self._update(whisper, creator_only=False).status_code, 404)
+        whisper = Whisper.objects.create(mode="send", creator=self.creator)
+        self.assertEqual(self._update(whisper, creator_only=True).status_code, 404)
+
+    def test_pending_request_can_be_managed(self):
+        response = self._create(creator_only=True)
+        whisper = Whisper.objects.get(pk=response.json()["id"])
+        self.assertEqual(
+            self._update(
+                whisper, allowed_reader_emails=[self.reader.email]
+            ).status_code,
+            200,
+        )
+
+    def test_management_requires_csrf(self):
+        from django.test import Client
+
+        whisper = self._restricted()
+        client = Client(enforce_csrf_checks=True)
+        client.force_login(self.creator)
+        response = client.patch(
+            f"/api/whisper/{whisper.id}/access",
+            data=json.dumps({"creator_only": False}),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_creator_can_manage_pending_confirm_and_unlimited_reveal(self):
+        response = self._create(creator_only=True)
+        whisper = Whisper.objects.get(pk=response.json()["id"])
+        self.assertContains(
+            self.client.get(f"/whisper/{whisper.id}"), 'id="receive-access-form"'
+        )
+        redis_store.update_crypto(whisper.id, ciphertext="ct", iv="iv")
+        self.assertContains(
+            self.client.get(f"/whisper/{whisper.id}"), 'id="receive-access-form"'
+        )
+        self.assertContains(
+            self.client.post(f"/whisper/{whisper.id}?render=1"),
+            'id="receive-access-form"',
+        )
+        self._update(whisper, allowed_reader_emails=[self.reader.email])
+        self.client.force_login(self.reader)
+        self.assertNotContains(
+            self.client.get(f"/whisper/{whisper.id}"), 'id="receive-access-form"'
+        )
+
+    def test_burned_whisper_has_no_access_editor(self):
+        response = self._create(creator_only=True, max_views=1)
+        whisper = Whisper.objects.get(pk=response.json()["id"])
+        redis_store.update_crypto(whisper.id, ciphertext="ct", iv="iv")
+        self.assertNotContains(
+            self.client.post(f"/whisper/{whisper.id}?render=1"),
+            'id="receive-access-form"',
+        )
+
+    @override_settings(PSST_ENABLE_RECEIVE_ACCESS=False)
+    def test_existing_restriction_survives_feature_disabled(self):
+        whisper = Whisper.objects.create(
+            mode="receive", creator=self.creator, creator_only=True
+        )
+        self.client.force_login(self.other)
+        self.assertEqual(self.client.post(f"/whisper/{whisper.id}").status_code, 403)
+
+    def test_creator_controls_render_only_for_signed_in_enabled_feature(self):
+        self.assertContains(self.client.get("/"), 'id="creator-only"')
+        with override_settings(PSST_ENABLE_RECEIVE_ACCESS=False):
+            self.assertNotContains(self.client.get("/"), 'id="creator-only"')
+        self.client.logout()
+        self.assertNotContains(self.client.get("/"), 'id="creator-only"')
+
+    def test_multiple_reader_emails_render_with_real_newlines(self):
+        from allauth.account.models import EmailAddress
+
+        EmailAddress.objects.create(
+            user=self.other, email=self.other.email, verified=True, primary=True
+        )
+        whisper = self._restricted()
+        self._update(
+            whisper, allowed_reader_emails=[self.reader.email, self.other.email]
+        )
+        response = self.client.get(f"/whisper/{whisper.id}")
+        self.assertContains(response, "other@example.com\nreader@example.com")
+
+    def test_force_can_be_applied_when_editing_older_unrestricted_request(self):
+        response = self._create(creator_only=False)
+        whisper = Whisper.objects.get(pk=response.json()["id"])
+        with override_settings(PSST_FORCE_RECEIVE_ACCESS=True):
+            self.assertEqual(
+                self._update(whisper, allowed_reader_emails=[]).status_code, 200
+            )
+        whisper.refresh_from_db()
+        self.assertTrue(whisper.creator_only)
 
 
 @override_settings(MIDDLEWARE=_BASE_MIDDLEWARE, REST_FRAMEWORK=_TEST_REST_FRAMEWORK)

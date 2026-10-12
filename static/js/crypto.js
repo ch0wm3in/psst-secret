@@ -584,6 +584,14 @@ async function handleCreateRequest() {
             ({ wrappedKey, wrappedKeyIv, salt } = await wrapPrivateKey(seedB64, password));
         }
 
+        const creatorOnly = document.getElementById('creator-only');
+        const readerEmails = document.getElementById('allowed-reader-emails');
+        const receiveAccess = creatorOnly ? {
+            creator_only: creatorOnly.checked,
+            allowed_reader_emails: creatorOnly.checked && readerEmails
+                ? readerEmails.value.split(/[\s,;]+/).filter(Boolean)
+                : [],
+        } : {};
         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
         const response = await fetch('/api/whisper/request', {
             method: 'POST',
@@ -596,6 +604,7 @@ async function handleCreateRequest() {
                 salt,
                 wrapped_key: wrappedKey,
                 wrapped_key_iv: wrappedKeyIv,
+                ...receiveAccess,
                 max_views: maxViews,
                 expiry: expiryEl.value,
                 allowed_cidr: (document.getElementById('allowed-cidr') || {}).value || '',

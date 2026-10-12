@@ -94,12 +94,14 @@
     </div>
 </div>
 
+{% include "whispers/receive_access.html" %}
+
 <!-- Embedded encrypted data (server-rendered, auto-escaped by json_script) -->
 {{ paste_data|json_script:"paste-data" }}
 
 {% load static %}
 <script src="{% static 'js/pqc.min.js' %}"></script>
-<script src="{% static 'js/crypto.js' %}"></script>
+<script src="{% static 'js/crypto.min.js' %}"></script>
 <script>
     let pasteData = JSON.parse(document.getElementById("paste-data").textContent);
 

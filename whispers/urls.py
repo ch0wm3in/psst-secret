@@ -21,6 +21,11 @@ urlpatterns = [
         name="api_create_request",
     ),
     path(
+        "api/whisper/<uuid:whisper_id>/access",
+        views.ReceiveAccessView.as_view(),
+        name="api_receive_access",
+    ),
+    path(
         "api/whisper/submit/<uuid:submit_token>",
         views.SubmitWhisperView.as_view(),
         name="api_submit",

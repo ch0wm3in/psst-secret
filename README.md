@@ -18,6 +18,7 @@ A privacy-focused, zero-knowledge app for sharing secrets securely. We call them
 - **IP/CIDR restriction** — restrict who can view (send mode) or submit (receive mode) a whisper by IP address or CIDR range.
 - **Optional authentication (SSO)** — opt-in [django-allauth](https://docs.allauth.org/) integration with pluggable social providers and/or local username/password. Disabled by default.
 - **Optional per-whisper auth** — individual whispers can require an authenticated viewer or submitter. Global overrides force auth for all whispers.
+- **Opt-in receive reader access** — restrict receive-mode reveals to the creator and approved accounts, selected by verified primary email. Creators can edit access from the reveal link without revealing or burning the whisper. Optional defaults and mandatory restrictions are configurable.
 - **Optional email notifications** — notify the receiver (send mode) or creator (receive mode) by email when a whisper is created or submitted. Supports Django's standard SMTP backend or Azure Communication Services.
 - **Opt-in anonymous statistics** — hourly aggregate submission and reveal counts, retained for 365 days, with relative time filters. Disabled by default; enable with `PSST_ENABLE_STATS=True`.
 - **Internationalization** — English, Danish (`da`), Czech (`cs`), Swedish (`sv`), and Filipino (Tagalog, `fil`) out of the box, with a per-request language switcher.
@@ -96,9 +97,22 @@ separate terminal:
 python manage.py tailwind start
 ```
 
-Tailwind, Alpine.js, and noble-post-quantum are installed from the locked npm dependencies in
-`theme/static_src/`. Production Docker builds compile these into local Django
-static assets, so the application does not depend on CDNs at runtime.
+Tailwind, Alpine.js, noble-post-quantum, and esbuild are installed from the locked npm dependencies in
+`theme/static_src/`. The frontend build also minifies the custom scripts in `static/js/`
+into `theme/static/js/crypto.min.js` and `theme/static/js/password-strength.min.js`,
+which are loaded by the templates. Keep editing the readable source files, not the
+generated assets. Production Docker builds compile all frontend assets locally,
+so the application does not depend on CDNs at runtime.
+
+The Tailwind watcher builds the JavaScript assets once at startup but only watches
+CSS changes. After editing a custom JavaScript source, rebuild it with:
+
+```bash
+npm --prefix theme/static_src run build:custom
+```
+
+Run `uv run --env-file .env python manage.py tailwind build` to rebuild all frontend
+assets, then run `collectstatic` as usual for production deployments.
 
 ## Architecture
 
@@ -179,11 +193,60 @@ All authentication features are **disabled by default**. Set `ENABLE_AUTH=True` 
 | `ENABLE_LOCAL_LOGIN` | Allow username/password login (in addition to SSO providers). Only takes effect when `ENABLE_AUTH=True`. | `False` |
 | `PSST_FORCE_AUTH_VIEW` | Require authentication to **view** all whispers (overrides per-whisper setting). | `False` |
 | `PSST_FORCE_AUTH_SUBMIT` | Require authentication to **submit** to all receive-mode requests (overrides per-whisper setting). | `False` |
+| `PSST_ENABLE_RECEIVE_ACCESS` | Enable creator-owned receive requests and reader-access controls. Requires `ENABLE_AUTH=True`. | `False` |
+| `PSST_RECEIVE_ACCESS_DEFAULT` | Enable restricted reader access by default for new receive requests; creators can turn it off. Requires the feature and authentication to be enabled. | `False` |
+| `PSST_FORCE_RECEIVE_ACCESS` | Require restricted access for new receive requests and access updates; creators cannot turn it off. Overrides the default setting. Requires the feature and authentication to be enabled. | `False` |
 | `ACCOUNT_DEFAULT_HTTP_PROTOCOL` | Protocol used by allauth when building absolute URLs in emails. | `https` (`http` in `DEBUG`) |
 | `ACCOUNT_EMAIL_VERIFICATION` | allauth email verification mode: `"mandatory"`, `"optional"`, or `"none"`. | `"none"` |
 | `LOGIN_REQUIRED_EXEMPT_URLS` | Comma-separated regex patterns for paths that bypass the login requirement (matched without leading `/`). | `login/,accounts/.*,i18n/.*,static/.*` |
 | `SOCIAL_AUTH_PROVIDERS` | Comma-separated list of allauth social provider names to enable (e.g. `google,github`). | _empty_ |
 | `{PROVIDER}_SOCIAL_AUTH_CONFIG` | JSON configuration for each social provider (uppercased provider name, e.g. `GOOGLE_SOCIAL_AUTH_CONFIG`). | `{}` |
+
+### Receive reader access
+
+Enable the optional feature with:
+
+```bash
+ENABLE_AUTH=True
+PSST_ENABLE_RECEIVE_ACCESS=True
+```
+
+Set `PSST_RECEIVE_ACCESS_DEFAULT=True` to start with **Only me and approved readers**
+checked while allowing creators to disable it. Set `PSST_FORCE_RECEIVE_ACCESS=True`
+instead to make the restriction mandatory. These settings do not retroactively
+restrict existing requests.
+
+Run `uv run --env-file .env python manage.py migrate` after upgrading. Requests
+created by signed-in users while this feature is enabled record their creator,
+even if the restriction is initially off. Older requests without a recorded creator
+cannot use the access editor. Anonymous callers cannot create restricted requests.
+
+Additional readers must already have active accounts with unique, verified primary
+email addresses in django-allauth. Enter up to 20 addresses, separated by commas,
+semicolons, spaces, or newlines. No invitations or keys are emailed, and no account
+directory is exposed. Grants are bound to account IDs, not future registrations
+with the same email address. The creator remains a reader and is the only account
+that can edit access; approved readers and administrators have no implicit management
+or reveal bypass.
+
+Open the reveal link to edit access while a request is pending, before revealing it,
+or after a reveal that has not exhausted its view limit. Saving access does not
+consume a reveal. Restricted reveals require sign-in even if a login middleware
+exemption permits visiting the URL. Submitter authentication remains controlled
+separately by the existing submit settings.
+
+Approved readers still need the complete reveal link (including its private key
+fragment, where applicable) and any password. Share those separately. All readers
+share the existing view limit, so a single-view whisper is destroyed after the first
+authorized reveal. Revoking an account blocks future retrievals, not in-flight
+retrievals or ciphertext/plaintext already obtained. Disabling the feature or
+authentication does not silently unlock previously restricted whispers; authentication
+must be restored to read them. Deleting the creator account deletes its owned
+request metadata; any remaining Redis ciphertext expires by its existing TTL.
+
+Creator and reader account references are operational metadata in PostgreSQL/SQLite,
+not analytics. They are never included in anonymous statistics. Ciphertext and key
+material remain in Redis, and private keys and passwords remain client-side.
 
 ### Rate limiting
 
@@ -192,6 +255,14 @@ All authentication features are **disabled by default**. Set `ENABLE_AUTH=True` 
 | `API_THROTTLE_RATE_ANON` | Global anonymous API rate limit (DRF format, e.g. `100/hour`). | `60/minute` |
 | `API_THROTTLE_RATE_CREATE` | Rate limit for whisper/request creation and submit API endpoints. | `20/minute` |
 | `THROTTLE_RATE_VIEW` | Rate limit for the whisper view page (per IP, cache-based). | `30/minute` |
+| `API_THROTTLE_RATE_RECEIVE_ACCESS` | Shared per-account limit for authenticated receive creation and access-management requests, including failed reader-email lookups. | `10/minute` |
+
+Reader-email validation reveals whether an address is eligible for access. Both
+receive creation and access-management requests share the limit above, keyed by
+the signed-in account rather than client IP. Invalid addresses consume the same
+budget as successful requests; exceeding it returns HTTP 429 before looking up
+reader accounts. Anonymous requests retain their existing per-IP limits. This
+limits account enumeration but does not eliminate the eligibility signal.
 
 ### Branding & build info
 
@@ -287,6 +358,15 @@ A small JSON API is exposed alongside the HTML views. The OpenAPI schema is gene
 | `POST` | `/api/whisper` | Create a send-mode whisper (ciphertext + metadata) |
 | `POST` | `/api/whisper/request` | Create a receive-mode request |
 | `POST` | `/api/whisper/submit/<request_id>` | Submit ciphertext to a receive-mode request |
+| `GET`, `PATCH` | `/api/whisper/<view_id>/access` | Read or update receive reader access (creator only; feature must be enabled) |
+
+Receive creation (`POST /api/whisper/request`) accepts optional `creator_only`
+(boolean) and `allowed_reader_emails` (array of up to 20 verified primary emails).
+The access endpoint accepts the same fields; omitted fields retain their current
+values. Disabling the restriction clears approved readers. A mandatory setting
+rejects attempts to disable it. Requests use the existing session authentication
+and CSRF protection; access responses contain only restriction settings, never
+ciphertext or keys.
 
 ## Security properties
 
@@ -300,6 +380,8 @@ A small JSON API is exposed alongside the HTML views. The OpenAPI schema is gene
 - Redis runs with persistence disabled (`--save "" --appendonly no`) by default — all ciphertexts are lost on restart.
 - If Redis evicts a key before the DB row is cleaned up, the next access deletes the orphaned row automatically.
 - The app refuses to start in production (`DEBUG=False`) with the insecure default `SECRET_KEY`.
+- Receive reader restrictions are checked before Redis retrieval or reveal counting. They complement client-side encryption, rather than replacing possession of the decryption key.
+- Reader-validation failures return a fixed translated message, never internal exception details.
 
 ## License
 

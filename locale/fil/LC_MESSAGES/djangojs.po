@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psst-secret\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-09 08:07+0000\n"
+"POT-Creation-Date: 2026-10-12 08:39+0000\n"
 "PO-Revision-Date: 2026-10-09 08:07+0000\n"
 "Last-Translator: \n"
 "Language-Team: Filipino\n"
@@ -11,7 +11,8 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n % 10 == 4 || n % 10 == 6 || n % 10 == 9);\n"
+"Plural-Forms: nplurals=2; plural=(n % 10 == 4 || n % 10 == 6 || n % 10 == "
+"9);\n"
 
 #: static/js/crypto.js:108
 msgid "Remove"
@@ -39,16 +40,16 @@ msgstr ""
 "Hindi tumutugma ang susi ng kahilingan sa link. Maaaring hindi kumpleto o "
 "napakialaman ang link."
 
-#: static/js/crypto.js:427 static/js/crypto.js:665
+#: static/js/crypto.js:427 static/js/crypto.js:674
 msgid "Please enter some content or select a file to encrypt."
 msgstr "Maglagay ng nilalaman o pumili ng file na i-e-encrypt."
 
-#: static/js/crypto.js:433 static/js/crypto.js:671
+#: static/js/crypto.js:433 static/js/crypto.js:680
 #, javascript-format
 msgid "Selected files exceed the maximum total size of %s."
 msgstr "Lumampas ang mga napiling file sa pinakamalaking kabuuang laki na %s."
 
-#: static/js/crypto.js:439 static/js/crypto.js:677
+#: static/js/crypto.js:439 static/js/crypto.js:686
 msgid "Encrypting…"
 msgstr "Ine-encrypt…"
 
@@ -59,7 +60,7 @@ msgstr ""
 "Hindi natutugunan ng password ang mga kinakailangan sa tibay na nakalista sa "
 "ibaba ng field."
 
-#: static/js/crypto.js:495 static/js/crypto.js:609 static/js/crypto.js:709
+#: static/js/crypto.js:495 static/js/crypto.js:618 static/js/crypto.js:718
 #, javascript-format
 msgid "Server error (%s)"
 msgstr "Error sa server (%s)"
@@ -73,7 +74,7 @@ msgstr "Buburahin ang whisper na ito pagkatapos tingnan nang isang beses."
 msgid "This whisper will be destroyed after %s views."
 msgstr "Buburahin ang whisper na ito pagkatapos ng %s pagtingin."
 
-#: static/js/crypto.js:526 static/js/crypto.js:640 static/js/crypto.js:717
+#: static/js/crypto.js:526 static/js/crypto.js:649 static/js/crypto.js:726
 #, javascript-format
 msgid "Error: %s"
 msgstr "Error: %s"
@@ -94,24 +95,37 @@ msgstr "Kopyahin"
 msgid "Creating…"
 msgstr "Lumilikha…"
 
-#: static/js/crypto.js:630
+#: static/js/crypto.js:639
 msgid "The whisper will be destroyed after you view it once."
 msgstr "Buburahin ang whisper pagkatapos mong tingnan nang isang beses."
 
-#: static/js/crypto.js:632
+#: static/js/crypto.js:641
 #, javascript-format
 msgid "The whisper will be destroyed after %s views."
 msgstr "Buburahin ang whisper pagkatapos ng %s pagtingin."
 
-#: static/js/crypto.js:644
+#: static/js/crypto.js:653
 msgid "Create Request"
 msgstr "Lumikha ng kahilingan"
 
-#: static/js/crypto.js:681
+#: static/js/crypto.js:690
 msgid "No encryption key found in URL. The link may be incomplete."
 msgstr ""
 "Walang susi para sa pag-encrypt sa URL. Maaaring hindi kumpleto ang link."
 
-#: static/js/crypto.js:721
+#: static/js/crypto.js:730
 msgid "Encrypt & Submit"
 msgstr "I-encrypt at isumite"
+
+#: static/js/receive-access.js:37
+msgid "Saving…"
+msgstr "Sine-save…"
+
+#: static/js/receive-access.js:52 static/js/receive-access.js:54
+#: static/js/receive-access.js:61
+msgid "Could not update access."
+msgstr "Hindi ma-update ang access."
+
+#: static/js/receive-access.js:58
+msgid "Access updated."
+msgstr "Na-update ang access."

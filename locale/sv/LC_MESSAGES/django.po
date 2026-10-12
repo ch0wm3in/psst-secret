@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psst-secret\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-09 07:50+0000\n"
+"POT-Creation-Date: 2026-10-12 08:53+0000\n"
 "PO-Revision-Date: 2026-10-09 07:50+0000\n"
 "Last-Translator: \n"
 "Language-Team: Swedish\n"
@@ -286,11 +286,11 @@ msgstr ""
 
 #: templates/whispers/about.html:77
 msgid "The server never receives the decryption key"
-msgstr "Servern aldrig tar emot dekrypteringsnyckeln"
+msgstr "Servern tar aldrig emot dekrypteringsnyckeln"
 
 #: templates/whispers/about.html:78
 msgid "The key doesn't appear in server logs or analytics"
-msgstr "Nyckeln inte förekommer i serverloggar eller analysdata"
+msgstr "Nyckeln förekommer inte i serverloggar eller analysdata"
 
 #: templates/whispers/about.html:79
 msgid "Even if the server is compromised, your whispers remain encrypted"
@@ -346,14 +346,30 @@ msgid "This provides an extra layer of security for highly sensitive data"
 msgstr "Detta ger ett extra säkerhetslager för mycket känsliga uppgifter"
 
 #: templates/whispers/about.html:101
+msgid "Restricted receive access"
+msgstr "Begränsad läsåtkomst för mottagning"
+
+#: templates/whispers/about.html:102
+msgid ""
+"Receive requests can limit reading to their creator and approved accounts. "
+"The creator can update readers from the reveal link. Readers still need the "
+"full link and any password; removing access cannot revoke content already "
+"retrieved."
+msgstr ""
+"Mottagningsförfrågningar kan begränsa läsning till skaparen och godkända "
+"konton. Skaparen kan ändra läsare via visningslänken. Läsare behöver "
+"fortfarande hela länken och eventuellt lösenord; borttagen åtkomst kan inte "
+"återkalla innehåll som redan har hämtats."
+
+#: templates/whispers/about.html:108
 msgid "Security Features"
 msgstr "Säkerhetsfunktioner"
 
-#: templates/whispers/about.html:104
+#: templates/whispers/about.html:111
 msgid "Burn After Reading"
 msgstr "Radera efter läsning"
 
-#: templates/whispers/about.html:106
+#: templates/whispers/about.html:113
 msgid ""
 "Whispers marked as burn-after-read are <strong class=\"text-"
 "gray-300\">permanently deleted</strong> the moment they are viewed — not "
@@ -363,7 +379,7 @@ msgstr ""
 "gray-300\">raderas permanent</strong> så snart de visas — de markeras inte "
 "bara, utan försvinner helt."
 
-#: templates/whispers/about.html:108
+#: templates/whispers/about.html:115
 msgid ""
 "Whispers marked as burn-after-read are <strong class=\"text-"
 "gray-300\">permanently erased from memory</strong> the moment they are "
@@ -373,11 +389,11 @@ msgstr ""
 "gray-300\">raderas permanent ur minnet</strong> så snart de visas — de "
 "markeras inte bara, utan försvinner helt."
 
-#: templates/whispers/about.html:112
+#: templates/whispers/about.html:119
 msgid "Auto-Expiry"
 msgstr "Automatisk utgångstid"
 
-#: templates/whispers/about.html:113
+#: templates/whispers/about.html:120
 msgid ""
 "All whispers require an expiration time (5 minutes to 1 month). Expired "
 "whispers are automatically evicted from Redis via TTL and continuously "
@@ -387,7 +403,7 @@ msgstr ""
 "vars giltighetstid har löpt ut tas automatiskt bort från Redis via TTL och "
 "rensas löpande av en bakgrundsprocess."
 
-#: templates/whispers/about.html:117
+#: templates/whispers/about.html:124
 msgid ""
 "Industry-standard authenticated encryption. Provides both confidentiality "
 "and integrity — any tampering with the ciphertext is detected."
@@ -395,11 +411,11 @@ msgstr ""
 "Autentiserad kryptering enligt branschstandard. Ger både konfidentialitet "
 "och integritet — all manipulering av chiffertexten upptäcks."
 
-#: templates/whispers/about.html:120
+#: templates/whispers/about.html:127
 msgid "Post-Quantum Ready"
 msgstr "Redo för kvantdatorer"
 
-#: templates/whispers/about.html:121
+#: templates/whispers/about.html:128
 msgid ""
 "Send mode uses 256-bit symmetric keys, which remain secure against quantum "
 "computers. Receive mode uses the hybrid ML-KEM-768 + X25519 key exchange."
@@ -408,11 +424,11 @@ msgstr ""
 "mot kvantdatorer. Mottagningsläget använder det hybrida nyckelutbytet ML-"
 "KEM-768 + X25519."
 
-#: templates/whispers/about.html:124
+#: templates/whispers/about.html:131
 msgid "Zero Knowledge"
 msgstr "Ingen insyn"
 
-#: templates/whispers/about.html:126
+#: templates/whispers/about.html:133
 msgid ""
 "The server stores only encrypted data and public key material in Redis. It "
 "has no ability to decrypt your data, even under compulsion."
@@ -420,7 +436,7 @@ msgstr ""
 "Servern lagrar endast krypterade data och publikt nyckelmaterial i Redis. "
 "Den kan inte dekryptera dina data, inte ens under tvång."
 
-#: templates/whispers/about.html:128
+#: templates/whispers/about.html:135
 msgid ""
 "The server stores only encrypted data and public key material — and only in "
 "volatile memory (Redis). It has no ability to decrypt your data, even under "
@@ -430,43 +446,43 @@ msgstr ""
 "i flyktigt minne (Redis). Den kan inte dekryptera dina data, inte ens under "
 "tvång."
 
-#: templates/whispers/about.html:136
+#: templates/whispers/about.html:143
 msgid "What the Server Stores"
 msgstr "Vad servern lagrar"
 
-#: templates/whispers/about.html:140
+#: templates/whispers/about.html:147
 msgid "Redis (with persistence enabled)"
 msgstr "Redis (med beständig lagring aktiverad)"
 
-#: templates/whispers/about.html:142
+#: templates/whispers/about.html:149
 msgid "Redis (in-memory only — never touches disk)"
 msgstr "Redis (endast i minnet — skrivs aldrig till disk)"
 
-#: templates/whispers/about.html:147 templates/whispers/about.html:167
+#: templates/whispers/about.html:154 templates/whispers/about.html:174
 msgid "Field"
 msgstr "Fält"
 
-#: templates/whispers/about.html:148 templates/whispers/about.html:168
+#: templates/whispers/about.html:155 templates/whispers/about.html:175
 msgid "Purpose"
 msgstr "Syfte"
 
-#: templates/whispers/about.html:152
+#: templates/whispers/about.html:159
 msgid "Your encrypted data (useless without the key)"
 msgstr "Dina krypterade data (oanvändbara utan nyckeln)"
 
-#: templates/whispers/about.html:153
+#: templates/whispers/about.html:160
 msgid "Random initialization vector for AES-GCM"
 msgstr "Slumpmässig initieringsvektor för AES-GCM"
 
-#: templates/whispers/about.html:154
+#: templates/whispers/about.html:161
 msgid "PBKDF2 salt (only if password-protected)"
 msgstr "PBKDF2-salt (endast vid lösenordsskydd)"
 
-#: templates/whispers/about.html:155
+#: templates/whispers/about.html:162
 msgid "Receive mode: your X-Wing public key (can only encrypt)"
 msgstr "Mottagningsläge: din publika X-Wing-nyckel (kan endast kryptera)"
 
-#: templates/whispers/about.html:156
+#: templates/whispers/about.html:163
 msgid ""
 "Receive mode: the sender's key encapsulation (useless without your private "
 "key)"
@@ -474,7 +490,7 @@ msgstr ""
 "Mottagningsläge: avsändarens nyckelinkapsling (oanvändbar utan din privata "
 "nyckel)"
 
-#: templates/whispers/about.html:157
+#: templates/whispers/about.html:164
 msgid ""
 "Receive mode: your private key seed encrypted with your password (only if "
 "password-protected)"
@@ -482,51 +498,59 @@ msgstr ""
 "Mottagningsläge: fröet till din privata nyckel krypterat med ditt lösenord "
 "(endast vid lösenordsskydd)"
 
-#: templates/whispers/about.html:158
+#: templates/whispers/about.html:165
 msgid "Reveal counter, used to enforce the view limit"
 msgstr "Visningsräknare som används för att upprätthålla visningsgränsen"
 
-#: templates/whispers/about.html:163
+#: templates/whispers/about.html:170
 msgid "PostgreSQL (metadata only)"
 msgstr "PostgreSQL (endast metadata)"
 
-#: templates/whispers/about.html:172
+#: templates/whispers/about.html:179
 msgid "Random identifier used in the view link"
 msgstr "Slumpmässig identifierare som används i visningslänken"
 
-#: templates/whispers/about.html:173
+#: templates/whispers/about.html:180
 msgid "Receive mode: separate random identifier used in the submit link"
 msgstr ""
 "Mottagningsläge: separat slumpmässig identifierare som används i "
 "inlämningslänken"
 
-#: templates/whispers/about.html:174
+#: templates/whispers/about.html:181
 msgid "When the whisper was created and when it will be auto-deleted"
 msgstr "När whispern skapades och när den kommer att raderas automatiskt"
 
-#: templates/whispers/about.html:175
+#: templates/whispers/about.html:182
 msgid "Number of allowed reveals before destruction (1 = burn; 0 = unlimited)"
 msgstr ""
 "Antal tillåtna visningar före radering (1 = radera efter läsning; 0 = "
 "obegränsat)"
 
-#: templates/whispers/about.html:176
+#: templates/whispers/about.html:183
 msgid "Send or receive"
 msgstr "Sända eller ta emot"
 
-#: templates/whispers/about.html:177
+#: templates/whispers/about.html:184
 msgid "IP/CIDR restriction"
 msgstr "IP/CIDR-begränsning"
 
-#: templates/whispers/about.html:178
+#: templates/whispers/about.html:185
 msgid "Whether signing in is required to view or submit"
 msgstr "Om inloggning krävs för att visa eller skicka in"
 
-#: templates/whispers/about.html:179
+#: templates/whispers/about.html:187
+msgid ""
+"Receive mode: creator and approved reader account references (never included "
+"in statistics)"
+msgstr ""
+"Mottagningsläge: referenser till skaparens och godkända läsares konton "
+"(ingår aldrig i statistiken)"
+
+#: templates/whispers/about.html:189
 msgid "Email address to notify (only if you opt in)"
 msgstr "E-postadress för aviseringar (endast om du väljer det)"
 
-#: templates/whispers/about.html:184
+#: templates/whispers/about.html:194
 msgid ""
 "The server does <strong>not</strong> store: plaintext, encryption keys, "
 "private keys, or passwords. An email address is only stored if you opt in to "
@@ -536,7 +560,7 @@ msgstr ""
 "nycklar eller lösenord. En e-postadress lagras endast om du väljer att få "
 "aviseringar. Krypterade data lagras i Redis med beständig lagring aktiverad."
 
-#: templates/whispers/about.html:186
+#: templates/whispers/about.html:196
 msgid ""
 "The server does <strong>not</strong> store: plaintext, encryption keys, "
 "private keys, or passwords. An email address is only stored if you opt in to "
@@ -548,19 +572,19 @@ msgstr ""
 "aviseringar. Krypterade data finns bara i flyktigt minne och går förlorade "
 "om Redis startas om."
 
-#: templates/whispers/about.html:193
+#: templates/whispers/about.html:203
 msgid "Tech Stack"
 msgstr "Teknikstack"
 
-#: templates/whispers/about.html:197
+#: templates/whispers/about.html:207
 msgid "Redis (persistent)"
 msgstr "Redis (beständig lagring)"
 
-#: templates/whispers/about.html:199
+#: templates/whispers/about.html:209
 msgid "Redis (in-memory)"
 msgstr "Redis (i minnet)"
 
-#: templates/whispers/about.html:214
+#: templates/whispers/about.html:224
 msgid "Create a whisper"
 msgstr "Skapa en whisper"
 
@@ -622,7 +646,7 @@ msgstr "Klicka nedan för att dekryptera och visa denna whisper."
 msgid "Reveal whisper"
 msgstr "Visa whisper"
 
-#: templates/whispers/confirm.html:34
+#: templates/whispers/confirm.html:36
 msgid "Loading…"
 msgstr "Laddar…"
 
@@ -788,7 +812,7 @@ msgid "Password"
 msgstr "Lösenord"
 
 #: templates/whispers/create.html:131 templates/whispers/create.html:167
-#: templates/whispers/create.html:208
+#: templates/whispers/create.html:224
 msgid "optional"
 msgstr "valfritt"
 
@@ -872,33 +896,47 @@ msgid "The person submitting a whisper to this request must be signed in."
 msgstr ""
 "Den som skickar in en whisper till denna förfrågan måste vara inloggad."
 
-#: templates/whispers/create.html:206
-msgid "Notify recipient"
-msgstr "Avisera mottagaren"
+#: templates/whispers/create.html:206 templates/whispers/receive_access.html:8
+#: whispers/views.py:696
+msgid "Restricted receive access is required."
+msgstr "Begränsad läsåtkomst för mottagning krävs."
 
-#: templates/whispers/create.html:207
-msgid "Notify me when submitted"
-msgstr "Avisera mig vid inlämning"
+#: templates/whispers/create.html:209 templates/whispers/receive_access.html:10
+msgid "Only me and approved readers"
+msgstr "Bara jag och godkända läsare"
 
-#: templates/whispers/create.html:212
+#: templates/whispers/create.html:212 templates/whispers/receive_access.html:13
+msgid "Additional readers (verified primary emails)"
+msgstr "Ytterligare läsare (verifierade primära e-postadresser)"
+
+#: templates/whispers/create.html:215 templates/whispers/create.html:228
+#: templates/whispers/receive_access.html:16
 msgid "recipient@example.com"
 msgstr "mottagare@example.com"
 
-#: templates/whispers/create.html:214
+#: templates/whispers/create.html:222
+msgid "Notify recipient"
+msgstr "Avisera mottagaren"
+
+#: templates/whispers/create.html:223
+msgid "Notify me when submitted"
+msgstr "Avisera mig vid inlämning"
+
+#: templates/whispers/create.html:230
 msgid ""
 "The recipient will be emailed a notification that a whisper is waiting. "
 "<strong>The email will NOT contain the decryption key</strong> — you must "
 "share the full link (with the key) separately. <strong>This option is not "
-"recommended, as it will must likely confuse the recipient more than just "
-"sending it directly on other channels</strong"
+"recommended, as it will most likely confuse the recipient more than just "
+"sending it directly on other channels</strong>"
 msgstr ""
 "Mottagaren får en e-postavisering om att en whisper väntar. <strong>E-"
 "postmeddelandet innehåller INTE dekrypteringsnyckeln</strong> — du måste "
 "dela hela länken (med nyckeln) separat. <strong>Detta alternativ "
 "rekommenderas inte, eftersom det sannolikt förvirrar mottagaren mer än att "
-"skicka länken direkt via andra kanaler</strong"
+"skicka länken direkt via andra kanaler</strong>"
 
-#: templates/whispers/create.html:215
+#: templates/whispers/create.html:231
 msgid ""
 "You will be emailed when someone submits a whisper to your request. "
 "<strong>The email will NOT contain the decryption key</strong> — use the "
@@ -908,11 +946,11 @@ msgstr ""
 "förfrågan. <strong>E-postmeddelandet innehåller INTE dekrypteringsnyckeln</"
 "strong> — använd visningslänken som du sparade när du skapade förfrågan."
 
-#: templates/whispers/create.html:225
+#: templates/whispers/create.html:241
 msgid "Whisper created!"
 msgstr "Whisper skapad!"
 
-#: templates/whispers/create.html:226
+#: templates/whispers/create.html:242
 msgid ""
 "Share this link. The decryption key is in the URL fragment and is "
 "<strong>never sent to the server</strong>."
@@ -920,13 +958,13 @@ msgstr ""
 "Dela denna länk. Dekrypteringsnyckeln finns i URL-fragmentet och "
 "<strong>skickas aldrig till servern</strong>."
 
-#: templates/whispers/create.html:232 templates/whispers/create.html:262
-#: templates/whispers/create.html:273 templates/whispers/create.html:406
+#: templates/whispers/create.html:248 templates/whispers/create.html:278
+#: templates/whispers/create.html:289 templates/whispers/create.html:424
 #: templates/whispers/view.html:44
 msgid "Copy"
 msgstr "Kopiera"
 
-#: templates/whispers/create.html:236
+#: templates/whispers/create.html:252
 msgid ""
 "This whisper is password-protected. The recipient will need the password to "
 "decrypt it."
@@ -934,19 +972,19 @@ msgstr ""
 "Denna whisper är lösenordsskyddad. Mottagaren behöver lösenordet för att "
 "dekryptera den."
 
-#: templates/whispers/create.html:239
+#: templates/whispers/create.html:255
 msgid "This whisper will be destroyed after being viewed once."
 msgstr "Denna whisper raderas efter att ha visats en gång."
 
-#: templates/whispers/create.html:244 templates/whispers/create.html:288
+#: templates/whispers/create.html:260 templates/whispers/create.html:304
 msgid "Create another whisper"
 msgstr "Skapa en till whisper"
 
-#: templates/whispers/create.html:251
+#: templates/whispers/create.html:267
 msgid "Request created!"
 msgstr "Förfrågan skapad!"
 
-#: templates/whispers/create.html:252
+#: templates/whispers/create.html:268
 msgid ""
 "Share the <strong>submit link</strong> with the person who should send you a "
 "whisper. Use the <strong>view link</strong> to retrieve it once they've "
@@ -956,15 +994,15 @@ msgstr ""
 "whisper. Använd <strong>visningslänken</strong> för att hämta den när den "
 "har skickats in."
 
-#: templates/whispers/create.html:256
+#: templates/whispers/create.html:272
 msgid "Submit link — share this with the sender"
 msgstr "Inlämningslänk — dela denna med avsändaren"
 
-#: templates/whispers/create.html:267
+#: templates/whispers/create.html:283
 msgid "View link — for you to retrieve the whisper"
 msgstr "Visningslänk — för att hämta din whisper"
 
-#: templates/whispers/create.html:280
+#: templates/whispers/create.html:296
 msgid ""
 "This request is password-protected. You will need the password to open the "
 "view link. Do not share it with the sender."
@@ -972,24 +1010,24 @@ msgstr ""
 "Denna förfrågan är lösenordsskyddad. Du behöver lösenordet för att öppna "
 "visningslänken. Dela det inte med avsändaren."
 
-#: templates/whispers/create.html:283
+#: templates/whispers/create.html:299
 msgid "The whisper will be destroyed after you view it once."
 msgstr "Whispern raderas när du har visat den en gång."
 
-#: templates/whispers/create.html:304
+#: templates/whispers/create.html:320
 msgid "Leave blank to share without a password."
 msgstr "Lämna tomt för att dela utan lösenord."
 
-#: templates/whispers/create.html:305
+#: templates/whispers/create.html:321
 msgid "Strong password — all requirements met."
 msgstr "Starkt lösenord — alla krav är uppfyllda."
 
-#: templates/whispers/create.html:306
+#: templates/whispers/create.html:322
 #, python-brace-format
 msgid "{count} of 5 requirements still missing."
 msgstr "Återstående krav: {count} av 5."
 
-#: templates/whispers/create.html:405
+#: templates/whispers/create.html:423
 msgid "Copied!"
 msgstr "Kopierat!"
 
@@ -1015,6 +1053,10 @@ msgstr "Åtkomst nekad"
 #: templates/whispers/forbidden.html:9
 msgid "Access denied"
 msgstr "Åtkomst nekad"
+
+#: templates/whispers/forbidden.html:10 whispers/views.py:409
+msgid "You do not have access to this whisper."
+msgstr "Du har inte åtkomst till denna whisper."
 
 #: templates/whispers/forbidden.html:10
 msgid "Your IP address is not allowed to access this whisper."
@@ -1077,6 +1119,14 @@ msgstr "Denna förfrågan löper ut %(expires_at)s."
 #: templates/whispers/pending.html:15
 msgid "← Back to home"
 msgstr "← Tillbaka till startsidan"
+
+#: templates/whispers/receive_access.html:4
+msgid "Reader access"
+msgstr "Läsåtkomst"
+
+#: templates/whispers/receive_access.html:19
+msgid "Save access"
+msgstr "Spara åtkomst"
 
 #: templates/whispers/stats.html:10
 msgid "Whisper statistics"
@@ -1310,7 +1360,7 @@ msgid ""
 msgstr ""
 "Denna whisper har raderats — den kan aldrig visas igen. Ladda ner den nu."
 
-#: templates/whispers/view.html:68 templates/whispers/view.html:218
+#: templates/whispers/view.html:68 templates/whispers/view.html:220
 msgid "Decrypted File"
 msgstr "Dekrypterad fil"
 
@@ -1326,57 +1376,57 @@ msgstr "Dekrypteringen misslyckades"
 msgid "The link may be incomplete or the whisper may have been tampered with."
 msgstr "Länken kan vara ofullständig eller whispern kan ha manipulerats."
 
-#: templates/whispers/view.html:113
+#: templates/whispers/view.html:115
 msgid "View"
 msgstr "Visning"
 
-#: templates/whispers/view.html:113
+#: templates/whispers/view.html:115
 msgid "this whisper has unlimited views"
 msgstr "denna whisper har obegränsat antal visningar"
 
-#: templates/whispers/view.html:115
+#: templates/whispers/view.html:117
 msgid "Final view"
 msgstr "Sista visningen"
 
-#: templates/whispers/view.html:115
+#: templates/whispers/view.html:117
 msgid "this whisper has now been destroyed"
 msgstr "denna whisper har nu raderats"
 
-#: templates/whispers/view.html:118
+#: templates/whispers/view.html:120
 msgid "Viewed"
 msgstr "Visad"
 
-#: templates/whispers/view.html:118
+#: templates/whispers/view.html:120
 msgid "view(s) remaining"
 msgstr "visningar kvar"
 
-#: templates/whispers/view.html:208
+#: templates/whispers/view.html:210
 msgid "Download"
 msgstr "Ladda ner"
 
-#: templates/whispers/view.html:222
+#: templates/whispers/view.html:224
 msgid "Decrypted Files"
 msgstr "Dekrypterade filer"
 
-#: templates/whispers/view.html:223
+#: templates/whispers/view.html:225
 #, python-format
 msgid "%%s files — %%s total"
 msgstr "%%s filer — %%s totalt"
 
-#: templates/whispers/view.html:284
+#: templates/whispers/view.html:286
 msgid "Wrong password. Please try again."
 msgstr "Fel lösenord. Försök igen."
 
-#: templates/whispers/view.html:291
+#: templates/whispers/view.html:293
 msgid "No encrypted data available. The psst may have already been viewed."
 msgstr "Inga krypterade data finns tillgängliga. Whispern kan redan ha visats."
 
-#: templates/whispers/view.html:303
+#: templates/whispers/view.html:305
 msgid "No decryption key found in URL. The link may be incomplete."
 msgstr ""
 "Ingen dekrypteringsnyckel hittades i URL:en. Länken kan vara ofullständig."
 
-#: templates/whispers/view.html:312
+#: templates/whispers/view.html:314
 msgid "Decryption failed. The link may be incomplete or corrupted."
 msgstr ""
 "Dekrypteringen misslyckades. Länken kan vara ofullständig eller skadad."
@@ -1416,3 +1466,19 @@ msgstr "5 minuter"
 #: whispers/stats.py:119
 msgid "1 hour"
 msgstr "1 timme"
+
+#: whispers/views.py:131
+msgid "Enter the verified primary email of each additional reader."
+msgstr "Ange varje ytterligare läsares verifierade primära e-postadress."
+
+#: whispers/views.py:609
+msgid "Receive reader restrictions are not enabled."
+msgstr "Läsarbegränsningar för mottagning är inte aktiverade."
+
+#: whispers/views.py:613
+msgid "Sign in to manage reader access."
+msgstr "Logga in för att hantera läsåtkomst."
+
+#: whispers/views.py:617 whispers/views.py:702
+msgid "Enable restricted access before adding readers."
+msgstr "Aktivera begränsad åtkomst innan du lägger till läsare."

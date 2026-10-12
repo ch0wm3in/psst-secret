@@ -207,6 +207,9 @@ CACHES = {
 # and the per-whisper option is hidden from the UI.
 PSST_FORCE_AUTH_VIEW = env.bool("PSST_FORCE_AUTH_VIEW", default=False)
 PSST_FORCE_AUTH_SUBMIT = env.bool("PSST_FORCE_AUTH_SUBMIT", default=False)
+PSST_ENABLE_RECEIVE_ACCESS = env.bool("PSST_ENABLE_RECEIVE_ACCESS", default=False)
+PSST_RECEIVE_ACCESS_DEFAULT = env.bool("PSST_RECEIVE_ACCESS_DEFAULT", default=False)
+PSST_FORCE_RECEIVE_ACCESS = env.bool("PSST_FORCE_RECEIVE_ACCESS", default=False)
 
 # About page — toggle persistence-aware language
 ABOUT_PAGE_PERSISTENCE_ENABLED = env.bool(
@@ -252,6 +255,9 @@ REST_FRAMEWORK = {
         "anon": env.str("API_THROTTLE_RATE_ANON", default="60/minute"),
         "whisper_create": env.str("API_THROTTLE_RATE_CREATE", default="20/minute"),
         "whisper_view": env.str("THROTTLE_RATE_VIEW", default="30/minute"),
+        "receive_access": env.str(
+            "API_THROTTLE_RATE_RECEIVE_ACCESS", default="10/minute"
+        ),
     },
 }
 

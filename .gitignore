@@ -59,6 +59,7 @@ cover/
 
 # Translations
 *.mo
+!locale/da/LC_MESSAGES/*.mo
 !locale/cs/LC_MESSAGES/*.mo
 !locale/sv/LC_MESSAGES/*.mo
 !locale/fil/LC_MESSAGES/*.mo
@@ -182,3 +183,4 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 redis-data/
+.env.docker
