@@ -25,7 +25,7 @@ msgstr "Totalt: %s / %s"
 #: static/js/crypto.js:122
 #, javascript-format
 msgid "Skipped (would exceed %s total): %s"
-msgstr "Hoppades över (skulle överskrida totalt %s): %s"
+msgstr "Hoppade över (skulle överskrida totalt %s): %s"
 
 #: static/js/crypto.js:304
 msgid "Post-quantum crypto module failed to load."

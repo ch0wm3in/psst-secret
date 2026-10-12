@@ -96,9 +96,22 @@ separate terminal:
 python manage.py tailwind start
 ```
 
-Tailwind, Alpine.js, and noble-post-quantum are installed from the locked npm dependencies in
-`theme/static_src/`. Production Docker builds compile these into local Django
-static assets, so the application does not depend on CDNs at runtime.
+Tailwind, Alpine.js, noble-post-quantum, and esbuild are installed from the locked npm dependencies in
+`theme/static_src/`. The frontend build also minifies the custom scripts in `static/js/`
+into `theme/static/js/crypto.min.js` and `theme/static/js/password-strength.min.js`,
+which are loaded by the templates. Keep editing the readable source files, not the
+generated assets. Production Docker builds compile all frontend assets locally,
+so the application does not depend on CDNs at runtime.
+
+The Tailwind watcher builds the JavaScript assets once at startup but only watches
+CSS changes. After editing a custom JavaScript source, rebuild it with:
+
+```bash
+npm --prefix theme/static_src run build:custom
+```
+
+Run `uv run --env-file .env python manage.py tailwind build` to rebuild all frontend
+assets, then run `collectstatic` as usual for production deployments.
 
 ## Architecture
 
