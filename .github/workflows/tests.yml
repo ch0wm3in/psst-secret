@@ -134,8 +134,26 @@ jobs:
       - name: Build frontend assets
         run: uv run --env-file .env.docker python manage.py tailwind build
 
+      - name: Get Playwright version
+        id: playwright-version
+        run: >-
+          uv run --env-file .env.docker python -c
+          'from importlib.metadata import version; print("version=" + version("playwright"))'
+          >> "$GITHUB_OUTPUT"
+
+      - name: Cache Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-${{ runner.arch }}-playwright-${{ steps.playwright-version.outputs.version }}-chromium-firefox
+
+      - name: Install Playwright system dependencies
+        run: uv run --env-file .env.docker playwright install-deps chromium firefox
+
       - name: Install Playwright browsers
-        run: uv run --env-file .env.docker playwright install --with-deps chromium firefox
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: uv run --env-file .env.docker playwright install chromium firefox
 
       - name: Run browser tests
         run: >-
