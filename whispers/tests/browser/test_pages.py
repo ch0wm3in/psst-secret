@@ -135,9 +135,10 @@ def test_create_another_whisper(page, create_whisper, app_url):
 def test_clipboard_links_and_decrypted_content(
     page, create_whisper, browser_name, kind
 ):
-    if browser_name != "chromium":
-        pytest.skip("Clipboard read permissions are only supported by Chromium")
-    page.context.grant_permissions(["clipboard-read", "clipboard-write"])
+    if browser_name == "chromium":
+        page.context.grant_permissions(["clipboard-read", "clipboard-write"])
+    if browser_name == "webkit":
+        page.context.grant_permissions(["clipboard-read"])
     result = create_whisper(kind=kind)
     if kind == "receive":
         submit_url, view_url = result

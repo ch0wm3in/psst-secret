@@ -11,6 +11,19 @@ class BrowserRequestHandler(QuietWSGIRequestHandler):
     timeout = 1
 
 
+@pytest.fixture(scope="session")
+def browser_type_launch_args(browser_type_launch_args, browser_name):
+    if browser_name != "firefox":
+        return browser_type_launch_args
+    return {
+        **browser_type_launch_args,
+        "firefox_user_prefs": {
+            **browser_type_launch_args.get("firefox_user_prefs", {}),
+            "dom.events.testing.asyncClipboard": True,
+        },
+    }
+
+
 @pytest.fixture(scope="session", autouse=True)
 def browser_environment(pytestconfig):
     if pytestconfig.getoption("--browser-tests"):
