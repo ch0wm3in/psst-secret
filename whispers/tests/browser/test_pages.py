@@ -1,3 +1,6 @@
+import base64
+import email
+import email.policy
 import json
 import re
 import uuid
@@ -229,6 +232,37 @@ def test_email_notifications_exclude_keys_and_plaintext(
     assert view_url.split("#")[0] in body
     assert urlsplit(view_url).fragment not in body
     assert plaintext not in body
+
+
+_DATA_LOGO = (
+    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4"
+    "2mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+)
+
+
+@pytest.mark.browser_settings(
+    PSST_ENABLE_EMAIL=True,
+    MAILERS={"default": {"BACKEND": "django.core.mail.backends.locmem.EmailBackend"}},
+    PSST_BRAND_LOGO_URL=_DATA_LOGO,
+)
+def test_data_logo_is_inlined_in_notification_email(page, create_whisper, mailoutbox):
+    create_whisper(notify_email="notification@example.com")
+    expect(page.locator("[data-brand-logo]").first).to_have_attribute("src", _DATA_LOGO)
+    (message,) = mailoutbox
+    html = message.alternatives[0].content
+    assert 'src="cid:brand-logo@psst-secret"' in html
+    assert "data:image" not in html
+    parsed = email.message_from_bytes(
+        message.message().as_bytes(), policy=email.policy.default
+    )
+    (logo,) = [
+        part
+        for part in parsed.walk()
+        if part.get("Content-ID") == "<brand-logo@psst-secret>"
+    ]
+    assert logo.get_content_type() == "image/png"
+    assert logo.get_content_disposition() == "inline"
+    assert logo.get_content() == base64.b64decode(_DATA_LOGO.partition(",")[2])
 
 
 @pytest.mark.parametrize("width,height", [(390, 844), (1280, 800)])

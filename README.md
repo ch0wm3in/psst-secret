@@ -275,7 +275,7 @@ limits account enumeration but does not eliminate the eligibility signal.
 |---|---|---|
 | `BRAND_COLORS` | Tailwind color palette as JSON (shade → hex). | Teal palette |
 | `PSST_BRAND_NAME` | Application name shown in the navigation bar, browser tab titles, sign-in page, About page, footer, notification emails, and API docs. | `psst-secret` |
-| `PSST_BRAND_LOGO_URL` | Logo image that replaces the 🤫 emoji in the navigation bar and sign-in page. Emails show it only when it is an absolute `http(s)` URL. | *(emoji)* |
+| `PSST_BRAND_LOGO_URL` | Logo image that replaces the 🤫 emoji in the navigation bar and sign-in page. Emails link to an absolute `http(s)` URL directly and embed a `data:image/` URI as an inline attachment referenced by `cid:`; root-relative paths are left out of emails. Many email clients do not render SVG, so use PNG for email logos. | *(emoji)* |
 | `PSST_BRAND_FAVICON_URL` | Favicon that replaces the default 🤫 icon. | `/static/favicon.svg` |
 | `PSST_HIDE_SOCIAL_LINKS` | Hide the GitHub repository link in the footer and show the version as plain text instead of linking to GitHub releases. | `False` |
 | `PSST_HIDE_FOOTER_TEXT` | Hide the `<name> — Psst! Don't tell anyone.` tagline in the footer. | `False` |

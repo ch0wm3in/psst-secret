@@ -29,7 +29,8 @@ def get_branding():
         "brand_name": brand_name,
         "brand_is_default": brand_name == DEFAULT_BRAND_NAME,
         "brand_logo_url": logo_url,
-        # Email clients cannot resolve relative paths and commonly block data URIs.
+        # Email clients cannot resolve relative paths and commonly block data URIs;
+        # whispers.email attaches data: logos inline instead.
         "brand_email_logo_url": logo_url if _is_absolute_http_url(logo_url) else "",
         "brand_favicon_url": getattr(settings, "PSST_BRAND_FAVICON_URL", ""),
         "hide_social_links": getattr(settings, "PSST_HIDE_SOCIAL_LINKS", False),
