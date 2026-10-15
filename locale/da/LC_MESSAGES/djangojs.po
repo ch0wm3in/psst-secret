@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-12 08:39+0000\n"
+"POT-Creation-Date: 2026-10-15 13:25+0000\n"
 "PO-Revision-Date: 2026-10-07 15:40+0000\n"
 "Last-Translator: \n"
 "Language-Team: Danish\n"
@@ -111,7 +111,8 @@ msgstr "Opret forespørgsel"
 
 #: static/js/crypto.js:690
 msgid "No encryption key found in URL. The link may be incomplete."
-msgstr "Ingen krypteringsnøgle fundet i URL'en. Linket kan være ufuldstændigt."
+msgstr ""
+"Ingen krypteringsnøgle fundet i URL'en. Linket kan være ufuldstændigt."
 
 #: static/js/crypto.js:730
 msgid "Encrypt & Submit"
@@ -129,3 +130,24 @@ msgstr "Kunne ikke opdatere adgang."
 #: static/js/receive-access.js:58
 msgid "Access updated."
 msgstr "Adgang opdateret."
+
+#: static/js/secret-generator.js:94
+msgid "Secure random number generation is not available in this browser."
+msgstr ""
+"Sikker generering af tilfældige tal er ikke tilgængelig i denne browser."
+
+#: static/js/secret-generator.js:206
+msgid "Select at least one character type."
+msgstr "Vælg mindst én tegntype."
+
+#: static/js/secret-generator.js:207
+msgid "The minimum counts add up to more than the length."
+msgstr "De mindste antal giver tilsammen mere end længden."
+
+#: static/js/secret-generator.js:208
+msgid "The word list could not be loaded."
+msgstr "Ordlisten kunne ikke indlæses."
+
+#: static/js/secret-generator.js:431
+msgid "Estimated strength: ≈ %(bits)s bits"
+msgstr "Anslået styrke: ≈ %(bits)s bit"

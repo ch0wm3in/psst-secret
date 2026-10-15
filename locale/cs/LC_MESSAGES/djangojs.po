@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psst-secret\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-12 08:39+0000\n"
+"POT-Creation-Date: 2026-10-15 13:25+0000\n"
 "PO-Revision-Date: 2026-10-09 07:02+0000\n"
 "Last-Translator: \n"
 "Language-Team: Czech\n"
@@ -35,7 +35,8 @@ msgstr "Nepodařilo se načíst modul postkvantové kryptografie."
 msgid ""
 "The request key does not match the link. The link may be incomplete or "
 "tampered with."
-msgstr "Klíč žádosti neodpovídá odkazu. Odkaz může být neúplný nebo pozměněný."
+msgstr ""
+"Klíč žádosti neodpovídá odkazu. Odkaz může být neúplný nebo pozměněný."
 
 #: static/js/crypto.js:427 static/js/crypto.js:674
 msgid "Please enter some content or select a file to encrypt."
@@ -123,3 +124,24 @@ msgstr "Přístup se nepodařilo aktualizovat."
 #: static/js/receive-access.js:58
 msgid "Access updated."
 msgstr "Přístup byl aktualizován."
+
+#: static/js/secret-generator.js:94
+msgid "Secure random number generation is not available in this browser."
+msgstr ""
+"Bezpečné generování náhodných čísel není v tomto prohlížeči k dispozici."
+
+#: static/js/secret-generator.js:206
+msgid "Select at least one character type."
+msgstr "Vyberte alespoň jeden typ znaků."
+
+#: static/js/secret-generator.js:207
+msgid "The minimum counts add up to more than the length."
+msgstr "Součet minimálních počtů přesahuje délku."
+
+#: static/js/secret-generator.js:208
+msgid "The word list could not be loaded."
+msgstr "Seznam slov se nepodařilo načíst."
+
+#: static/js/secret-generator.js:431
+msgid "Estimated strength: ≈ %(bits)s bits"
+msgstr "Odhadovaná síla: ≈ %(bits)s bitů"

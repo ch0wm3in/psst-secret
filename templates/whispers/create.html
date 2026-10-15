@@ -37,7 +37,25 @@
 
         <!-- Text input (send mode only) -->
         <div id="text-mode">
-            <label for="whisper" class="block text-sm font-medium text-gray-300 mb-1">{% trans "Whisper content" %}</label>
+            <div class="flex flex-wrap items-end justify-between gap-2 mb-1">
+                <label for="whisper" class="block text-sm font-medium text-gray-300">{% trans "Whisper content" %}</label>
+                <div class="inline-flex rounded-lg shadow-sm" role="group">
+                    <button type="button" id="generate-secret-btn"
+                        class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-l-lg text-sm font-semibold bg-brand-600 hover:bg-brand-500 text-white transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:z-10">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/>
+                        </svg>
+                        {% trans "Generate secret" %}
+                    </button>
+                    <button type="button" id="generate-secret-options-btn" aria-haspopup="dialog" aria-controls="secret-generator"
+                        aria-label="{% trans "Secret generator options" %}" title="{% trans "Secret generator options" %}"
+                        class="inline-flex items-center px-2.5 py-1.5 rounded-r-lg bg-gray-800 hover:bg-gray-700 border border-gray-700 text-brand-300 hover:text-brand-200 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:z-10">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                            <path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M14 2v4M8 10v4M16 18v4"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
             <textarea id="whisper" rows="8"
                 class="w-full rounded-lg bg-gray-800 border border-gray-700 text-gray-100 px-4 py-3 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent font-mono text-sm resize-y"
                 placeholder="{% trans "Type your whisper here…" %}"></textarea>
@@ -130,9 +148,20 @@
                         {% trans "Password" %}
                         <span class="text-gray-500">({% trans "optional" %})</span>
                     </label>
-                    <input type="password" id="password" autocomplete="off"
-                        class="w-full rounded-lg bg-gray-800 border border-gray-700 text-gray-100 px-3 py-2 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
-                        placeholder="{% trans "Use own password" %}">
+                    <div class="flex gap-2">
+                        <input type="password" id="password" autocomplete="off"
+                            class="flex-1 min-w-0 rounded-lg bg-gray-800 border border-gray-700 text-gray-100 px-3 py-2 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                            placeholder="{% trans "Use own password" %}">
+                        <button type="button" id="password-visibility-btn"
+                            data-label-show="{% trans "Show password" %}" data-label-hide="{% trans "Hide password" %}"
+                            class="shrink-0 px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-white text-sm font-medium transition">
+                            👁️
+                        </button>
+                        <button type="button" id="password-generate-btn"
+                            class="shrink-0 px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-white text-sm font-medium transition">
+                            🎲 {% trans "Generate" %}
+                        </button>
+                    </div>
                     <p class="mt-1 text-xs text-gray-500">{% trans "Use your own password for encryption instead of the randomly generated one in the url fragment. The recipient will need this password in addition to the link to decrypt the psst." %}</p>
                     <div id="password-strength-wrapper" class="mt-2 rounded-lg bg-gray-900/50 border border-gray-700 px-3 py-2">
                         <p class="text-xs font-medium text-gray-400 mb-1">{% trans "Password requirements" %}</p>
@@ -309,6 +338,165 @@
     <div id="error" class="hidden rounded-lg bg-red-900/30 border border-red-800 p-4 text-red-300 text-sm"></div>
 </div>
 
+<!-- Secret generator -->
+<dialog id="secret-generator" aria-labelledby="secret-generator-title"
+    class="fixed inset-0 m-auto h-fit w-[calc(100%-2rem)] max-w-lg max-h-[calc(100%-2rem)] overflow-y-auto rounded-xl bg-gray-900 border border-gray-700 text-gray-100 p-0 shadow-2xl backdrop:bg-black/70">
+    <div class="p-5 space-y-4">
+        <div class="flex items-start justify-between gap-4">
+            <div>
+                <h2 id="secret-generator-title" class="text-lg font-semibold text-white">🎲 {% trans "Secret generator" %}</h2>
+                <p class="mt-1 text-xs text-gray-500">{% trans "Generated in your browser with a cryptographically secure random number generator. Nothing is sent to the server until you encrypt your whisper." %}</p>
+            </div>
+            <button type="button" data-sg-cancel aria-label="{% trans "Close" %}" title="{% trans "Close" %}"
+                class="shrink-0 rounded-lg px-2 py-1 text-gray-400 hover:text-white hover:bg-gray-800 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500">✕</button>
+        </div>
+
+        <div role="tablist" aria-label="{% trans "Secret type" %}" class="flex gap-2">
+            <button type="button" role="tab" id="sg-tab-password" data-sg-tab="password" aria-controls="sg-panel-password"
+                class="px-4 py-1.5 rounded-lg text-sm font-medium bg-brand-600 text-white transition">
+                🔣 {% trans "Password" %}
+            </button>
+            <button type="button" role="tab" id="sg-tab-passphrase" data-sg-tab="passphrase" aria-controls="sg-panel-passphrase"
+                class="px-4 py-1.5 rounded-lg text-sm font-medium bg-gray-800 text-gray-400 hover:text-white transition">
+                📖 {% trans "Passphrase" %}
+            </button>
+        </div>
+
+        <div class="rounded-lg bg-gray-950 border border-gray-700 p-3">
+            <div class="flex items-start gap-2">
+                <output id="sg-preview" data-sg-preview aria-live="polite" aria-label="{% trans "Preview" %}"
+                    class="flex-1 min-h-6 font-mono text-sm text-gray-100 break-all"></output>
+                <button type="button" data-sg-regenerate aria-label="{% trans "Regenerate" %}" title="{% trans "Regenerate" %}"
+                    class="shrink-0 rounded-lg px-2 py-1 bg-gray-800 hover:bg-gray-700 text-sm transition focus:outline-none focus:ring-2 focus:ring-brand-500">🔄</button>
+            </div>
+            <p id="sg-entropy" data-sg-entropy class="mt-2 text-xs"></p>
+            <p id="sg-error" data-sg-error role="alert" class="hidden mt-2 text-xs text-red-400"></p>
+        </div>
+
+        <!-- Password options -->
+        <div id="sg-panel-password" data-sg-panel="password" role="tabpanel" aria-labelledby="sg-tab-password" class="space-y-3">
+            <div>
+                <label for="sg-length" class="block text-sm font-medium text-gray-300 mb-1">{% trans "Length" %}</label>
+                <div class="flex items-center gap-3">
+                    <input type="range" id="sg-length-range" data-sg-option="length" min="8" max="128" step="1"
+                        aria-label="{% trans "Length" %}" class="flex-1 accent-brand-500">
+                    <input type="number" id="sg-length" data-sg-option="length" min="8" max="128" step="1"
+                        class="w-20 rounded-lg bg-gray-800 border border-gray-700 text-gray-100 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+            </div>
+            <div class="space-y-2">
+                <div class="flex items-center justify-between gap-3">
+                    <label class="flex items-center gap-2 cursor-pointer select-none text-sm text-gray-300">
+                        <input type="checkbox" id="sg-uppercase" data-sg-option="uppercase" class="rounded bg-gray-700 border-gray-600 accent-brand-500">
+                        {% trans "Uppercase letters (A–Z)" %}
+                    </label>
+                    <input type="number" id="sg-min-uppercase" data-sg-option="minUppercase" data-sg-min-for="uppercase" min="0" max="128"
+                        aria-label="{% trans "Minimum uppercase letters" %}" title="{% trans "Minimum uppercase letters" %}"
+                        class="w-16 rounded-lg bg-gray-800 border border-gray-700 text-gray-100 px-2 py-1 text-sm disabled:opacity-40 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+                <div class="flex items-center justify-between gap-3">
+                    <label class="flex items-center gap-2 cursor-pointer select-none text-sm text-gray-300">
+                        <input type="checkbox" id="sg-lowercase" data-sg-option="lowercase" class="rounded bg-gray-700 border-gray-600 accent-brand-500">
+                        {% trans "Lowercase letters (a–z)" %}
+                    </label>
+                    <input type="number" id="sg-min-lowercase" data-sg-option="minLowercase" data-sg-min-for="lowercase" min="0" max="128"
+                        aria-label="{% trans "Minimum lowercase letters" %}" title="{% trans "Minimum lowercase letters" %}"
+                        class="w-16 rounded-lg bg-gray-800 border border-gray-700 text-gray-100 px-2 py-1 text-sm disabled:opacity-40 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+                <div class="flex items-center justify-between gap-3">
+                    <label class="flex items-center gap-2 cursor-pointer select-none text-sm text-gray-300">
+                        <input type="checkbox" id="sg-digits" data-sg-option="digits" class="rounded bg-gray-700 border-gray-600 accent-brand-500">
+                        {% trans "Numbers (0–9)" %}
+                    </label>
+                    <input type="number" id="sg-min-digits" data-sg-option="minDigits" data-sg-min-for="digits" min="0" max="128"
+                        aria-label="{% trans "Minimum numbers" %}" title="{% trans "Minimum numbers" %}"
+                        class="w-16 rounded-lg bg-gray-800 border border-gray-700 text-gray-100 px-2 py-1 text-sm disabled:opacity-40 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+                <div class="flex items-center justify-between gap-3">
+                    <label class="flex items-center gap-2 cursor-pointer select-none text-sm text-gray-300">
+                        <input type="checkbox" id="sg-symbols" data-sg-option="symbols" class="rounded bg-gray-700 border-gray-600 accent-brand-500">
+                        {% trans "Symbols (!#$&…)" %}
+                    </label>
+                    <input type="number" id="sg-min-symbols" data-sg-option="minSymbols" data-sg-min-for="symbols" min="0" max="128"
+                        aria-label="{% trans "Minimum symbols" %}" title="{% trans "Minimum symbols" %}"
+                        class="w-16 rounded-lg bg-gray-800 border border-gray-700 text-gray-100 px-2 py-1 text-sm disabled:opacity-40 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+                <p class="text-xs text-gray-500 text-right">{% trans "Numbers on the right set the minimum count of each type." %}</p>
+                <label class="flex items-center gap-2 cursor-pointer select-none text-sm text-gray-300">
+                    <input type="checkbox" id="sg-avoid-ambiguous" data-sg-option="avoidAmbiguous" class="rounded bg-gray-700 border-gray-600 accent-brand-500">
+                    {% trans "Avoid ambiguous characters" %} <code class="text-xs text-gray-500">O 0 o I l 1 |</code>
+                </label>
+            </div>
+        </div>
+
+        <!-- Passphrase options -->
+        <div id="sg-panel-passphrase" data-sg-panel="passphrase" role="tabpanel" aria-labelledby="sg-tab-passphrase" class="hidden space-y-3">
+            <div>
+                <label for="sg-words" class="block text-sm font-medium text-gray-300 mb-1">{% trans "Number of words" %}</label>
+                <div class="flex items-center gap-3">
+                    <input type="range" id="sg-words-range" data-sg-option="words" min="3" max="20" step="1"
+                        aria-label="{% trans "Number of words" %}" class="flex-1 accent-brand-500">
+                    <input type="number" id="sg-words" data-sg-option="words" min="3" max="20" step="1"
+                        class="w-20 rounded-lg bg-gray-800 border border-gray-700 text-gray-100 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+            </div>
+            <div>
+                <label for="sg-separator" class="block text-sm font-medium text-gray-300 mb-1">{% trans "Separator" %}</label>
+                <select id="sg-separator" data-sg-option="separator"
+                    class="w-full rounded-lg bg-gray-800 border border-gray-700 text-gray-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    <option value="-">{% trans "Hyphen" %} ( - )</option>
+                    <option value=" ">{% trans "Space" %}</option>
+                    <option value=".">{% trans "Period" %} ( . )</option>
+                    <option value="_">{% trans "Underscore" %} ( _ )</option>
+                    <option value=",">{% trans "Comma" %} ( , )</option>
+                    <option value="">{% trans "None" %}</option>
+                </select>
+            </div>
+            <label class="flex items-center gap-2 cursor-pointer select-none text-sm text-gray-300">
+                <input type="checkbox" id="sg-capitalize" data-sg-option="capitalize" class="rounded bg-gray-700 border-gray-600 accent-brand-500">
+                {% trans "Capitalize words" %}
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer select-none text-sm text-gray-300">
+                <input type="checkbox" id="sg-include-number" data-sg-option="includeNumber" class="rounded bg-gray-700 border-gray-600 accent-brand-500">
+                {% trans "Add a number to a random word" %}
+            </label>
+            <div class="flex flex-wrap gap-3">
+                <div class="w-28">
+                    <label for="sg-symbol-count" class="block text-sm font-medium text-gray-300 mb-1">{% trans "Symbols" %}</label>
+                    <input type="number" id="sg-symbol-count" data-sg-option="symbolCount" min="0" max="10" step="1"
+                        class="w-full rounded-lg bg-gray-800 border border-gray-700 text-gray-100 px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+                <div class="flex-1 min-w-[160px]">
+                    <label for="sg-symbol-position" class="block text-sm font-medium text-gray-300 mb-1">{% trans "Symbol position" %}</label>
+                    <select id="sg-symbol-position" data-sg-option="symbolPosition"
+                        class="w-full rounded-lg bg-gray-800 border border-gray-700 text-gray-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        <option value="end">{% trans "Append to the end" %}</option>
+                        <option value="random">{% trans "Random positions" %}</option>
+                    </select>
+                </div>
+            </div>
+            <p class="text-xs text-gray-500">{% blocktrans %}Words are drawn from the <a href="https://www.eff.org/dice" target="_blank" rel="noopener noreferrer" class="underline hover:text-gray-300">EFF large wordlist</a> (7,776 English words).{% endblocktrans %}</p>
+        </div>
+
+        <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-gray-800">
+            <button type="button" data-sg-reset
+                class="text-sm text-gray-400 hover:text-white underline transition">
+                {% trans "Reset to defaults" %}
+            </button>
+            <div class="flex gap-2">
+                <button type="button" data-sg-cancel
+                    class="px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-white text-sm font-medium transition">
+                    {% trans "Cancel" %}
+                </button>
+                <button type="button" id="sg-use" data-sg-use
+                    class="px-4 py-2 rounded-lg bg-brand-600 hover:bg-brand-500 text-white text-sm font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed">
+                    {% trans "Use this secret" %}
+                </button>
+            </div>
+        </div>
+    </div>
+</dialog>
+
 {% csrf_token %}
 {% load static %}
 {% settings_value "DATA_UPLOAD_MAX_MEMORY_SIZE" as max_upload_size %}
@@ -321,8 +509,28 @@
     data-status-ok="{% trans "Strong password — all requirements met." %}"
     data-status-missing="{% trans "{count} of 5 requirements still missing." %}"></div>
 <script src="{% static 'js/password-strength.min.js' %}"></script>
+<script src="{% static 'js/wordlist-en.min.js' %}"></script>
+<script src="{% static 'js/secret-generator.min.js' %}"></script>
 <script src="{% static 'js/pqc.min.js' %}"></script>
 <script src="{% static 'js/crypto.min.js' %}"></script>
+<script>
+    (function () {
+        var generator = window.PsstSecretGenerator;
+        if (!generator) return;
+        generator.mountDialog({
+            dialog: document.getElementById('secret-generator'),
+            target: document.getElementById('whisper'),
+            openButton: document.getElementById('generate-secret-options-btn'),
+            quickButton: document.getElementById('generate-secret-btn'),
+        });
+        generator.attachPresetButton({
+            button: document.getElementById('password-generate-btn'),
+            input: document.getElementById('password'),
+            preset: 'whisperPassword',
+            toggleButton: document.getElementById('password-visibility-btn'),
+        });
+    })();
+</script>
 <script>
     (function () {
         var input = document.getElementById('password');

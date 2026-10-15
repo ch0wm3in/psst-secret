@@ -2,6 +2,7 @@
 
 @source "../../../templates";
 @source "../../../static/js";
+@source not "../../../static/js/wordlist-en.js";
 
 @theme inline {
 	--color-brand-50: var(--brand-50);

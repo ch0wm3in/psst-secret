@@ -13,6 +13,7 @@ A privacy-focused, zero-knowledge app for sharing secrets securely. We call them
 - **Receive mode** — create a request using **X-Wing**, a hybrid of **ML-KEM-768** (post-quantum, FIPS 203) and **X25519**. Share a submit link containing the public-key fingerprint and keep a separate view link containing the private key seed. The submit link cannot be used to find, read, or burn the submitted whisper.
 - **Post-quantum ready** — send mode uses 256-bit symmetric encryption; receive mode uses hybrid key exchange, which remains protected as long as either component holds.
 - **Password protection** — optionally protect whispers with a password (PBKDF2, 600,000 iterations, SHA-256). In send mode, the password derives the encryption key. In receive mode, it protects your private key seed; the sender does not need your password.
+- **Secret generator** — in send mode, generate a password or an English passphrase straight into the whisper with **Generate secret**, or open the options dialog next to it to choose the length, character types and minimum counts, ambiguous-character avoidance, word count, separator, capitalization, and the number and position of symbols, with a live preview and entropy estimate. The password field's **Generate** button uses a preset that meets the password requirements. Everything is generated in the browser with `crypto.getRandomValues` and unbiased rejection sampling; nothing is sent to the server. Passphrases use the [EFF large wordlist](https://www.eff.org/dice). Other scripts can call `window.PsstSecretGenerator.generate('password' | 'passphrase' | 'whisperPassword', overrides)`.
 - **View counter / burn-after-read** — configure how many successful reveals a whisper allows before it self-destructs. `1` = burn after first read; `0` = unlimited (no view-based destruction); any other value enforces a strict reveal counter atomically in Redis.
 - **Auto-expiry** — whispers expire after a configurable duration (5 minutes to 1 month). Redis TTLs evict keys automatically, and a background thread cleans up orphaned DB metadata every 60 seconds.
 - **IP/CIDR restriction** — restrict who can view (send mode) or submit (receive mode) a whisper by IP address or CIDR range.
@@ -483,3 +484,5 @@ ciphertext or keys.
 ## License
 
 See [LICENSE](LICENSE).
+
+The passphrase wordlist in `static/js/wordlist-en.js` is the [EFF Large Wordlist for Passphrases](https://www.eff.org/dice) by the Electronic Frontier Foundation, licensed under [CC BY 3.0 US](https://creativecommons.org/licenses/by/3.0/us/).
