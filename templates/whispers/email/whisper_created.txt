@@ -1,4 +1,4 @@
-Someone has sent you an encrypted whisper via psst-secret!
+Someone has sent you an encrypted whisper via {{ brand_name|safe }}!
 
 You can begin viewing it at the following URL:
 {{ whisper_url }}

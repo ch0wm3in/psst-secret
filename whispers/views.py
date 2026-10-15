@@ -22,6 +22,7 @@ from rest_framework.views import APIView
 from whispers.constants import EXPIRY_DELTAS
 
 from . import redis_store
+from .deployment import deployment_features
 from .email import send_whisper_created_email, send_whisper_submitted_email
 from .models import Whisper
 from .serializers import (
@@ -252,6 +253,7 @@ def about(request):
         {
             "persistence_enabled": settings.ABOUT_PAGE_PERSISTENCE_ENABLED,
             "enable_receive_access": _receive_access_enabled(),
+            "deployment_features": deployment_features(),
         },
     )
 

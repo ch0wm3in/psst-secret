@@ -91,6 +91,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "whispers.context_processors.branding",
             ],
         },
     },
@@ -237,6 +238,17 @@ BRAND_COLORS = _json.loads(
     env.str("BRAND_COLORS", default=_json.dumps(_DEFAULT_BRAND_COLORS))
 )
 
+# White-labeling — replace the name, logo, favicon and footer content.
+# Logo/favicon accept an absolute http(s) URL, a root-relative path or a data:image/ URI.
+PSST_BRAND_NAME = (
+    env.str("PSST_BRAND_NAME", default="psst-secret").strip() or "psst-secret"
+)
+PSST_BRAND_LOGO_URL = env.str("PSST_BRAND_LOGO_URL", default="").strip()
+PSST_BRAND_FAVICON_URL = env.str("PSST_BRAND_FAVICON_URL", default="").strip()
+PSST_HIDE_SOCIAL_LINKS = env.bool("PSST_HIDE_SOCIAL_LINKS", default=False)
+PSST_HIDE_FOOTER_TEXT = env.bool("PSST_HIDE_FOOTER_TEXT", default=False)
+PSST_HIDE_NAV_BRAND_NAME = env.bool("PSST_HIDE_NAV_BRAND_NAME", default=False)
+
 # Django REST Framework
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
@@ -263,7 +275,7 @@ REST_FRAMEWORK = {
 
 # drf-spectacular — OpenAPI schema generation
 SPECTACULAR_SETTINGS = {
-    "TITLE": "psst-secret API",
+    "TITLE": f"{PSST_BRAND_NAME} API",
     "DESCRIPTION": "End-to-end encrypted secret sharing. The server never sees your plaintext.",  # noqa: E501
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,

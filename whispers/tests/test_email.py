@@ -10,6 +10,7 @@ from django.test import TestCase, override_settings
 from django.utils import timezone
 
 from whispers import redis_store
+from whispers.email import send_whisper_created_email, send_whisper_submitted_email
 from whispers.models import Whisper
 
 # ---------------------------------------------------------------------------
@@ -309,3 +310,45 @@ class CreatePageEmailContextTests(TestCase):
         resp = self.client.get("/")
         self.assertEqual(resp.status_code, 200)
         self.assertFalse(resp.context["enable_email"])
+
+
+@override_settings(
+    MAILERS=_TEST_MAILERS,
+    PSST_ENABLE_EMAIL=True,
+    DEFAULT_FROM_EMAIL="test@example.com",
+)
+class EmailBrandingTests(TestCase):
+    """Test that notification emails respect white-label settings."""
+
+    def _html(self, msg):
+        return msg.alternatives[0][0]
+
+    def test_default_branding(self):
+        send_whisper_created_email("r@example.com", "https://x.example/whisper/1")
+        msg = mail.outbox[0]
+        self.assertIn("via psst-secret!", msg.body)
+        self.assertIn("🤫 psst-secret", self._html(msg))
+        self.assertIn("Sent by psst-secret", self._html(msg))
+
+    @override_settings(
+        PSST_BRAND_NAME="Acme & Co",
+        PSST_BRAND_LOGO_URL="https://cdn.example.com/logo.png",
+    )
+    def test_custom_name_and_absolute_logo(self):
+        send_whisper_created_email("r@example.com", "https://x.example/whisper/1")
+        send_whisper_submitted_email("r@example.com", "https://x.example/whisper/2")
+        self.assertIn("via Acme & Co!", mail.outbox[0].body)
+        for msg in mail.outbox:
+            html = self._html(msg)
+            self.assertIn('src="https://cdn.example.com/logo.png"', html)
+            self.assertIn("Sent by Acme &amp; Co", html)
+            self.assertNotIn("psst-secret", html)
+            self.assertNotIn("🤫", html)
+
+    @override_settings(PSST_BRAND_NAME="Acme", PSST_BRAND_LOGO_URL="/static/logo.png")
+    def test_relative_logo_omitted_from_email(self):
+        send_whisper_submitted_email("r@example.com", "https://x.example/whisper/2")
+        html = self._html(mail.outbox[0])
+        self.assertNotIn("<img", html)
+        self.assertNotIn("🤫", html)
+        self.assertIn("Sent by Acme", html)

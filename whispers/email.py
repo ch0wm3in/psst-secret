@@ -4,6 +4,8 @@ from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 
+from whispers.branding import get_branding
+
 logger = logging.getLogger(__name__)
 
 
@@ -23,7 +25,11 @@ def send_whisper_created_email(notify_email, whisper_url):
         return
 
     subject = "You have received a whisper!"
-    context = {"whisper_url": whisper_url, "brand": settings.BRAND_COLORS}
+    context = {
+        "whisper_url": whisper_url,
+        "brand": settings.BRAND_COLORS,
+        **get_branding(),
+    }
     text_body = render_to_string("whispers/email/whisper_created.txt", context)
     html_body = render_to_string("whispers/email/whisper_created.html", context)
 
@@ -53,7 +59,11 @@ def send_whisper_submitted_email(notify_email, view_url):
         return
 
     subject = "A whisper has been submitted to your request!"
-    context = {"view_url": view_url, "brand": settings.BRAND_COLORS}
+    context = {
+        "view_url": view_url,
+        "brand": settings.BRAND_COLORS,
+        **get_branding(),
+    }
     text_body = render_to_string("whispers/email/whisper_submitted.txt", context)
     html_body = render_to_string("whispers/email/whisper_submitted.html", context)
 

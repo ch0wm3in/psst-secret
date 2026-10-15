@@ -22,6 +22,8 @@ A privacy-focused, zero-knowledge app for sharing secrets securely. We call them
 - **Optional email notifications** — notify the receiver (send mode) or creator (receive mode) by email when a whisper is created or submitted. Supports Django's standard SMTP backend or Azure Communication Services.
 - **Opt-in anonymous statistics** — hourly aggregate submission and reveal counts, retained for 365 days, with relative time filters. Disabled by default; enable with `PSST_ENABLE_STATS=True`.
 - **Internationalization** — English, Danish (`da`), Czech (`cs`), Swedish (`sv`), and Filipino (Tagalog, `fil`) out of the box, with a per-request language switcher.
+- **Deployment summary** — the About page lists which optional features and sign-in requirements are enabled on the instance, in plain language for end users.
+- **White-labeling** — replace the application name, logo, favicon, and brand colors, and hide the GitHub links, footer tagline, and navigation-bar name, all through environment variables.
 - **No-cache headers** — middleware ensures browsers and proxies never cache whisper pages.
 
 ## How it works
@@ -272,6 +274,12 @@ limits account enumeration but does not eliminate the eligibility signal.
 | Variable | Description | Default |
 |---|---|---|
 | `BRAND_COLORS` | Tailwind color palette as JSON (shade → hex). | Teal palette |
+| `PSST_BRAND_NAME` | Application name shown in the navigation bar, browser tab titles, sign-in page, About page, footer, notification emails, and API docs. | `psst-secret` |
+| `PSST_BRAND_LOGO_URL` | Logo image that replaces the 🤫 emoji in the navigation bar and sign-in page. Emails show it only when it is an absolute `http(s)` URL. | *(emoji)* |
+| `PSST_BRAND_FAVICON_URL` | Favicon that replaces the default 🤫 icon. | `/static/favicon.svg` |
+| `PSST_HIDE_SOCIAL_LINKS` | Hide the GitHub repository link in the footer and show the version as plain text instead of linking to GitHub releases. | `False` |
+| `PSST_HIDE_FOOTER_TEXT` | Hide the `<name> — Psst! Don't tell anyone.` tagline in the footer. | `False` |
+| `PSST_HIDE_NAV_BRAND_NAME` | Hide the application name next to the logo in the navigation bar and sign-in page (useful when the logo already contains the name). The name stays in tab titles and remains available to screen readers. | `False` |
 | `ABOUT_PAGE_PERSISTENCE_ENABLED` | When `True`, the about page describes Redis as persisted (use this if you have explicitly enabled Redis persistence). | `False` |
 
 Example custom brand colors (blue):
@@ -279,6 +287,24 @@ Example custom brand colors (blue):
 ```bash
 BRAND_COLORS='{"50":"#eff6ff","100":"#dbeafe","200":"#bfdbfe","300":"#93c5fd","400":"#60a5fa","500":"#3b82f6","600":"#2563eb","700":"#1d4ed8","800":"#1e40af","900":"#1e3a8a","950":"#172554"}'
 ```
+
+Example white-label configuration:
+
+```bash
+PSST_BRAND_NAME="Acme Secrets"
+PSST_BRAND_LOGO_URL=https://assets.acme.example/logo.svg
+PSST_BRAND_FAVICON_URL=https://assets.acme.example/favicon.ico
+PSST_HIDE_SOCIAL_LINKS=True
+PSST_HIDE_FOOTER_TEXT=True
+PSST_HIDE_NAV_BRAND_NAME=True
+```
+
+Logo and favicon values must be an absolute `http(s)` URL, a path starting with `/`
+(for example, an asset served by your reverse proxy), or a `data:image/` URI that embeds
+the image directly in the variable. Startup fails with system check `whispers.E001`
+for anything else. Externally hosted images are fetched by every visitor's browser, so
+the image host can see visitor IP addresses. Use a same-origin path or a `data:` URI to
+avoid this. The URL fragment that holds the key is never sent with these requests.
 
 ## Translations
 

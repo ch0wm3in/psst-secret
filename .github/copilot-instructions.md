@@ -16,6 +16,7 @@ Always run Python through `uv` and load `.env`:
 - Django: `uv run --env-file .env python manage.py <command>`
 - Migrations: `uv run --env-file .env python manage.py makemigrations`. Never edit applied migrations.
 - Tailwind: after changing Tailwind classes in templates or JavaScript, run `uv run --env-file .env python manage.py tailwind build`.
+- While you use the `uv run --env-file .env` prefix which is fine, most developers will not need to type it manually for every command and load the .env once and then source the venv, thus the readme.md, should not contain these prefixes for every command.
 
 Without `DEBUG=True` and a non-default `SECRET_KEY`, settings refuse to start; `.env` supplies both.
 

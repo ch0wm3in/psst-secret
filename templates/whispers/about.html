@@ -1,20 +1,29 @@
 {% extends "base/layout.html" %}
 {% load i18n %}
 
-{% block title %}psst-secret — {% trans "About" %}{% endblock %}
+{% block title %}{{ brand_name }} — {% trans "About" %}{% endblock %}
 
 {% block content %}
 <div class="space-y-8 max-w-3xl">
     <div>
-        <h1 class="text-3xl font-bold text-white">{% trans "About psst-secret" %}</h1>
+        <h1 class="text-3xl font-bold text-white">{% blocktrans %}About {{ brand_name }}{% endblocktrans %}</h1>
         <p class="mt-2 text-gray-400">{% trans "A privacy focused app for sharing secrets securely. We call them whispers." %}</p>
+        <div class="mt-4 space-y-3 text-sm text-gray-300 leading-relaxed" data-about-intro>
+            {% if brand_is_default %}
+            <p>{% trans '<em class="text-white">“Psst… wanna hear a secret?”</em> When you share a secret in person, you lean in and whisper it, so only the person next to you can hear. That is where the name <strong class="text-white">psst-secret</strong> comes from.' %}</p>
+            {% else %}
+            <p>{% trans '<em class="text-white">“Psst… wanna hear a secret?”</em> When you share a secret in person, you lean in and whisper it, so only the person next to you can hear.' %}</p>
+            {% endif %}
+            <p>{% trans "A whisper here works the same way. It is a private, end-to-end encrypted exchange between two people: the one who shares it and the one who receives it. Your browser encrypts it before it leaves your device, and only someone with the full link — and the password, if one is set — can decrypt it. The server in the middle only ever passes along sealed data it cannot read." %}</p>
+            <p>{% trans "And like a real whisper, it does not linger. A whisper can vanish the moment it is read, and every whisper expires. You can whisper to someone, or ask someone to whisper to you." %}</p>
+        </div>
     </div>
 
     <!-- How it works -->
     <section class="space-y-3">
         <h2 class="text-xl font-semibold text-brand-400">{% trans "How It Works" %}</h2>
         <div class="rounded-lg bg-gray-800 border border-gray-700 p-5 space-y-4 text-sm text-gray-300 leading-relaxed">
-            <p>{% trans 'psst-secret ensures that <strong class="text-white">your whispers never exist in plaintext on our server</strong>. All encryption and decryption happens entirely in your browser using the <a href="https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API" class="text-brand-400 underline hover:text-brand-300" target="_blank" rel="noopener noreferrer">Web Crypto API</a>.' %}</p>
+            <p>{% blocktrans %}{{ brand_name }} ensures that <strong class="text-white">your whispers never exist in plaintext on our server</strong>. All encryption and decryption happens entirely in your browser using the <a href="https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API" class="text-brand-400 underline hover:text-brand-300" target="_blank" rel="noopener noreferrer">Web Crypto API</a>.{% endblocktrans %}</p>
 
             <h3 class="text-base font-semibold text-white pt-2">📤 {% trans "Send Mode" %}</h3>
             <p>{% trans "Share a whisper with someone. The key travels only inside the link you share." %}</p>
@@ -96,12 +105,23 @@
         </div>
     </section>
 
-    {% if enable_receive_access %}
-    <section class="space-y-3">
-        <h2 class="text-xl font-semibold text-brand-400">{% trans "Restricted receive access" %}</h2>
-        <p class="text-sm text-gray-300">{% trans "Receive requests can limit reading to their creator and approved accounts. The creator can update readers from the reveal link. Readers still need the full link and any password; removing access cannot revoke content already retrieved." %}</p>
+    <!-- Deployment configuration -->
+    <section class="space-y-3" aria-labelledby="deployment-features-heading">
+        <h2 id="deployment-features-heading" class="text-xl font-semibold text-brand-400">{% trans "Enabled Features for This Deployment" %}</h2>
+        <p class="text-sm text-gray-400">{% trans "The administrator of this site has configured it as follows. These settings apply to everyone using it." %}</p>
+        <dl class="rounded-lg bg-gray-800 border border-gray-700 divide-y divide-gray-700">
+            {% for feature in deployment_features %}
+            <div class="p-4 sm:grid sm:grid-cols-3 sm:gap-4" data-deployment-feature="{{ feature.key }}" data-state="{{ feature.state }}">
+                <dt class="font-semibold text-white text-sm"><span aria-hidden="true">{{ feature.icon }}</span> {{ feature.title }}</dt>
+                <dd class="mt-2 sm:mt-0 sm:col-span-2 space-y-1 text-sm text-gray-400">
+                    <span data-feature-status class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold border {% if feature.state == 'on' %}bg-brand-900/60 border-brand-700 text-brand-300{% elif feature.state == 'off' %}bg-gray-900 border-gray-700 text-gray-400{% else %}bg-gray-900 border-gray-600 text-gray-200{% endif %}">{{ feature.status }}</span>
+                    <p>{{ feature.description }}</p>
+                    {% if feature.detail %}<p class="text-xs text-gray-500">{{ feature.detail }}</p>{% endif %}
+                </dd>
+            </div>
+            {% endfor %}
+        </dl>
     </section>
-    {% endif %}
 
     <!-- Security Features -->
     <section class="space-y-3">
