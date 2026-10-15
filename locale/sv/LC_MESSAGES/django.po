@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psst-secret\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-15 08:43+0000\n"
+"POT-Creation-Date: 2026-10-15 09:53+0000\n"
 "PO-Revision-Date: 2026-10-09 07:50+0000\n"
 "Last-Translator: \n"
 "Language-Team: Swedish\n"
@@ -1485,8 +1485,9 @@ msgstr "användarnamn och lösenord"
 msgid "Sign-in options: %(methods)s"
 msgstr "Inloggningsalternativ: %(methods)s"
 
-#: whispers/deployment.py:57 whispers/deployment.py:71
-#: whispers/deployment.py:81
+#: whispers/deployment.py:57 whispers/deployment.py:75
+#: whispers/deployment.py:85 whispers/deployment.py:98
+#: whispers/deployment.py:111
 msgid "Sign-in"
 msgstr "Inloggning"
 
@@ -1502,39 +1503,59 @@ msgstr ""
 "Alla som kan nå den här webbplatsen kan skapa whispers. För att visa en "
 "whisper eller skicka in till en begäran behövs bara länken."
 
-#: whispers/deployment.py:72
+#: whispers/deployment.py:76
 msgid "Required"
 msgstr "Krävs"
 
-#: whispers/deployment.py:74
+#: whispers/deployment.py:78
 msgid "You must sign in to create whispers and requests."
 msgstr "Du måste logga in för att skapa whispers och begäranden."
 
-#: whispers/deployment.py:82 whispers/deployment.py:175
+#: whispers/deployment.py:86 whispers/deployment.py:99
+msgid "Partly required"
+msgstr "Delvis krävs"
+
+#: whispers/deployment.py:89
+msgid ""
+"You must sign in to create whispers, but you can create receive requests "
+"without signing in."
+msgstr ""
+"Du måste logga in för att skapa whispers, men du kan skapa "
+"mottagningsbegäranden utan att logga in."
+
+#: whispers/deployment.py:102
+msgid ""
+"You can create whispers without signing in, but you must sign in to create "
+"receive requests."
+msgstr ""
+"Du kan skapa whispers utan att logga in, men du måste logga in för att skapa "
+"mottagningsbegäranden."
+
+#: whispers/deployment.py:112 whispers/deployment.py:207
 msgid "Optional"
 msgstr "Valfritt"
 
-#: whispers/deployment.py:84
+#: whispers/deployment.py:114
 msgid "You can create whispers without signing in."
 msgstr "Du kan skapa whispers utan att logga in."
 
-#: whispers/deployment.py:94 whispers/deployment.py:103
+#: whispers/deployment.py:124 whispers/deployment.py:133
 msgid "Viewing whispers"
 msgstr "Visa whispers"
 
-#: whispers/deployment.py:95 whispers/deployment.py:119
+#: whispers/deployment.py:125 whispers/deployment.py:149
 msgid "Sign-in required"
 msgstr "Inloggning krävs"
 
-#: whispers/deployment.py:97
+#: whispers/deployment.py:127
 msgid "You must sign in to view any whisper, in addition to having its link."
 msgstr "Du måste logga in för att visa en whisper, utöver att ha dess länk."
 
-#: whispers/deployment.py:104 whispers/deployment.py:128
+#: whispers/deployment.py:134 whispers/deployment.py:158
 msgid "Link only"
 msgstr "Endast länk"
 
-#: whispers/deployment.py:107
+#: whispers/deployment.py:137
 msgid ""
 "Anyone with the full link can view a whisper without signing in, unless its "
 "creator requires sign-in for that whisper."
@@ -1542,16 +1563,16 @@ msgstr ""
 "Alla med den fullständiga länken kan visa en whisper utan att logga in, om "
 "inte skaparen kräver inloggning för just den whispern."
 
-#: whispers/deployment.py:118 whispers/deployment.py:127
+#: whispers/deployment.py:148 whispers/deployment.py:157
 msgid "Submitting to requests"
 msgstr "Skicka in till begäranden"
 
-#: whispers/deployment.py:121
+#: whispers/deployment.py:151
 msgid "You must sign in to submit a whisper to a receive request."
 msgstr ""
 "Du måste logga in för att skicka in en whisper till en mottagningsbegäran."
 
-#: whispers/deployment.py:131
+#: whispers/deployment.py:161
 msgid ""
 "Anyone with a submit link can submit a whisper without signing in, unless "
 "the request's creator requires sign-in."
@@ -1559,36 +1580,38 @@ msgstr ""
 "Alla med en inskickningslänk kan skicka in en whisper utan att logga in, om "
 "inte begärans skapare kräver inloggning."
 
-#: whispers/deployment.py:136
+#: whispers/deployment.py:166
 msgid "Restricted receive access"
 msgstr "Begränsad läsåtkomst för mottagning"
 
-#: whispers/deployment.py:142 whispers/deployment.py:209
-#: whispers/deployment.py:236
+#: whispers/deployment.py:172 whispers/deployment.py:241
+#: whispers/deployment.py:268
 msgid "Off"
 msgstr "Av"
 
-#: whispers/deployment.py:144
+#: whispers/deployment.py:174
 msgid "Receive requests cannot be limited to specific accounts."
 msgstr "Mottagningsbegäranden kan inte begränsas till specifika konton."
 
-#: whispers/deployment.py:151
+#: whispers/deployment.py:181
 msgid "Always on"
 msgstr "Alltid på"
 
-#: whispers/deployment.py:154
+#: whispers/deployment.py:184
 msgid ""
-"Receive requests can only be read by their creator and the accounts they "
-"approve."
+"New receive requests can only be read by their creator and the accounts they "
+"approve, and creators cannot turn this off when changing access. Existing "
+"requests keep their current access setting."
 msgstr ""
-"Mottagningsbegäranden kan bara läsas av sin skapare och de konton skaparen "
-"godkänner."
+"Nya mottagningsbegäranden kan bara läsas av sin skapare och de konton "
+"skaparen godkänner, och skapare kan inte stänga av det när åtkomsten ändras. "
+"Befintliga begäranden behåller sin nuvarande åtkomstinställning."
 
-#: whispers/deployment.py:163
+#: whispers/deployment.py:195
 msgid "On by default"
 msgstr "På som standard"
 
-#: whispers/deployment.py:166
+#: whispers/deployment.py:198
 msgid ""
 "New receive requests are limited to their creator and approved accounts "
 "unless the creator turns this off."
@@ -1596,7 +1619,7 @@ msgstr ""
 "Nya mottagningsbegäranden begränsas till sin skapare och godkända konton om "
 "inte skaparen stänger av det."
 
-#: whispers/deployment.py:178
+#: whispers/deployment.py:210
 msgid ""
 "Creators can limit receive requests to themselves and the accounts they "
 "approve."
@@ -1604,15 +1627,15 @@ msgstr ""
 "Skapare kan begränsa mottagningsbegäranden till sig själva och de konton de "
 "godkänner."
 
-#: whispers/deployment.py:194 whispers/deployment.py:208
+#: whispers/deployment.py:226 whispers/deployment.py:240
 msgid "Email notifications"
 msgstr "E-postaviseringar"
 
-#: whispers/deployment.py:195
+#: whispers/deployment.py:227
 msgid "Available"
 msgstr "Tillgänglig"
 
-#: whispers/deployment.py:198
+#: whispers/deployment.py:230
 msgid ""
 "You can have an email sent when a whisper is created or submitted. The email "
 "never contains the decryption key."
@@ -1620,19 +1643,19 @@ msgstr ""
 "Du kan få ett e-postmeddelande skickat när en whisper skapas eller skickas "
 "in. E-postmeddelandet innehåller aldrig dekrypteringsnyckeln."
 
-#: whispers/deployment.py:211
+#: whispers/deployment.py:243
 msgid "This site does not send email notifications."
 msgstr "Den här webbplatsen skickar inga e-postaviseringar."
 
-#: whispers/deployment.py:220 whispers/deployment.py:235
+#: whispers/deployment.py:252 whispers/deployment.py:267
 msgid "Usage statistics"
 msgstr "Användningsstatistik"
 
-#: whispers/deployment.py:221
+#: whispers/deployment.py:253
 msgid "On"
 msgstr "På"
 
-#: whispers/deployment.py:224
+#: whispers/deployment.py:256
 msgid ""
 "Anonymous hourly counts of created and revealed whispers are kept for up to "
 "a year. No content, keys, identifiers, IP addresses, or accounts are "
@@ -1642,27 +1665,27 @@ msgstr ""
 "ett år. Inget innehåll och inga nycklar, identifierare, IP-adresser eller "
 "konton registreras."
 
-#: whispers/deployment.py:238
+#: whispers/deployment.py:270
 msgid "No usage statistics are collected."
 msgstr "Ingen användningsstatistik samlas in."
 
-#: whispers/deployment.py:246
+#: whispers/deployment.py:278
 msgid "File size limit"
 msgstr "Gräns för filstorlek"
 
-#: whispers/deployment.py:249
+#: whispers/deployment.py:281
 msgid "Maximum total size of the files attached to a single whisper."
 msgstr "Största totala storlek på filerna som bifogas en enskild whisper."
 
-#: whispers/deployment.py:258 whispers/deployment.py:272
+#: whispers/deployment.py:290 whispers/deployment.py:304
 msgid "Encrypted storage"
 msgstr "Krypterad lagring"
 
-#: whispers/deployment.py:259
+#: whispers/deployment.py:291
 msgid "Saved to disk"
 msgstr "Sparas på disk"
 
-#: whispers/deployment.py:262
+#: whispers/deployment.py:294
 msgid ""
 "Encrypted whispers are stored in Redis with persistence enabled, so they "
 "survive server restarts until they expire."
@@ -1670,11 +1693,11 @@ msgstr ""
 "Krypterade whispers lagras i Redis med beständig lagring aktiverad, så de "
 "överlever omstarter av servern tills de upphör att gälla."
 
-#: whispers/deployment.py:273
+#: whispers/deployment.py:305
 msgid "Memory only"
 msgstr "Endast i minnet"
 
-#: whispers/deployment.py:276
+#: whispers/deployment.py:308
 msgid ""
 "Encrypted whispers live only in memory and are lost if the server restarts."
 msgstr ""
@@ -1732,6 +1755,13 @@ msgstr "Logga in för att hantera läsåtkomst."
 #: whispers/views.py:631 whispers/views.py:723
 msgid "Enable restricted access before adding readers."
 msgstr "Aktivera begränsad åtkomst innan du lägger till läsare."
+
+#~ msgid ""
+#~ "Receive requests can only be read by their creator and the accounts they "
+#~ "approve."
+#~ msgstr ""
+#~ "Mottagningsbegäranden kan bara läsas av sin skapare och de konton "
+#~ "skaparen godkänner."
 
 #~ msgid ""
 #~ "Receive requests can limit reading to their creator and approved "

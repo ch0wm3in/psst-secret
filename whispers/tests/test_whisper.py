@@ -1466,8 +1466,44 @@ class DeploymentFeaturesTests(TestCase):
         self.assertEqual(self._status("submit_auth"), ("Sign-in required", "on"))
 
     @override_settings(LOGIN_REQUIRED_EXEMPT_URLS=[*_DEFAULT_EXEMPT_URLS, r"$"])
-    def test_exempt_create_page_makes_sign_in_optional(self):
-        self.assertEqual(self._status("sign_in"), ("Optional", "neutral"))
+    def test_exempt_create_page_alone_keeps_sign_in_required(self):
+        self.assertEqual(self._status("sign_in"), ("Required", "on"))
+
+    def test_sign_in_summary_matches_anonymous_creation(self):
+        from django.core.cache import cache
+        from django.test import Client
+
+        cases = [
+            ([r"$"], ("Required", "on"), False, False),
+            ([r"$", r"api/whisper$"], ("Partly required", "neutral"), True, False),
+            (
+                [r"$", r"api/whisper/request$"],
+                ("Partly required", "neutral"),
+                False,
+                True,
+            ),
+            (
+                [r"$", r"api/whisper$", r"api/whisper/request$"],
+                ("Optional", "neutral"),
+                True,
+                True,
+            ),
+        ]
+        for extra, expected, send_open, request_open in cases:
+            with override_settings(
+                LOGIN_REQUIRED_EXEMPT_URLS=[*_DEFAULT_EXEMPT_URLS, *extra]
+            ):
+                self.assertEqual(self._status("sign_in"), expected, extra)
+                cache.clear()
+                client = Client()
+                for path, is_open in (
+                    ("/api/whisper", send_open),
+                    ("/api/whisper/request", request_open),
+                ):
+                    response = client.post(path, {}, content_type="application/json")
+                    self.assertEqual(
+                        response.status_code != 302, is_open, (extra, path)
+                    )
 
     def test_receive_access_states(self):
         cases = [
@@ -1484,6 +1520,14 @@ class DeploymentFeaturesTests(TestCase):
         for extra, expected in cases:
             with override_settings(PSST_ENABLE_RECEIVE_ACCESS=True, **extra):
                 self.assertEqual(self._status("receive_access"), expected, extra)
+        with override_settings(
+            PSST_ENABLE_RECEIVE_ACCESS=True, PSST_FORCE_RECEIVE_ACCESS=True
+        ):
+            description = self._features()["receive_access"]["description"]
+        self.assertIn("New receive requests", description)
+        self.assertIn(
+            "Existing requests keep their current access setting.", description
+        )
 
     @override_settings(SOCIAL_AUTH_PROVIDERS=["google"], ENABLE_LOCAL_LOGIN=True)
     def test_sign_in_methods(self):
@@ -1620,7 +1664,16 @@ class BrandingTests(TestCase):
             "http://example.com/logo.png",
             "data:image/svg+xml;base64,PHN2Zy8+",
         ]
-        invalid = ["logo.svg", "//evil.example/logo.svg", "javascript:alert(1)"]
+        invalid = [
+            "logo.svg",
+            "//evil.example/logo.svg",
+            "javascript:alert(1)",
+            "https://",
+            "http:///logo.svg",
+            "https://:443/logo.svg",
+            "http://[::1/logo.svg",
+            "ftp://example.com/logo.png",
+        ]
         for url in valid:
             with override_settings(PSST_BRAND_LOGO_URL=url, PSST_BRAND_FAVICON_URL=url):
                 self.assertEqual(check_branding_urls(None), [], url)

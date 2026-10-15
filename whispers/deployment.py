@@ -64,7 +64,11 @@ def _auth_features():
             )
         ]
 
-    if _login_required_for(""):
+    # Creating needs both the page and the matching API endpoint to be reachable.
+    page_required = _login_required_for("")
+    send_required = page_required or _login_required_for("api/whisper")
+    request_required = page_required or _login_required_for("api/whisper/request")
+    if send_required and request_required:
         sign_in = _feature(
             "sign_in",
             "🔐",
@@ -72,6 +76,32 @@ def _auth_features():
             _("Required"),
             "on",
             _("You must sign in to create whispers and requests."),
+            _sign_in_methods(),
+        )
+    elif send_required:
+        sign_in = _feature(
+            "sign_in",
+            "🔐",
+            _("Sign-in"),
+            _("Partly required"),
+            "neutral",
+            _(
+                "You must sign in to create whispers, but you can create receive "
+                "requests without signing in."
+            ),
+            _sign_in_methods(),
+        )
+    elif request_required:
+        sign_in = _feature(
+            "sign_in",
+            "🔐",
+            _("Sign-in"),
+            _("Partly required"),
+            "neutral",
+            _(
+                "You can create whispers without signing in, but you must sign in "
+                "to create receive requests."
+            ),
             _sign_in_methods(),
         )
     else:
@@ -151,8 +181,10 @@ def _auth_features():
             _("Always on"),
             "on",
             _(
-                "Receive requests can only be read by their creator and the "
-                "accounts they approve."
+                "New receive requests can only be read by their creator and the "
+                "accounts they approve, and creators cannot turn this off when "
+                "changing access. Existing requests keep their current access "
+                "setting."
             ),
         )
     elif getattr(settings, "PSST_RECEIVE_ACCESS_DEFAULT", False):
