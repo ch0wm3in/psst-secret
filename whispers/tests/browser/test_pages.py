@@ -1,4 +1,5 @@
 import json
+import re
 import uuid
 from urllib.parse import urlsplit
 
@@ -27,6 +28,136 @@ def test_navigation_optional_features_and_not_found(page, app_url):
     assert page.goto(app_url + f"/whisper/{uuid.uuid4()}").status == 404
     expect(page.locator("h1")).to_contain_text("burned")
     assert page.goto(app_url + f"/submit/{uuid.uuid4()}").status == 404
+
+
+_LOGO = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiIvPg=="
+
+
+def test_default_branding_and_footer(page, app_url):
+    page.goto(app_url)
+    expect(page).to_have_title("psst-secret — New Whisper")
+    expect(page.locator("nav")).to_contain_text("🤫 psst-secret")
+    expect(page.locator("[data-brand-logo]")).to_have_count(0)
+    expect(page.locator("nav [data-nav-brand-name]")).not_to_have_class("sr-only")
+    expect(page.locator('link[rel="icon"]')).to_have_attribute(
+        "href", "/static/favicon.svg"
+    )
+    footer = page.locator("footer")
+    expect(footer).to_contain_text("psst-secret — Psst! Don't tell anyone.")
+    expect(footer.get_by_role("link", name="GitHub repository")).to_be_visible()
+
+
+@pytest.mark.browser_settings(
+    PSST_BRAND_NAME="Acme Vault",
+    PSST_BRAND_LOGO_URL=_LOGO,
+    PSST_BRAND_FAVICON_URL=_LOGO,
+    PSST_HIDE_SOCIAL_LINKS=True,
+    PSST_HIDE_FOOTER_TEXT=True,
+    APP_VERSION="v9.9.9",
+)
+def test_white_label_branding(page, app_url, create_whisper):
+    page.goto(app_url)
+    expect(page).to_have_title("Acme Vault — New Whisper")
+    nav = page.locator("nav")
+    expect(nav).to_contain_text("Acme Vault")
+    expect(nav).not_to_contain_text("psst-secret")
+    expect(nav).not_to_contain_text("🤫")
+    logo = nav.locator("[data-brand-logo]")
+    expect(logo).to_be_visible()
+    assert logo.evaluate("img => img.complete && img.naturalWidth > 0")
+    expect(page.locator('link[rel="icon"]')).to_have_attribute("href", _LOGO)
+    footer = page.locator("footer")
+    expect(footer.locator("[data-footer-text]")).to_have_count(0)
+    expect(footer.locator("a")).to_have_count(0)
+    expect(footer).to_have_text("v9.9.9")
+    page.get_by_role("link", name="About", exact=True).click()
+    expect(page).to_have_title("Acme Vault — About")
+    expect(page.locator("h1")).to_have_text("About Acme Vault")
+    expect(page.locator("main")).not_to_contain_text("psst-secret")
+    url = create_whisper()
+    page.goto(url)
+    expect(page).to_have_title(re.compile(r"^Acme Vault — "))
+
+
+@pytest.mark.browser_settings(
+    PSST_BRAND_NAME="Acme Vault",
+    PSST_BRAND_LOGO_URL=_LOGO,
+    PSST_HIDE_NAV_BRAND_NAME=True,
+    ENABLE_AUTH=True,
+    ENABLE_LOCAL_LOGIN=True,
+)
+@pytest.mark.parametrize("path", ["/", "/login/"])
+def test_hide_nav_brand_name_keeps_logo_and_accessible_name(page, app_url, path):
+    page.goto(app_url + path)
+    expect(page).to_have_title(re.compile(r"^Acme Vault"))
+    home = page.get_by_role("link", name="Acme Vault", exact=True)
+    expect(home.locator("[data-brand-logo]")).to_be_visible()
+    name = home.locator("[data-nav-brand-name]")
+    expect(name).to_have_class("sr-only")
+    box = name.bounding_box()
+    assert box["width"] <= 1 and box["height"] <= 1
+
+
+def _deployment_rows(page):
+    section = page.locator('section[aria-labelledby="deployment-features-heading"]')
+    expect(section).to_be_visible()
+    rows = section.locator("[data-deployment-feature]")
+    return {
+        rows.nth(i).get_attribute("data-deployment-feature"): rows.nth(i)
+        for i in range(rows.count())
+    }
+
+
+def test_about_page_lists_deployment_features(page, app_url):
+    page.goto(app_url + "/about")
+    rows = _deployment_rows(page)
+    assert list(rows) == ["sign_in", "email", "stats", "upload_limit", "storage"]
+    expect(rows["sign_in"].locator("[data-feature-status]")).to_have_text("Not used")
+    expect(rows["email"].locator("[data-feature-status]")).to_have_text("Off")
+    expect(rows["stats"]).to_contain_text("No usage statistics are collected.")
+    expect(rows["upload_limit"].locator("[data-feature-status]")).to_have_text(
+        re.compile(r"^\d+(\.\d)? (B|KB|MB|GB)$")
+    )
+    expect(rows["storage"].locator("[data-feature-status]")).to_have_text("Memory only")
+    page.locator('select[name="language"]').select_option("da")
+    rows = _deployment_rows(page)
+    expect(rows["sign_in"].locator("[data-feature-status]")).to_have_text("Bruges ikke")
+
+
+@pytest.mark.browser_settings(
+    ENABLE_AUTH=True,
+    PSST_FORCE_AUTH_VIEW=True,
+    PSST_ENABLE_RECEIVE_ACCESS=True,
+    PSST_FORCE_RECEIVE_ACCESS=True,
+    PSST_ENABLE_STATS=True,
+    PSST_ENABLE_EMAIL=True,
+    ABOUT_PAGE_PERSISTENCE_ENABLED=True,
+)
+def test_about_page_reflects_enabled_deployment_features(page, app_url):
+    page.goto(app_url + "/about")
+    rows = _deployment_rows(page)
+    assert list(rows) == [
+        "sign_in",
+        "view_auth",
+        "submit_auth",
+        "receive_access",
+        "email",
+        "stats",
+        "upload_limit",
+        "storage",
+    ]
+    statuses = {
+        "view_auth": "Sign-in required",
+        "submit_auth": "Link only",
+        "receive_access": "Always on",
+        "email": "Available",
+        "stats": "On",
+        "storage": "Saved to disk",
+    }
+    for key, status in statuses.items():
+        expect(rows[key].locator("[data-feature-status]")).to_have_text(status)
+    expect(rows["view_auth"]).to_have_attribute("data-state", "on")
+    expect(rows["submit_auth"]).to_have_attribute("data-state", "off")
 
 
 @pytest.mark.parametrize("language", ["en", "da", "cs", "sv", "fil"])

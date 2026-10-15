@@ -39,5 +39,7 @@ class WhispersConfig(AppConfig):
     name = "whispers"
 
     def ready(self):
+        from whispers import checks  # noqa: F401
+
         t = threading.Thread(target=_cleanup_loop, daemon=True)
         t.start()

@@ -26,6 +26,15 @@ PSST_ENABLE_RECEIVE_ACCESS = False
 PSST_RECEIVE_ACCESS_DEFAULT = False
 PSST_FORCE_RECEIVE_ACCESS = False
 
+# Keep tests independent of white-label and deployment values in a developer's .env.
+PSST_BRAND_NAME = "psst-secret"
+PSST_BRAND_LOGO_URL = ""
+PSST_BRAND_FAVICON_URL = ""
+PSST_HIDE_SOCIAL_LINKS = False
+PSST_HIDE_FOOTER_TEXT = False
+PSST_HIDE_NAV_BRAND_NAME = False
+ABOUT_PAGE_PERSISTENCE_ENABLED = False
+
 CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
 
 # Tests don't run collectstatic, so there is no manifest.

@@ -1390,6 +1390,247 @@ class PageRenderTests(TestCase):
         self.assertEqual(resp["Referrer-Policy"], "same-origin")
 
 
+_LOGIN_MIDDLEWARE_STACK = [
+    *_BASE_MIDDLEWARE,
+    "whispers.middleware.LoginRequiredMiddleware",
+]
+_DEFAULT_EXEMPT_URLS = [
+    r"login/",
+    r"accounts/.*",
+    r"i18n/.*",
+    r"jsi18n/",
+    r"static/.*",
+    r"submit/.*",
+    r"api/whisper/submit/.*",
+    r"whisper/.*",
+]
+
+
+@override_settings(
+    ENABLE_AUTH=True,
+    MIDDLEWARE=_LOGIN_MIDDLEWARE_STACK,
+    LOGIN_REQUIRED_EXEMPT_URLS=_DEFAULT_EXEMPT_URLS,
+    PSST_FORCE_AUTH_VIEW=False,
+    PSST_FORCE_AUTH_SUBMIT=False,
+    PSST_ENABLE_RECEIVE_ACCESS=False,
+    PSST_RECEIVE_ACCESS_DEFAULT=False,
+    PSST_FORCE_RECEIVE_ACCESS=False,
+    PSST_ENABLE_EMAIL=False,
+    PSST_ENABLE_STATS=False,
+    ABOUT_PAGE_PERSISTENCE_ENABLED=False,
+    ENABLE_LOCAL_LOGIN=False,
+    SOCIAL_AUTH_PROVIDERS=[],
+    DATA_UPLOAD_MAX_MEMORY_SIZE=10_000_000,
+)
+class DeploymentFeaturesTests(TestCase):
+
+    def _features(self):
+        from django.utils import translation
+
+        from whispers.deployment import deployment_features
+
+        with translation.override("en"):
+            return {f["key"]: f for f in deployment_features()}
+
+    def _status(self, key):
+        feature = self._features()[key]
+        return str(feature["status"]), feature["state"]
+
+    @override_settings(ENABLE_AUTH=False)
+    def test_auth_disabled_shows_single_sign_in_row(self):
+        features = self._features()
+        self.assertEqual(
+            list(features),
+            ["sign_in", "email", "stats", "upload_limit", "storage"],
+        )
+        self.assertEqual(self._status("sign_in"), ("Not used", "off"))
+
+    def test_auth_enabled_defaults_allow_link_only_access(self):
+        self.assertEqual(self._status("sign_in"), ("Required", "on"))
+        self.assertEqual(self._status("view_auth"), ("Link only", "off"))
+        self.assertEqual(self._status("submit_auth"), ("Link only", "off"))
+        self.assertEqual(self._status("receive_access"), ("Off", "off"))
+        self.assertIn(
+            "unless its creator requires sign-in",
+            self._features()["view_auth"]["description"],
+        )
+
+    @override_settings(PSST_FORCE_AUTH_VIEW=True, PSST_FORCE_AUTH_SUBMIT=True)
+    def test_forced_auth(self):
+        self.assertEqual(self._status("view_auth"), ("Sign-in required", "on"))
+        self.assertEqual(self._status("submit_auth"), ("Sign-in required", "on"))
+
+    @override_settings(LOGIN_REQUIRED_EXEMPT_URLS=[r"login/", r"static/.*"])
+    def test_login_middleware_exemptions_are_respected(self):
+        self.assertEqual(self._status("view_auth"), ("Sign-in required", "on"))
+        self.assertEqual(self._status("submit_auth"), ("Sign-in required", "on"))
+
+    @override_settings(LOGIN_REQUIRED_EXEMPT_URLS=[*_DEFAULT_EXEMPT_URLS, r"$"])
+    def test_exempt_create_page_makes_sign_in_optional(self):
+        self.assertEqual(self._status("sign_in"), ("Optional", "neutral"))
+
+    def test_receive_access_states(self):
+        cases = [
+            ({}, ("Optional", "neutral")),
+            ({"PSST_RECEIVE_ACCESS_DEFAULT": True}, ("On by default", "on")),
+            (
+                {
+                    "PSST_RECEIVE_ACCESS_DEFAULT": True,
+                    "PSST_FORCE_RECEIVE_ACCESS": True,
+                },
+                ("Always on", "on"),
+            ),
+        ]
+        for extra, expected in cases:
+            with override_settings(PSST_ENABLE_RECEIVE_ACCESS=True, **extra):
+                self.assertEqual(self._status("receive_access"), expected, extra)
+
+    @override_settings(SOCIAL_AUTH_PROVIDERS=["google"], ENABLE_LOCAL_LOGIN=True)
+    def test_sign_in_methods(self):
+        self.assertEqual(
+            self._features()["sign_in"]["detail"],
+            "Sign-in options: Google, username and password",
+        )
+
+    def test_no_sign_in_methods_omits_detail(self):
+        self.assertEqual(self._features()["sign_in"]["detail"], "")
+
+    @override_settings(
+        PSST_ENABLE_EMAIL=True,
+        PSST_ENABLE_STATS=True,
+        ABOUT_PAGE_PERSISTENCE_ENABLED=True,
+        DATA_UPLOAD_MAX_MEMORY_SIZE=5 * 1024**2,
+    )
+    def test_optional_features_enabled(self):
+        self.assertEqual(self._status("email"), ("Available", "on"))
+        self.assertEqual(self._status("stats"), ("On", "on"))
+        self.assertEqual(self._status("storage"), ("Saved to disk", "neutral"))
+        self.assertEqual(self._status("upload_limit"), ("5.0 MB", "neutral"))
+
+    def test_optional_features_disabled(self):
+        self.assertEqual(self._status("email"), ("Off", "off"))
+        self.assertEqual(self._status("stats"), ("Off", "off"))
+        self.assertEqual(self._status("storage"), ("Memory only", "neutral"))
+
+    @override_settings(MIDDLEWARE=_BASE_MIDDLEWARE, PSST_FORCE_AUTH_VIEW=True)
+    def test_about_page_renders_section(self):
+        resp = self.client.get("/about")
+        self.assertContains(resp, "Enabled Features for This Deployment")
+        self.assertContains(resp, 'data-deployment-feature="view_auth" data-state="on"')
+        self.assertContains(resp, "Sign-in required")
+
+    @override_settings(MIDDLEWARE=_BASE_MIDDLEWARE, ENABLE_AUTH=False)
+    def test_about_page_section_is_translated(self):
+        resp = self.client.get("/about", HTTP_ACCEPT_LANGUAGE="da")
+        self.assertContains(resp, 'data-deployment-feature="sign_in" data-state="off"')
+        self.assertNotContains(resp, "Enabled Features for This Deployment")
+        self.assertNotContains(resp, "No usage statistics are collected.")
+
+
+@override_settings(MIDDLEWARE=_BASE_MIDDLEWARE, REST_FRAMEWORK=_TEST_REST_FRAMEWORK)
+class BrandingTests(TestCase):
+
+    def test_default_branding(self):
+        resp = self.client.get("/")
+        self.assertContains(resp, "<title>psst-secret — New Whisper</title>", html=True)
+        self.assertContains(resp, 'href="/static/favicon.svg"')
+        self.assertContains(resp, "🤫")
+        self.assertNotContains(resp, "data-brand-logo")
+        self.assertContains(resp, "https://github.com/ch0wm3in/psst-secret")
+        self.assertContains(resp, "data-footer-text")
+
+    @override_settings(
+        PSST_BRAND_NAME="Acme <Vault>",
+        PSST_BRAND_LOGO_URL="https://cdn.example.com/logo.svg",
+        PSST_BRAND_FAVICON_URL="/media/favicon.ico",
+    )
+    def test_custom_name_logo_and_favicon(self):
+        for path in ("/", "/about", f"/whisper/{uuid.uuid4()}"):
+            resp = self.client.get(path)
+            content = resp.content.decode()
+            self.assertIn("<title>Acme &lt;Vault&gt; — ", content)
+            self.assertIn('<link rel="icon" href="/media/favicon.ico">', content)
+            self.assertIn('src="https://cdn.example.com/logo.svg"', content)
+            self.assertNotIn("🤫", content)
+            self.assertNotIn(
+                "psst-secret", content.replace("github.com/ch0wm3in/psst-secret", "")
+            )
+        resp = self.client.get("/about")
+        self.assertContains(resp, "About Acme &lt;Vault&gt;")
+        self.assertContains(resp, "Acme &lt;Vault&gt; ensures that")
+
+    @override_settings(PSST_BRAND_NAME="Acme Vault", LANGUAGE_CODE="da")
+    def test_custom_name_in_translated_about_page(self):
+        resp = self.client.get("/about", HTTP_ACCEPT_LANGUAGE="da")
+        self.assertContains(resp, "Om Acme Vault")
+        self.assertContains(resp, "Acme Vault sikrer, at")
+
+    @override_settings(PSST_HIDE_SOCIAL_LINKS=True, APP_VERSION="v1.2.3")
+    def test_hide_social_links(self):
+        resp = self.client.get("/")
+        self.assertNotContains(resp, "github.com")
+        self.assertContains(
+            resp, '<span class="text-gray-600">v1.2.3</span>', html=True
+        )
+        self.assertContains(resp, "data-footer-text")
+
+    def test_about_intro_explains_default_name(self):
+        resp = self.client.get("/about")
+        self.assertContains(resp, "Psst… wanna hear a secret?")
+        self.assertContains(
+            resp,
+            'That is where the name <strong class="text-white">psst-secret</strong>',
+        )
+        self.assertContains(resp, "end-to-end encrypted exchange between two people")
+
+    @override_settings(PSST_BRAND_NAME="Acme Vault")
+    def test_about_intro_omits_name_origin_for_custom_brand(self):
+        resp = self.client.get("/about")
+        self.assertContains(resp, "Psst… wanna hear a secret?")
+        self.assertNotContains(resp, "That is where the name")
+
+    @override_settings(PSST_HIDE_NAV_BRAND_NAME=True, PSST_BRAND_NAME="Acme")
+    def test_hide_nav_brand_name(self):
+        resp = self.client.get("/")
+        self.assertContains(
+            resp, '<span class="sr-only" data-nav-brand-name>Acme</span>', html=True
+        )
+        self.assertContains(resp, "<title>Acme — New Whisper</title>", html=True)
+
+    def test_nav_brand_name_visible_by_default(self):
+        resp = self.client.get("/")
+        self.assertContains(
+            resp, "<span data-nav-brand-name>psst-secret</span>", html=True
+        )
+
+    @override_settings(PSST_HIDE_FOOTER_TEXT=True)
+    def test_hide_footer_text(self):
+        resp = self.client.get("/")
+        self.assertNotContains(resp, "data-footer-text")
+        self.assertNotContains(resp, "Don&#x27;t tell anyone")
+        self.assertContains(resp, "https://github.com/ch0wm3in/psst-secret")
+
+    def test_asset_url_check(self):
+        from whispers.checks import check_branding_urls
+
+        valid = [
+            "",
+            "/static/logo.svg",
+            "https://example.com/logo.png",
+            "http://example.com/logo.png",
+            "data:image/svg+xml;base64,PHN2Zy8+",
+        ]
+        invalid = ["logo.svg", "//evil.example/logo.svg", "javascript:alert(1)"]
+        for url in valid:
+            with override_settings(PSST_BRAND_LOGO_URL=url, PSST_BRAND_FAVICON_URL=url):
+                self.assertEqual(check_branding_urls(None), [], url)
+        for url in invalid:
+            with override_settings(PSST_BRAND_LOGO_URL=url, PSST_BRAND_FAVICON_URL=url):
+                errors = check_branding_urls(None)
+                self.assertEqual(len(errors), 2, url)
+                self.assertEqual(errors[0].id, "whispers.E001")
+
+
 # ---------------------------------------------------------------------------
 # Middleware tests
 # ---------------------------------------------------------------------------
