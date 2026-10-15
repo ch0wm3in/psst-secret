@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psst-secret\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-15 08:43+0000\n"
+"POT-Creation-Date: 2026-10-15 09:53+0000\n"
 "PO-Revision-Date: 2026-10-09 08:07+0000\n"
 "Last-Translator: \n"
 "Language-Team: Filipino\n"
@@ -1518,8 +1518,9 @@ msgstr "username at password"
 msgid "Sign-in options: %(methods)s"
 msgstr "Mga opsyon sa pag-sign in: %(methods)s"
 
-#: whispers/deployment.py:57 whispers/deployment.py:71
-#: whispers/deployment.py:81
+#: whispers/deployment.py:57 whispers/deployment.py:75
+#: whispers/deployment.py:85 whispers/deployment.py:98
+#: whispers/deployment.py:111
 msgid "Sign-in"
 msgstr "Pag-sign in"
 
@@ -1535,41 +1536,61 @@ msgstr ""
 "Sinumang makaka-access sa site na ito ay makakagawa ng mga whisper. Ang link "
 "lamang ang kailangan para tumingin ng whisper o magsumite sa isang request."
 
-#: whispers/deployment.py:72
+#: whispers/deployment.py:76
 msgid "Required"
 msgstr "Kailangan"
 
-#: whispers/deployment.py:74
+#: whispers/deployment.py:78
 msgid "You must sign in to create whispers and requests."
 msgstr "Kailangan mong mag-sign in para gumawa ng mga whisper at request."
 
-#: whispers/deployment.py:82 whispers/deployment.py:175
+#: whispers/deployment.py:86 whispers/deployment.py:99
+msgid "Partly required"
+msgstr "Bahagyang kailangan"
+
+#: whispers/deployment.py:89
+msgid ""
+"You must sign in to create whispers, but you can create receive requests "
+"without signing in."
+msgstr ""
+"Kailangan mong mag-sign in para gumawa ng mga whisper, pero maaari kang "
+"gumawa ng mga receive request nang hindi nagsa-sign in."
+
+#: whispers/deployment.py:102
+msgid ""
+"You can create whispers without signing in, but you must sign in to create "
+"receive requests."
+msgstr ""
+"Maaari kang gumawa ng mga whisper nang hindi nagsa-sign in, pero kailangan "
+"mong mag-sign in para gumawa ng mga receive request."
+
+#: whispers/deployment.py:112 whispers/deployment.py:207
 msgid "Optional"
 msgstr "Opsyonal"
 
-#: whispers/deployment.py:84
+#: whispers/deployment.py:114
 msgid "You can create whispers without signing in."
 msgstr "Maaari kang gumawa ng mga whisper nang hindi nagsa-sign in."
 
-#: whispers/deployment.py:94 whispers/deployment.py:103
+#: whispers/deployment.py:124 whispers/deployment.py:133
 msgid "Viewing whispers"
 msgstr "Pagtingin ng mga whisper"
 
-#: whispers/deployment.py:95 whispers/deployment.py:119
+#: whispers/deployment.py:125 whispers/deployment.py:149
 msgid "Sign-in required"
 msgstr "Kailangang mag-sign in"
 
-#: whispers/deployment.py:97
+#: whispers/deployment.py:127
 msgid "You must sign in to view any whisper, in addition to having its link."
 msgstr ""
 "Kailangan mong mag-sign in para tumingin ng anumang whisper, bukod pa sa "
 "pagkakaroon ng link nito."
 
-#: whispers/deployment.py:104 whispers/deployment.py:128
+#: whispers/deployment.py:134 whispers/deployment.py:158
 msgid "Link only"
 msgstr "Link lamang"
 
-#: whispers/deployment.py:107
+#: whispers/deployment.py:137
 msgid ""
 "Anyone with the full link can view a whisper without signing in, unless its "
 "creator requires sign-in for that whisper."
@@ -1578,17 +1599,17 @@ msgstr ""
 "maliban kung hinihingi ng gumawa nito ang pag-sign in para sa whisper na "
 "iyon."
 
-#: whispers/deployment.py:118 whispers/deployment.py:127
+#: whispers/deployment.py:148 whispers/deployment.py:157
 msgid "Submitting to requests"
 msgstr "Pagsusumite sa mga request"
 
-#: whispers/deployment.py:121
+#: whispers/deployment.py:151
 msgid "You must sign in to submit a whisper to a receive request."
 msgstr ""
 "Kailangan mong mag-sign in para magsumite ng whisper sa isang receive "
 "request."
 
-#: whispers/deployment.py:131
+#: whispers/deployment.py:161
 msgid ""
 "Anyone with a submit link can submit a whisper without signing in, unless "
 "the request's creator requires sign-in."
@@ -1596,38 +1617,41 @@ msgstr ""
 "Sinumang may submit link ay makakapagsumite ng whisper nang hindi nagsa-sign "
 "in, maliban kung hinihingi ng gumawa ng request ang pag-sign in."
 
-#: whispers/deployment.py:136
+#: whispers/deployment.py:166
 msgid "Restricted receive access"
 msgstr "Limitadong access sa pagtanggap"
 
-#: whispers/deployment.py:142 whispers/deployment.py:209
-#: whispers/deployment.py:236
+#: whispers/deployment.py:172 whispers/deployment.py:241
+#: whispers/deployment.py:268
 msgid "Off"
 msgstr "Naka-off"
 
-#: whispers/deployment.py:144
+#: whispers/deployment.py:174
 msgid "Receive requests cannot be limited to specific accounts."
 msgstr ""
 "Hindi maaaring limitahan ang mga receive request sa mga partikular na "
 "account."
 
-#: whispers/deployment.py:151
+#: whispers/deployment.py:181
 msgid "Always on"
 msgstr "Laging naka-on"
 
-#: whispers/deployment.py:154
+#: whispers/deployment.py:184
 msgid ""
-"Receive requests can only be read by their creator and the accounts they "
-"approve."
+"New receive requests can only be read by their creator and the accounts they "
+"approve, and creators cannot turn this off when changing access. Existing "
+"requests keep their current access setting."
 msgstr ""
-"Ang mga receive request ay mababasa lamang ng gumawa nito at ng mga account "
-"na inaprubahan nito."
+"Ang mga bagong receive request ay mababasa lamang ng gumawa nito at ng mga "
+"account na inaprubahan nito, at hindi ito maaaring i-off ng gumawa kapag "
+"binabago ang access. Pinapanatili ng mga umiiral na request ang kanilang "
+"kasalukuyang setting ng access."
 
-#: whispers/deployment.py:163
+#: whispers/deployment.py:195
 msgid "On by default"
 msgstr "Naka-on bilang default"
 
-#: whispers/deployment.py:166
+#: whispers/deployment.py:198
 msgid ""
 "New receive requests are limited to their creator and approved accounts "
 "unless the creator turns this off."
@@ -1635,7 +1659,7 @@ msgstr ""
 "Ang mga bagong receive request ay limitado sa gumawa nito at sa mga "
 "aprubadong account maliban kung i-off ito ng gumawa."
 
-#: whispers/deployment.py:178
+#: whispers/deployment.py:210
 msgid ""
 "Creators can limit receive requests to themselves and the accounts they "
 "approve."
@@ -1643,15 +1667,15 @@ msgstr ""
 "Maaaring limitahan ng mga gumawa ang mga receive request sa kanilang sarili "
 "at sa mga account na inaprubahan nila."
 
-#: whispers/deployment.py:194 whispers/deployment.py:208
+#: whispers/deployment.py:226 whispers/deployment.py:240
 msgid "Email notifications"
 msgstr "Mga abiso sa email"
 
-#: whispers/deployment.py:195
+#: whispers/deployment.py:227
 msgid "Available"
 msgstr "Available"
 
-#: whispers/deployment.py:198
+#: whispers/deployment.py:230
 msgid ""
 "You can have an email sent when a whisper is created or submitted. The email "
 "never contains the decryption key."
@@ -1659,19 +1683,19 @@ msgstr ""
 "Maaari kang magpadala ng email kapag may whisper na ginawa o isinumite. "
 "Hindi kailanman naglalaman ang email ng decryption key."
 
-#: whispers/deployment.py:211
+#: whispers/deployment.py:243
 msgid "This site does not send email notifications."
 msgstr "Hindi nagpapadala ang site na ito ng mga abiso sa email."
 
-#: whispers/deployment.py:220 whispers/deployment.py:235
+#: whispers/deployment.py:252 whispers/deployment.py:267
 msgid "Usage statistics"
 msgstr "Estadistika ng paggamit"
 
-#: whispers/deployment.py:221
+#: whispers/deployment.py:253
 msgid "On"
 msgstr "Naka-on"
 
-#: whispers/deployment.py:224
+#: whispers/deployment.py:256
 msgid ""
 "Anonymous hourly counts of created and revealed whispers are kept for up to "
 "a year. No content, keys, identifiers, IP addresses, or accounts are "
@@ -1681,28 +1705,28 @@ msgstr ""
 "ginawa at ipinakitang whisper. Walang nilalaman, key, identifier, IP "
 "address, o account na itinatala."
 
-#: whispers/deployment.py:238
+#: whispers/deployment.py:270
 msgid "No usage statistics are collected."
 msgstr "Walang kinokolektang estadistika ng paggamit."
 
-#: whispers/deployment.py:246
+#: whispers/deployment.py:278
 msgid "File size limit"
 msgstr "Limitasyon sa laki ng file"
 
-#: whispers/deployment.py:249
+#: whispers/deployment.py:281
 msgid "Maximum total size of the files attached to a single whisper."
 msgstr ""
 "Pinakamalaking kabuuang laki ng mga file na nakalakip sa iisang whisper."
 
-#: whispers/deployment.py:258 whispers/deployment.py:272
+#: whispers/deployment.py:290 whispers/deployment.py:304
 msgid "Encrypted storage"
 msgstr "Naka-encrypt na imbakan"
 
-#: whispers/deployment.py:259
+#: whispers/deployment.py:291
 msgid "Saved to disk"
 msgstr "Naka-save sa disk"
 
-#: whispers/deployment.py:262
+#: whispers/deployment.py:294
 msgid ""
 "Encrypted whispers are stored in Redis with persistence enabled, so they "
 "survive server restarts until they expire."
@@ -1710,11 +1734,11 @@ msgstr ""
 "Iniimbak ang mga naka-encrypt na whisper sa Redis na may persistence, kaya "
 "nananatili ang mga ito kahit mag-restart ang server hanggang sa mag-expire."
 
-#: whispers/deployment.py:273
+#: whispers/deployment.py:305
 msgid "Memory only"
 msgstr "Sa memory lamang"
 
-#: whispers/deployment.py:276
+#: whispers/deployment.py:308
 msgid ""
 "Encrypted whispers live only in memory and are lost if the server restarts."
 msgstr ""
@@ -1773,6 +1797,13 @@ msgstr "Mag-sign in upang pamahalaan ang access ng mambabasa."
 #: whispers/views.py:631 whispers/views.py:723
 msgid "Enable restricted access before adding readers."
 msgstr "I-enable ang limitadong access bago magdagdag ng mga mambabasa."
+
+#~ msgid ""
+#~ "Receive requests can only be read by their creator and the accounts they "
+#~ "approve."
+#~ msgstr ""
+#~ "Ang mga receive request ay mababasa lamang ng gumawa nito at ng mga "
+#~ "account na inaprubahan nito."
 
 #~ msgid ""
 #~ "Receive requests can limit reading to their creator and approved "
