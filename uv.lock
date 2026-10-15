@@ -271,15 +271,15 @@ socialaccount = [
 
 [[package]]
 name = "django-better-azure-communication-email"
-version = "0.0.1"
+version = "1.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "azure-communication-email" },
     { name = "azure-identity" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/1d/ef/e092c76c280a585f8a3fbe421d4ba54c66ca50b9bdf530624787dfbaa5f8/django_better_azure_communication_email-0.0.1.tar.gz", hash = "sha256:ab0d23e36ad3bca999fde090c4db1c56736362cc6977b33865326147b381542e", size = 8970, upload-time = "2024-12-17T12:31:22.576Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/7e/d3/077682bfa1339823304d5751e18624594b442de8b0bc7d7690caca8146c9/django_better_azure_communication_email-1.0.0.tar.gz", hash = "sha256:28fb4c8bd5e05497e7f5cf79b548e055797895802b0767478d2b9c179329921a", size = 9541, upload-time = "2026-10-15T11:04:16.26Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/96/c7/829487217e0adb33116a458c4297f522ecf2e6642e5945db2d406fe379aa/django_better_azure_communication_email-0.0.1-py3-none-any.whl", hash = "sha256:1ed3fc5339d62a5772b18a5f4c6c2a0f617c84c37e5d68f413a9f4b31d178e2c", size = 10489, upload-time = "2024-12-17T12:31:20.559Z" },
+    { url = "https://files.pythonhosted.org/packages/46/33/00b96e6a0810cd23d0646584b158212d33a107a18e05a01af3d59fad763e/django_better_azure_communication_email-1.0.0-py3-none-any.whl", hash = "sha256:37996764a8a905d15289d62b8dad4155060dd0eb53bfaeb2dfb2a4716d70dfd4", size = 11414, upload-time = "2026-10-15T11:04:17.107Z" },
 ]
 
 [[package]]
@@ -641,7 +641,7 @@ dev = [
 requires-dist = [
     { name = "django", specifier = ">=6.1" },
     { name = "django-allauth", extras = ["socialaccount"], specifier = ">=65.18.0" },
-    { name = "django-better-azure-communication-email", specifier = ">=0.0.1" },
+    { name = "django-better-azure-communication-email", specifier = ">=1.0.0" },
     { name = "django-environ", specifier = ">=0.14.0" },
     { name = "django-tailwind", specifier = ">=4.5.0" },
     { name = "djangorestframework", specifier = ">=3.18.0" },
