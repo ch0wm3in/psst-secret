@@ -148,6 +148,10 @@
                 <p class="text-sm text-gray-400">{% trans "Send mode uses 256-bit symmetric keys, which remain secure against quantum computers. Receive mode uses the hybrid ML-KEM-768 + X25519 key exchange." %}</p>
             </div>
             <div class="rounded-lg bg-gray-800 border border-gray-700 p-4 sm:col-span-2">
+                <h3 class="font-semibold text-white mb-1">🎲 {% trans "Secret Generator" %}</h3>
+                <p class="text-sm text-gray-400">{% trans "Need a fresh password to share? Generate a random password or an English passphrase directly in your browser, using its cryptographically secure random number generator. You choose the length, character types, words, and symbols — nothing is sent to the server until you encrypt the whisper." %}</p>
+            </div>
+            <div class="rounded-lg bg-gray-800 border border-gray-700 p-4 sm:col-span-2">
                 <h3 class="font-semibold text-white mb-1">🚫 {% trans "Zero Knowledge" %}</h3>
                 {% if persistence_enabled %}
                 <p class="text-sm text-gray-400">{% trans "The server stores only encrypted data and public key material in Redis. It has no ability to decrypt your data, even under compulsion." %}</p>

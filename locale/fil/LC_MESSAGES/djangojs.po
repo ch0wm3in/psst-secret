@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psst-secret\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-12 08:39+0000\n"
+"POT-Creation-Date: 2026-10-15 13:25+0000\n"
 "PO-Revision-Date: 2026-10-09 08:07+0000\n"
 "Last-Translator: \n"
 "Language-Team: Filipino\n"
@@ -11,8 +11,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n % 10 == 4 || n % 10 == 6 || n % 10 == "
-"9);\n"
+"Plural-Forms: nplurals=2; plural=(n % 10 == 4 || n % 10 == 6 || n % 10 == 9);\n"
 
 #: static/js/crypto.js:108
 msgid "Remove"
@@ -57,8 +56,8 @@ msgstr "Ine-encrypt…"
 msgid ""
 "Passphrase does not meet the strength requirements shown below the field."
 msgstr ""
-"Hindi natutugunan ng password ang mga kinakailangan sa tibay na nakalista sa "
-"ibaba ng field."
+"Hindi natutugunan ng password ang mga kinakailangan sa tibay na nakalista sa"
+" ibaba ng field."
 
 #: static/js/crypto.js:495 static/js/crypto.js:618 static/js/crypto.js:718
 #, javascript-format
@@ -129,3 +128,24 @@ msgstr "Hindi ma-update ang access."
 #: static/js/receive-access.js:58
 msgid "Access updated."
 msgstr "Na-update ang access."
+
+#: static/js/secret-generator.js:94
+msgid "Secure random number generation is not available in this browser."
+msgstr ""
+"Hindi available sa browser na ito ang ligtas na pagbuo ng random na numero."
+
+#: static/js/secret-generator.js:206
+msgid "Select at least one character type."
+msgstr "Pumili ng kahit isang uri ng karakter."
+
+#: static/js/secret-generator.js:207
+msgid "The minimum counts add up to more than the length."
+msgstr "Lumalampas sa haba ang kabuuan ng mga pinakamababang bilang."
+
+#: static/js/secret-generator.js:208
+msgid "The word list could not be loaded."
+msgstr "Hindi ma-load ang listahan ng salita."
+
+#: static/js/secret-generator.js:431
+msgid "Estimated strength: ≈ %(bits)s bits"
+msgstr "Tinatayang lakas: ≈ %(bits)s bits"

@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psst-secret\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-12 08:39+0000\n"
+"POT-Creation-Date: 2026-10-15 13:25+0000\n"
 "PO-Revision-Date: 2026-10-09 07:50+0000\n"
 "Last-Translator: \n"
 "Language-Team: Swedish\n"
@@ -46,7 +46,8 @@ msgstr "Ange innehåll eller välj en fil att kryptera."
 #: static/js/crypto.js:433 static/js/crypto.js:680
 #, javascript-format
 msgid "Selected files exceed the maximum total size of %s."
-msgstr "De valda filerna överskrider den maximala sammanlagda storleken på %s."
+msgstr ""
+"De valda filerna överskrider den maximala sammanlagda storleken på %s."
 
 #: static/js/crypto.js:439 static/js/crypto.js:686
 msgid "Encrypting…"
@@ -126,3 +127,24 @@ msgstr "Det gick inte att uppdatera åtkomsten."
 #: static/js/receive-access.js:58
 msgid "Access updated."
 msgstr "Åtkomsten har uppdaterats."
+
+#: static/js/secret-generator.js:94
+msgid "Secure random number generation is not available in this browser."
+msgstr ""
+"Säker generering av slumptal är inte tillgänglig i den här webbläsaren."
+
+#: static/js/secret-generator.js:206
+msgid "Select at least one character type."
+msgstr "Välj minst en teckentyp."
+
+#: static/js/secret-generator.js:207
+msgid "The minimum counts add up to more than the length."
+msgstr "Minsta antalen blir sammanlagt fler än längden."
+
+#: static/js/secret-generator.js:208
+msgid "The word list could not be loaded."
+msgstr "Ordlistan kunde inte läsas in."
+
+#: static/js/secret-generator.js:431
+msgid "Estimated strength: ≈ %(bits)s bits"
+msgstr "Uppskattad styrka: ≈ %(bits)s bitar"
