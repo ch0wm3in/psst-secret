@@ -1,5 +1,9 @@
+import base64
+import email
+import email.policy
 import json
 import uuid
+import warnings
 from datetime import timedelta
 from unittest.mock import patch
 
@@ -35,6 +39,8 @@ _TEST_REST_FRAMEWORK = {
 _TEST_MAILERS = {
     "default": {"BACKEND": "django.core.mail.backends.locmem.EmailBackend"}
 }
+
+_PNG_BYTES = b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR-test-logo"
 
 
 def _fake_redis_client():
@@ -352,3 +358,105 @@ class EmailBrandingTests(TestCase):
         self.assertNotIn("<img", html)
         self.assertNotIn("🤫", html)
         self.assertIn("Sent by Acme", html)
+
+    def _logo_parts(self, msg):
+        parsed = email.message_from_bytes(
+            msg.message().as_bytes(), policy=email.policy.default
+        )
+        return parsed, [
+            part
+            for part in parsed.walk()
+            if part.get("Content-ID") == "<brand-logo@psst-secret>"
+        ]
+
+    @override_settings(
+        PSST_BRAND_NAME="Acme",
+        PSST_BRAND_LOGO_URL="data:image/png;base64,"
+        + base64.b64encode(_PNG_BYTES).decode(),
+    )
+    def test_data_logo_attached_inline_with_cid(self):
+        send_whisper_created_email("r@example.com", "https://x.example/whisper/1")
+        send_whisper_submitted_email("r@example.com", "https://x.example/whisper/2")
+        self.assertEqual(len(mail.outbox), 2)
+        for msg in mail.outbox:
+            html = self._html(msg)
+            self.assertIn('src="cid:brand-logo@psst-secret"', html)
+            self.assertNotIn("data:image", html)
+            self.assertNotIn("🤫", html)
+            self.assertEqual(msg.attachments, [])
+            parsed, logos = self._logo_parts(msg)
+            self.assertEqual(
+                [part.get_content_type() for part in parsed.walk()],
+                [
+                    "multipart/alternative",
+                    "text/plain",
+                    "multipart/related",
+                    "text/html",
+                    "image/png",
+                ],
+            )
+            self.assertEqual(len(logos), 1)
+            self.assertEqual(logos[0].get_content_disposition(), "inline")
+            self.assertEqual(logos[0].get_filename(), "logo.png")
+            self.assertEqual(logos[0].get_content(), _PNG_BYTES)
+
+    @override_settings(
+        PSST_BRAND_LOGO_URL="data:image/svg+xml,%3Csvg%20xmlns%3D%22x%22%2F%3E"
+    )
+    def test_percent_encoded_data_logo(self):
+        send_whisper_created_email("r@example.com", "https://x.example/whisper/1")
+        _, (logo,) = self._logo_parts(mail.outbox[0])
+        self.assertEqual(logo.get_content_type(), "image/svg+xml")
+        self.assertEqual(logo.get_filename(), "logo.svg")
+        self.assertEqual(logo.get_content(), b'<svg xmlns="x"/>')
+
+    @override_settings(
+        PSST_BRAND_NAME="Acme", PSST_BRAND_LOGO_URL="data:image/png;base64,***"
+    )
+    def test_invalid_data_logo_omitted(self):
+        send_whisper_created_email("r@example.com", "https://x.example/whisper/1")
+        msg = mail.outbox[0]
+        self.assertEqual(self._logo_parts(msg)[1], [])
+        self.assertNotIn("<img", self._html(msg))
+        self.assertNotIn("🤫", self._html(msg))
+
+
+@override_settings(
+    MAILERS={
+        "default": {"BACKEND": "django_better_azure_communication_email.EmailBackend"}
+    },
+    PSST_ENABLE_EMAIL=True,
+    DEFAULT_FROM_EMAIL="test@example.com",
+    PSST_BRAND_LOGO_URL="data:image/png;base64,"
+    + base64.b64encode(_PNG_BYTES).decode(),
+)
+class AzureEmailLogoTests(TestCase):
+    """The Azure backend needs legacy MIME parts and a bare contentId."""
+
+    def test_data_logo_converted_to_azure_inline_attachment(self):
+        from django_better_azure_communication_email.backend import ACEmailBackend
+
+        from whispers.email import _build_message
+
+        with warnings.catch_warnings():
+            # Fail on Django's MIMEBase deprecation warning.
+            warnings.simplefilter("error")
+            msg = _build_message(
+                "r@example.com",
+                "Subject",
+                "whisper_created",
+                {"whisper_url": "https://x.example/whisper/1"},
+            )
+        self.assertIn('src="cid:brand-logo@psst-secret"', msg.alternatives[0][0])
+        payload = ACEmailBackend().convert_message(msg)
+        self.assertEqual(
+            payload["attachments"],
+            [
+                {
+                    "name": "logo.png",
+                    "contentType": "image/png",
+                    "contentInBase64": base64.b64encode(_PNG_BYTES).decode(),
+                    "contentId": "brand-logo@psst-secret",
+                }
+            ],
+        )
