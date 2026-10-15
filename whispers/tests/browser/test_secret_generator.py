@@ -1,3 +1,4 @@
+import math
 import re
 from urllib.parse import urlsplit
 
@@ -178,6 +179,43 @@ def test_dialog_passphrase_options_and_cancel(page, app_url):
     secret = preview.text_content()
     page.locator("#sg-use").click()
     expect(page.locator("#whisper")).to_have_value(secret)
+
+
+def test_entropy_estimate_respects_constrained_minima(page, app_url):
+    page.goto(app_url)
+    constrained = {
+        "type": "password",
+        "length": 16,
+        "uppercase": True,
+        "lowercase": False,
+        "digits": True,
+        "symbols": False,
+        "minUppercase": 1,
+        "minDigits": 15,
+        "avoidAmbiguous": True,
+    }
+    estimate = "options => window.PsstSecretGenerator.estimateEntropy(options)"
+    bits = page.evaluate(estimate, constrained)
+    # 1 draw from 24 uppercase letters and 15 draws from 8 digits (no 0/1).
+    assert bits == pytest.approx(math.log2(24) + 15 * math.log2(8))
+    # Never above the number of distinct outputs: 16 positions x 24 x 8^15.
+    assert bits <= math.log2(16 * 24 * 8**15)
+    # Default preset: one draw per class, then 16 draws from the 83-char pool.
+    assert page.evaluate(estimate, "password") == pytest.approx(
+        2 * math.log2(24) + math.log2(8) + math.log2(27) + 16 * math.log2(83)
+    )
+
+    _open_generator(page)
+    page.locator("#sg-length").fill("16")
+    page.locator("#sg-lowercase").uncheck()
+    page.locator("#sg-symbols").uncheck()
+    page.locator("#sg-min-digits").fill("15")
+    entropy = page.locator("#sg-entropy")
+    expect(entropy).to_have_text("Estimated strength: ≈ 49 bits")
+    expect(entropy).to_have_class(re.compile(r"\btext-red-400\b"))
+    secret = page.locator("#sg-preview").text_content()
+    assert re.fullmatch(r"[A-HJ-NP-Z2-9]{16}", secret)
+    assert len(re.findall(r"[0-9]", secret)) >= 15
 
 
 @pytest.mark.parametrize("kind", ["send", "receive"])

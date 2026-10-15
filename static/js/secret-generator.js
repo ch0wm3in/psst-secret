@@ -265,21 +265,36 @@
     }
 
     /**
-     * Conservative entropy estimate in bits. Password mode assumes uniform
-     * draws from the full pool; passphrase mode ignores the extra entropy
-     * from random symbol positions.
+     * Conservative entropy estimate in bits.
+     *
+     * Password mode counts the draws actually made: each required minimum is
+     * drawn from its own class only, and the remaining positions from the full
+     * pool. The final shuffle is not credited; for a fixed permutation the
+     * output is a bijection of those draws, so the shuffle can only add
+     * entropy and the sum is a lower bound.
+     *
+     * Passphrase mode counts words, the optional digit and its word position,
+     * and the symbols, but not random symbol positions. It assumes word
+     * boundaries are recoverable (a separator or capitalization); without
+     * either, different word sequences can join into the same string.
      */
     function estimateEntropy(options) {
         var o = resolveOptions(options);
         if (validate(o)) return 0;
         if (o.type === 'password') {
-            var pool = enabledClasses(o).reduce(function (sum, cls) { return sum + cls.chars.length; }, 0);
-            return o.length * Math.log2(pool);
+            var classes = enabledClasses(o);
+            var pool = classes.reduce(function (sum, cls) { return sum + cls.chars.length; }, 0);
+            var required = 0;
+            var bits = classes.reduce(function (sum, cls) {
+                required += cls.min;
+                return sum + cls.min * Math.log2(cls.chars.length);
+            }, 0);
+            return bits + (o.length - required) * Math.log2(pool);
         }
-        var bits = o.words * Math.log2(getWordlist().length);
-        if (o.includeNumber) bits += Math.log2(DIGITS.length) + Math.log2(o.words);
-        bits += o.symbolCount * Math.log2(SYMBOLS.length);
-        return bits;
+        var phraseBits = o.words * Math.log2(getWordlist().length);
+        if (o.includeNumber) phraseBits += Math.log2(DIGITS.length) + Math.log2(o.words);
+        phraseBits += o.symbolCount * Math.log2(SYMBOLS.length);
+        return phraseBits;
     }
 
     // ---- UI helpers -------------------------------------------------------
