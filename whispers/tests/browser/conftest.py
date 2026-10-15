@@ -1,6 +1,7 @@
 import pytest
 from django.core.cache import cache
 from django.test.testcases import QuietWSGIRequestHandler
+from playwright.sync_api import Error as PlaywrightError
 from playwright.sync_api import expect
 from pytest_django.live_server_helper import LiveServer
 
@@ -81,6 +82,47 @@ def app_url(browser_app, live_server):
 @pytest.fixture
 def context(app_url, new_context):
     return new_context()
+
+
+@pytest.fixture
+def page(page):
+    # Firefox occasionally drops Playwright's "load" lifecycle event when the
+    # response is fast, so goto() hangs on a fully rendered page. Wait for the
+    # commit and then poll readyState in the new document instead.
+    goto, reload = page.goto, page.reload
+
+    def mark_current_document():
+        try:
+            page.evaluate("window.__psstPreviousDocument = true")
+        except PlaywrightError:
+            pass
+
+    def wait_for_load(response, timeout):
+        if response is None:
+            # Same-document (fragment-only) navigation: nothing new to load.
+            return response
+        page.wait_for_function(
+            "!window.__psstPreviousDocument && document.readyState === 'complete'",
+            timeout=timeout,
+        )
+        return response
+
+    def navigate(url, *, timeout=None, wait_until=None, **kwargs):
+        if wait_until is not None:
+            return goto(url, timeout=timeout, wait_until=wait_until, **kwargs)
+        mark_current_document()
+        response = goto(url, timeout=timeout, wait_until="commit", **kwargs)
+        return wait_for_load(response, timeout)
+
+    def refresh(*, timeout=None, wait_until=None):
+        if wait_until is not None:
+            return reload(timeout=timeout, wait_until=wait_until)
+        mark_current_document()
+        return wait_for_load(reload(timeout=timeout, wait_until="commit"), timeout)
+
+    page.goto = navigate
+    page.reload = refresh
+    return page
 
 
 @pytest.fixture
