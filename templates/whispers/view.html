@@ -171,9 +171,8 @@
     function showText(text, format) {
         const raw = document.getElementById("decrypted-content");
         raw.textContent = text;
-        if (format === 'markdown' && window.PsstRichText) {
-            const rendered = document.getElementById("decrypted-rendered");
-            window.PsstRichText.render(rendered, text);
+        const rendered = document.getElementById("decrypted-rendered");
+        if (format === 'markdown' && window.PsstRichText && window.PsstRichText.render(rendered, text)) {
             rendered.classList.remove("hidden");
             raw.classList.add("hidden");
         }

@@ -197,8 +197,11 @@
         });
 
         // Lets the secret generator insert plain text instead of writing the hidden textarea.
+        // The secret stays selected so generating again replaces it.
         function insertSecret(value) {
+            var start = editor.state.selection.from;
             editor.chain().focus().insertContent({ type: 'text', text: value }).run();
+            editor.commands.setTextSelection({ from: start, to: editor.state.selection.to });
         }
 
         function setPlain(value) {
@@ -232,7 +235,11 @@
         });
         modeToggle.addEventListener('click', function () {
             setPlain(!plain);
-            (plain ? textarea : editor).focus();
+            if (plain) {
+                textarea.focus();
+            } else {
+                editor.commands.focus();
+            }
         });
         root.classList.remove('hidden');
         editor.on('transaction', sync);
