@@ -15,17 +15,19 @@
         <div class="flex gap-2">
             <button id="tab-text" onclick="switchMode('text')"
                 class="px-4 py-1.5 rounded-lg text-sm font-medium bg-brand-600 text-white transition">
-                📝 {% trans "Text" %}
+                {% icon "pencil-square" %} {% trans "Text" %}
             </button>
             <button id="tab-file" onclick="switchMode('file')"
                 class="px-4 py-1.5 rounded-lg text-sm font-medium bg-gray-800 text-gray-400 hover:text-white transition">
-                📎 {% trans "File" %}
+                {% icon "paper-clip" %} {% trans "File" %}
             </button>
         </div>
 
         <!-- Text input -->
         <div id="text-mode">
             <label for="whisper" class="block text-sm font-medium text-gray-300 mb-1">{% trans "Whisper content" %}</label>
+            {% settings_value "PSST_ENABLE_RICH_TEXT" as rich_text %}
+            {% if rich_text %}{% include "whispers/rich_editor.html" %}{% endif %}
             <textarea id="whisper" rows="8"
                 class="w-full rounded-lg bg-gray-800 border border-gray-700 text-gray-100 px-4 py-3 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent font-mono text-sm resize-y"
                 placeholder="{% trans "Enter the whisper here…" %}"></textarea>
@@ -39,7 +41,7 @@
                 onclick="document.getElementById('file-input').click()">
                 <input type="file" id="file-input" class="hidden" multiple onchange="onFileSelected()">
                 <div id="file-placeholder" class="space-y-2 py-4">
-                    <div class="text-3xl">📁</div>
+                    <div>{% icon "folder-open" class="size-9 text-gray-400" %}</div>
                     <p class="text-sm text-gray-400">{% trans "Click to select files or drag & drop" %}</p>
                     <p class="text-xs text-gray-500">{% settings_value "DATA_UPLOAD_MAX_MEMORY_SIZE" as max_size %}{% trans "Any file type supported." %} {% blocktrans with max_size=max_size|filesizeformat %}Max total upload size: {{ max_size }}{% endblocktrans %}</p>
                 </div>
@@ -52,14 +54,14 @@
 
         {% if burn_after_read %}
         <div class="rounded-lg bg-amber-900/30 border border-amber-700 px-4 py-3 text-sm text-amber-300">
-            🔥 {% trans "This whisper will be destroyed after being viewed once by the requester." %}
+            {% icon "fire" %} {% trans "This whisper will be destroyed after being viewed once by the requester." %}
         </div>
         {% endif %}
 
         <div class="flex items-end">
             <button id="submit-btn" onclick="handleSubmit()"
                 class="px-6 py-2 rounded-lg bg-brand-600 hover:bg-brand-500 text-white font-semibold transition focus:outline-none focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 focus:ring-offset-gray-950">
-                🔒 {% trans "Encrypt & Submit" %}
+                {% icon "lock-closed" %} <span data-btn-label>{% trans "Encrypt & Submit" %}</span>
             </button>
         </div>
     </div>
@@ -67,7 +69,7 @@
     <!-- Success -->
     <div id="submit-success" class="hidden space-y-4">
         <div class="rounded-lg bg-gray-800 border border-gray-700 p-6 space-y-3">
-            <h2 class="text-lg font-semibold text-brand-400">✅ {% trans "Whisper submitted!" %}</h2>
+            <h2 class="text-lg font-semibold text-brand-400">{% icon "check-circle" %} {% trans "Whisper submitted!" %}</h2>
             <p class="text-sm text-gray-400">{% trans "Your encrypted whisper has been submitted. The requester can now view it." %}</p>
         </div>
         <a href="{% url 'whispers:create' %}" class="inline-block text-sm text-brand-400 hover:text-brand-300 underline transition">
@@ -83,9 +85,14 @@
 {{ request_data|json_script:"request-data" }}
 
 {% csrf_token %}
+<template id="file-icon">{% icon "document" class="text-gray-400" %}</template>
 {% load static %}
 {% settings_value "DATA_UPLOAD_MAX_MEMORY_SIZE" as max_upload_size %}
 <script>window.PSST_MAX_UPLOAD_SIZE = {{ max_upload_size }};</script>
+{% if rich_text %}
+<script src="{% static 'js/tiptap.min.js' %}"></script>
+<script src="{% static 'js/rich-text.min.js' %}"></script>
+{% endif %}
 <script src="{% static 'js/pqc.min.js' %}"></script>
 <script src="{% static 'js/crypto.min.js' %}"></script>
 <script>

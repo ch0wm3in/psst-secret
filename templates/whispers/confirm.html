@@ -1,20 +1,20 @@
 {% extends "base/layout.html" %}
-{% load i18n %}
+{% load i18n whispers_extras %}
 
 {% block title %}{{ brand_name }} — {% trans "Reveal Whisper" %}{% endblock %}
 
 {% block content %}
 <div class="text-center py-16 space-y-4">
     {% if whisper.burn_after_read %}
-    <div class="text-5xl">🔥</div>
+    <div>{% icon "fire" class="size-12 text-amber-400" %}</div>
     <h1 class="text-2xl font-bold text-white">{% trans "Burn-after-reading whisper" %}</h1>
     <p class="text-gray-400 max-w-md mx-auto">{% trans "This whisper will be permanently destroyed after you view it. Click below when you are ready." %}</p>
     {% elif whisper.max_views > 0 %}
-    <div class="text-5xl">👁️</div>
+    <div>{% icon "eye" class="size-12 text-brand-400" %}</div>
     <h1 class="text-2xl font-bold text-white">{% trans "View Whisper" %}</h1>
     <p class="text-gray-400 max-w-md mx-auto">{% blocktrans with n=whisper.max_views %}This whisper can be viewed up to {{ n }} times in total before it is destroyed. Click below to reveal it.{% endblocktrans %}</p>
     {% else %}
-    <div class="text-5xl">🔒</div>
+    <div>{% icon "lock-closed" class="size-12 text-brand-400" %}</div>
     <h1 class="text-2xl font-bold text-white">{% trans "View Whisper" %}</h1>
     <p class="text-gray-400 max-w-md mx-auto">{% trans "Click below to decrypt and view this whisper." %}</p>
     {% endif %}
@@ -22,7 +22,7 @@
         {% csrf_token %}
         <button id="reveal-btn" type="submit"
             class="inline-block mt-4 px-6 py-2 rounded-lg bg-brand-600 hover:bg-brand-500 text-white font-semibold transition">
-            🔓 {% trans "Reveal whisper" %}
+            {% icon "lock-open" %} {% trans "Reveal whisper" %}
         </button>
     </form>
 </div>

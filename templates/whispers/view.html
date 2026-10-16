@@ -1,5 +1,5 @@
 {% extends "base/layout.html" %}
-{% load i18n %}
+{% load i18n whispers_extras %}
 
 {% block title %}{{ brand_name }} — {% trans "View Whisper" %}{% endblock %}
 
@@ -8,7 +8,7 @@
     <!-- Password prompt (shown when paste is password-protected) -->
     <div id="password-prompt" class="hidden space-y-4">
         <div class="rounded-lg bg-gray-800 border border-gray-700 p-6 space-y-4">
-            <h2 class="text-lg font-semibold text-brand-400">🔑 {% trans "Password Required" %}</h2>
+            <h2 class="text-lg font-semibold text-brand-400">{% icon "key" %} {% trans "Password Required" %}</h2>
             <p class="text-sm text-gray-400">{% trans "This whisper is password-protected. Enter the password to decrypt." %}</p>
             <input type="password" id="view-password" autocomplete="off"
                 class="w-full rounded-lg bg-gray-900 border border-gray-600 text-gray-100 px-3 py-2 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
@@ -31,7 +31,7 @@
     <div id="decrypted-container" class="hidden space-y-4">
         {% if burn_after_read %}
         <div class="rounded-lg bg-amber-900/30 border border-amber-700 px-4 py-3 text-sm text-amber-300">
-            🔥 {% trans "This whisper has been burned — it can never be viewed again." %}
+            {% icon "fire" %} {% trans "This whisper has been burned — it can never be viewed again." %}
         </div>
         {% endif %}
         <div id="view-count-banner-text" class="hidden rounded-lg bg-gray-800/60 border border-gray-700 px-4 py-2 text-xs text-gray-300"></div>
@@ -44,6 +44,8 @@
                     {% trans "Copy" %}
                 </button>
             </div>
+            <div id="decrypted-rendered"
+                class="hidden w-full rounded-lg bg-gray-800 border border-gray-700 text-gray-100 px-4 py-4 text-sm max-h-[60vh] overflow-y-auto"></div>
             <pre id="decrypted-content"
                 class="w-full rounded-lg bg-gray-800 border border-gray-700 text-gray-100 px-4 py-4 font-mono text-sm whitespace-pre-wrap break-words max-h-[60vh] overflow-y-auto"></pre>
         </div>
@@ -57,14 +59,14 @@
     <div id="file-container" class="hidden space-y-4">
         {% if burn_after_read %}
         <div class="rounded-lg bg-amber-900/30 border border-amber-700 px-4 py-3 text-sm text-amber-300">
-            🔥 {% trans "This whisper has been burned — it can never be viewed again. Download it now." %}
+            {% icon "fire" %} {% trans "This whisper has been burned — it can never be viewed again. Download it now." %}
         </div>
         {% endif %}
         <div id="view-count-banner-file" class="hidden rounded-lg bg-gray-800/60 border border-gray-700 px-4 py-2 text-xs text-gray-300"></div>
 
         <div class="rounded-lg bg-gray-800 border border-gray-700 p-6 space-y-4">
             <div class="text-center space-y-1">
-                <div class="text-5xl">📄</div>
+                <div>{% icon "document" class="size-12 text-gray-400" %}</div>
                 <h1 id="file-heading" class="text-xl font-bold text-white">{% trans "Decrypted File" %}</h1>
                 <p id="file-meta" class="text-sm text-gray-400"></p>
             </div>
@@ -72,7 +74,7 @@
             <div id="download-all-row" class="hidden text-center">
                 <button id="download-all-btn" onclick="downloadAllFiles()"
                     class="px-6 py-2 rounded-lg bg-brand-600 hover:bg-brand-500 text-white font-semibold transition">
-                    ⬇️ {% trans "Download all" %}
+                    {% icon "arrow-down-tray" %} {% trans "Download all" %}
                 </button>
             </div>
         </div>
@@ -98,9 +100,16 @@
 
 <!-- Embedded encrypted data (server-rendered, auto-escaped by json_script) -->
 {{ paste_data|json_script:"paste-data" }}
+<template id="file-icon">{% icon "document" class="size-6 text-gray-400" %}</template>
+<template id="download-icon">{% icon "arrow-down-tray" %}</template>
 
 {% load static %}
 <script src="{% static 'js/pqc.min.js' %}"></script>
+{% settings_value "PSST_ENABLE_RICH_TEXT" as rich_text %}
+{% if rich_text %}
+<script src="{% static 'js/tiptap.min.js' %}"></script>
+<script src="{% static 'js/rich-text.min.js' %}"></script>
+{% endif %}
 <script src="{% static 'js/crypto.min.js' %}"></script>
 <script>
     let pasteData = JSON.parse(document.getElementById("paste-data").textContent);
@@ -150,7 +159,7 @@
                     data: envelope.data,
                 }]);
             } else if (envelope.type === 'text') {
-                showText(envelope.content);
+                showText(envelope.content, envelope.format);
             } else {
                 showText(plaintext);
             }
@@ -159,8 +168,15 @@
         }
     }
 
-    function showText(text) {
-        document.getElementById("decrypted-content").textContent = text;
+    function showText(text, format) {
+        const raw = document.getElementById("decrypted-content");
+        raw.textContent = text;
+        if (format === 'markdown' && window.PsstRichText) {
+            const rendered = document.getElementById("decrypted-rendered");
+            window.PsstRichText.render(rendered, text);
+            rendered.classList.remove("hidden");
+            raw.classList.add("hidden");
+        }
         document.getElementById("decrypting").classList.add("hidden");
         document.getElementById("decrypted-container").classList.remove("hidden");
         renderViewCountBanner();
@@ -189,9 +205,7 @@
             li.className = 'flex items-center justify-between gap-3 rounded-lg bg-gray-900 border border-gray-700 px-4 py-3';
             const meta = document.createElement('div');
             meta.className = 'flex items-center gap-3 min-w-0';
-            const icon = document.createElement('span');
-            icon.className = 'text-2xl shrink-0';
-            icon.textContent = '📄';
+            const icon = document.getElementById('file-icon').content.firstElementChild.cloneNode(true);
             const textBox = document.createElement('div');
             textBox.className = 'min-w-0';
             const name = document.createElement('p');
@@ -207,7 +221,10 @@
             const btn = document.createElement('button');
             btn.type = 'button';
             btn.className = 'shrink-0 px-3 py-1.5 rounded-lg bg-brand-600 hover:bg-brand-500 text-white text-sm font-medium transition';
-            btn.textContent = '⬇️ {% trans "Download" %}';
+            btn.append(
+                document.getElementById('download-icon').content.firstElementChild.cloneNode(true),
+                ' {% trans "Download" %}',
+            );
             btn.onclick = () => downloadFile(i);
             li.appendChild(meta);
             li.appendChild(btn);

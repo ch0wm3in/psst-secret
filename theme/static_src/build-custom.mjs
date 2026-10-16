@@ -6,6 +6,7 @@ await build({
         fileURLToPath(new URL('../../static/js/crypto.js', import.meta.url)),
         fileURLToPath(new URL('../../static/js/password-strength.js', import.meta.url)),
         fileURLToPath(new URL('../../static/js/receive-access.js', import.meta.url)),
+        fileURLToPath(new URL('../../static/js/rich-text.js', import.meta.url)),
         fileURLToPath(new URL('../../static/js/secret-generator.js', import.meta.url)),
         fileURLToPath(new URL('../../static/js/wordlist-en.js', import.meta.url)),
     ],

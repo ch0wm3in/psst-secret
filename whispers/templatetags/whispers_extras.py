@@ -3,6 +3,8 @@ import json
 
 from django import template
 from django.conf import settings
+from django.templatetags.static import static
+from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
 register = template.Library()
@@ -29,6 +31,19 @@ except ImportError, Exception:
 @register.simple_tag
 def settings_value(name):
     return getattr(settings, name, "")
+
+
+@register.simple_tag
+def icon(name, **attrs):
+    """Render a heroicon from the sprite built by theme/static_src/build-icons.mjs."""
+    style, _, icon_name = name.rpartition("/")
+    href = f"{static('icons/heroicons.svg')}#{style or 'outline'}-{icon_name}"
+    css_class = f"icon {attrs['class']}" if attrs.get("class") else "icon"
+    return format_html(
+        '<svg class="{}" aria-hidden="true" focusable="false"><use href="{}"></use></svg>',
+        css_class,
+        href,
+    )
 
 
 @register.filter

@@ -333,7 +333,8 @@ class EmailBrandingTests(TestCase):
         send_whisper_created_email("r@example.com", "https://x.example/whisper/1")
         msg = mail.outbox[0]
         self.assertIn("via psst-secret!", msg.body)
-        self.assertIn("🤫 psst-secret", self._html(msg))
+        self.assertIn("psst-secret</h1>", self._html(msg))
+        self.assertNotIn("🤫", self._html(msg))
         self.assertIn("Sent by psst-secret", self._html(msg))
 
     @override_settings(

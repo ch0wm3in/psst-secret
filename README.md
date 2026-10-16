@@ -22,6 +22,7 @@ A privacy-focused, zero-knowledge app for sharing secrets securely. We call them
 - **Opt-in receive reader access** — restrict receive-mode reveals to the creator and approved accounts, selected by verified primary email. Creators can edit access from the reveal link without revealing or burning the whisper. Optional defaults and mandatory restrictions are configurable.
 - **Optional email notifications** — notify the receiver (send mode) or creator (receive mode) by email when a whisper is created or submitted. Supports Django's standard SMTP backend or Azure Communication Services.
 - **Opt-in anonymous statistics** — hourly aggregate submission and reveal counts, retained for 365 days, with relative time filters. Disabled by default; enable with `PSST_ENABLE_STATS=True`.
+- **Formatted text** — a Markdown WYSIWYG editor (headings, lists, links, quotes, and code) for whisper content in send mode and on submit pages, with a **Plain text** toggle for writing raw content. Formatting is done and rendered entirely in the browser and is encrypted like any other text. Enabled by default; disable with `PSST_ENABLE_RICH_TEXT=False`.
 - **Internationalization** — English, Danish (`da`), Czech (`cs`), Swedish (`sv`), and Filipino (Tagalog, `fil`) out of the box, with a per-request language switcher.
 - **Deployment summary** — the About page lists which optional features and sign-in requirements are enabled on the instance, in plain language for end users.
 - **White-labeling** — replace the application name, logo, favicon, and brand colors, and hide the GitHub links, footer tagline, and navigation-bar name, all through environment variables.
@@ -103,7 +104,7 @@ separate terminal:
 python manage.py tailwind start
 ```
 
-Tailwind, Alpine.js, noble-post-quantum, and esbuild are installed from the locked npm dependencies in
+Tailwind, Alpine.js, noble-post-quantum, Tiptap, Heroicons, and esbuild are installed from the locked npm dependencies in
 `theme/static_src/`. The frontend build also minifies the custom scripts in `static/js/`
 into `theme/static/js/crypto.min.js` and `theme/static/js/password-strength.min.js`,
 which are loaded by the templates. Keep editing the readable source files, not the
@@ -119,6 +120,24 @@ npm --prefix theme/static_src run build:custom
 
 Run `python manage.py tailwind build` to rebuild all frontend
 assets, then run `collectstatic` as usual for production deployments.
+
+### Icons
+
+Icons come from [Heroicons](https://heroicons.com) via the locked `heroicons` npm package.
+Use the `{% icon %}` tag from `whispers_extras` in templates:
+
+```django
+{% icon "lock-closed" class="w-5 h-5" %}        {# 24px outline (default) #}
+{% icon "solid/lock-closed" class="w-5 h-5" %}  {# 24px solid #}
+{% icon "mini/x-mark" class="w-4 h-4" %}        {# 20px solid #}
+{% icon "micro/x-mark" class="w-3 h-3" %}       {# 16px solid #}
+```
+
+The build scans `templates/` for `{% icon %}` tags, plus `whispers/` Python files for
+style-prefixed names such as `"outline/lock-closed"` (used for icons passed to templates
+as variables), and writes only the used icons to
+`theme/static/icons/heroicons.svg`. After adding an icon, rebuild with
+`npm --prefix theme/static_src run build:icons`. Unknown icon names fail the build.
 
 ## Architecture
 
@@ -179,6 +198,23 @@ The page offers 1 day, 1 week (default), 1 month, 3 months, 6 months, and 1 year
 Only fixed hourly counters are stored in PostgreSQL / SQLite, with no whisper identifiers, content, keys, IP addresses, accounts, emails, or individual event records. No third-party analytics or visitor tracking is used. These counters survive whisper deletion and Redis restarts. Exact live totals can still reveal aggregate activity on a quiet instance; this is not differential privacy.
 
 Buckets older than the rolling 365-day cutoff are removed by the existing background cleanup every 60 seconds, by `python manage.py cleanup_expired`, and when the stats page is read. Old buckets are excluded from reports regardless of cleanup timing. Entire boundary buckets are discarded, so up to an hour of otherwise valid history may be omitted. Database backups and infrastructure logs require their own retention policies. Counter recording is best-effort: database failures or process crashes can undercount, but do not prevent whisper delivery.
+
+### Formatted text
+
+| Variable | Description | Default |
+|---|---|---|
+| `PSST_ENABLE_RICH_TEXT` | Use a Markdown WYSIWYG editor for whisper content on the create and submit pages, and render formatted whispers on the view page. Set to `False` to always use the plain text box. | `True` |
+
+The editor is built on [Tiptap](https://tiptap.dev/) and bundled locally into
+`theme/static/js/tiptap.min.js`; it is only loaded when this setting is on. The
+**Plain text** button in the editor toolbar switches to a raw text box; whispers written
+that way are sent and shown exactly as typed. The browser remembers the last choice in
+`localStorage` (only the mode, never content). Formatted whispers are
+stored as Markdown inside the encrypted payload, so the server never sees the text or its
+formatting. On the view page the Markdown is rendered read-only through the same schema,
+so raw HTML, scripts, and images are dropped and only `http`, `https`, and `mailto` links
+are kept. **Copy** copies the raw Markdown. If the setting is later turned off, formatted
+whispers are shown as raw Markdown text.
 
 ### Email notifications
 
@@ -276,8 +312,8 @@ limits account enumeration but does not eliminate the eligibility signal.
 |---|---|---|
 | `BRAND_COLORS` | Tailwind color palette as JSON (shade → hex). | Teal palette |
 | `PSST_BRAND_NAME` | Application name shown in the navigation bar, browser tab titles, sign-in page, About page, footer, notification emails, and API docs. | `psst-secret` |
-| `PSST_BRAND_LOGO_URL` | Logo image that replaces the 🤫 emoji in the navigation bar and sign-in page. Emails link to an absolute `http(s)` URL directly and embed a `data:image/` URI as an inline attachment referenced by `cid:`; root-relative paths are left out of emails. Many email clients do not render SVG, so use PNG for email logos. | *(emoji)* |
-| `PSST_BRAND_FAVICON_URL` | Favicon that replaces the default 🤫 icon. | `/static/favicon.svg` |
+| `PSST_BRAND_LOGO_URL` | Logo image that replaces the default lock icon in the navigation bar and sign-in page, and is shown next to the name in email headers. Emails link to an absolute `http(s)` URL directly and embed a `data:image/` URI as an inline attachment referenced by `cid:`; root-relative paths are left out of emails. Many email clients do not render SVG, so use PNG for email logos. | *(lock icon)* |
+| `PSST_BRAND_FAVICON_URL` | Favicon that replaces the default lock icon, which is otherwise drawn in the `400` shade of `BRAND_COLORS`. | *(lock icon)* |
 | `PSST_HIDE_SOCIAL_LINKS` | Hide the GitHub repository link in the footer and show the version as plain text instead of linking to GitHub releases. | `False` |
 | `PSST_HIDE_FOOTER_TEXT` | Hide the `<name> — Psst! Don't tell anyone.` tagline in the footer. | `False` |
 | `PSST_HIDE_NAV_BRAND_NAME` | Hide the application name next to the logo in the navigation bar and sign-in page (useful when the logo already contains the name). The name stays in tab titles and remains available to screen readers. | `False` |

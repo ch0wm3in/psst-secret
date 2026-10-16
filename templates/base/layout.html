@@ -10,13 +10,14 @@
                 {% if brand_logo_url %}
                 <img src="{{ brand_logo_url }}" alt="" class="h-8 w-auto max-w-40 object-contain" data-brand-logo>
                 {% else %}
-                <span aria-hidden="true">🤫</span>
+                {% icon "lock-closed" class="size-6" %}
                 {% endif %}
                 <span{% if hide_nav_brand_name %} class="sr-only"{% endif %} data-nav-brand-name>{{ brand_name }}</span>
             </a>
             <span class="hidden lg:inline text-xs text-gray-500">{% trans "Zero-knowledge secret sharing" %}</span>
             <div class="flex items-center gap-4">
-                <form action="{% url 'set_language' %}" method="post" class="flex items-center">
+                <form action="{% url 'set_language' %}" method="post" class="flex items-center gap-1.5 text-gray-400">
+                    {% icon "language" class="size-4" %}
                     {% csrf_token %}
                     <input name="next" type="hidden" value="{{ request.path }}">
                     {% get_current_language as LANGUAGE_CODE %}
@@ -24,7 +25,7 @@
                     <select name="language" onchange="this.form.submit()"
                         class="bg-gray-800 border border-gray-700 text-gray-300 text-xs rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-brand-500 cursor-pointer">
                         {% for lang_code, lang_name in LANGUAGES %}
-                        <option value="{{ lang_code }}" {% if lang_code == LANGUAGE_CODE %}selected{% endif %}>{% if lang_code == 'en' %}🇬🇧 {% elif lang_code == 'da' %}🇩🇰 {% elif lang_code == 'cs' %}🇨🇿 {% elif lang_code == 'sv' %}🇸🇪 {% elif lang_code == 'fil' %}🇵🇭 {% endif %}{{ lang_name | capfirst }}</option>
+                        <option value="{{ lang_code }}" {% if lang_code == LANGUAGE_CODE %}selected{% endif %}>{{ lang_name | capfirst }}</option>
                         {% endfor %}
                     </select>
                 </form>

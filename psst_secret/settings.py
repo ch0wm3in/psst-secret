@@ -212,6 +212,9 @@ PSST_ENABLE_RECEIVE_ACCESS = env.bool("PSST_ENABLE_RECEIVE_ACCESS", default=Fals
 PSST_RECEIVE_ACCESS_DEFAULT = env.bool("PSST_RECEIVE_ACCESS_DEFAULT", default=False)
 PSST_FORCE_RECEIVE_ACCESS = env.bool("PSST_FORCE_RECEIVE_ACCESS", default=False)
 
+# Markdown WYSIWYG editor for whisper content (rendered client-side only); users can switch to plain text
+PSST_ENABLE_RICH_TEXT = env.bool("PSST_ENABLE_RICH_TEXT", default=True)
+
 # About page — toggle persistence-aware language
 ABOUT_PAGE_PERSISTENCE_ENABLED = env.bool(
     "ABOUT_PAGE_PERSISTENCE_ENABLED", default=False

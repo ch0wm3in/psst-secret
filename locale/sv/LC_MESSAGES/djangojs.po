@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psst-secret\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-15 13:25+0000\n"
+"POT-Creation-Date: 2026-10-16 21:19+0000\n"
 "PO-Revision-Date: 2026-10-09 07:50+0000\n"
 "Last-Translator: \n"
 "Language-Team: Swedish\n"
@@ -13,25 +13,25 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: static/js/crypto.js:108
+#: static/js/crypto.js:110
 msgid "Remove"
 msgstr "Ta bort"
 
-#: static/js/crypto.js:117
+#: static/js/crypto.js:119
 #, javascript-format
 msgid "Total: %s / %s"
 msgstr "Totalt: %s / %s"
 
-#: static/js/crypto.js:122
+#: static/js/crypto.js:124
 #, javascript-format
 msgid "Skipped (would exceed %s total): %s"
 msgstr "Hoppade över (skulle överskrida totalt %s): %s"
 
-#: static/js/crypto.js:304
+#: static/js/crypto.js:306
 msgid "Post-quantum crypto module failed to load."
 msgstr "Den postkvantkryptografiska modulen kunde inte laddas."
 
-#: static/js/crypto.js:345
+#: static/js/crypto.js:347
 msgid ""
 "The request key does not match the link. The link may be incomplete or "
 "tampered with."
@@ -39,79 +39,78 @@ msgstr ""
 "Förfrågans nyckel stämmer inte med länken. Länken kan vara ofullständig "
 "eller manipulerad."
 
-#: static/js/crypto.js:427 static/js/crypto.js:674
+#: static/js/crypto.js:429 static/js/crypto.js:677
 msgid "Please enter some content or select a file to encrypt."
 msgstr "Ange innehåll eller välj en fil att kryptera."
 
-#: static/js/crypto.js:433 static/js/crypto.js:680
+#: static/js/crypto.js:435 static/js/crypto.js:683
 #, javascript-format
 msgid "Selected files exceed the maximum total size of %s."
-msgstr ""
-"De valda filerna överskrider den maximala sammanlagda storleken på %s."
+msgstr "De valda filerna överskrider den maximala sammanlagda storleken på %s."
 
-#: static/js/crypto.js:439 static/js/crypto.js:686
+#: static/js/crypto.js:441 static/js/crypto.js:689
 msgid "Encrypting…"
 msgstr "Krypterar…"
 
-#: static/js/crypto.js:452 static/js/crypto.js:573
+#: static/js/crypto.js:454 static/js/crypto.js:576
 msgid ""
 "Passphrase does not meet the strength requirements shown below the field."
 msgstr "Lösenordet uppfyller inte styrkekraven som visas under fältet."
 
-#: static/js/crypto.js:495 static/js/crypto.js:618 static/js/crypto.js:718
+#: static/js/crypto.js:498 static/js/crypto.js:621 static/js/crypto.js:722
 #, javascript-format
 msgid "Server error (%s)"
 msgstr "Serverfel (%s)"
 
-#: static/js/crypto.js:516
+#: static/js/crypto.js:519
 msgid "This whisper will be destroyed after being viewed once."
 msgstr "Denna whisper raderas efter att ha visats en gång."
 
-#: static/js/crypto.js:518
+#: static/js/crypto.js:521
 #, javascript-format
 msgid "This whisper will be destroyed after %s views."
 msgstr "Denna whisper raderas efter %s visningar."
 
-#: static/js/crypto.js:526 static/js/crypto.js:649 static/js/crypto.js:726
+#: static/js/crypto.js:529 static/js/crypto.js:652 static/js/crypto.js:730
 #, javascript-format
 msgid "Error: %s"
 msgstr "Fel: %s"
 
-#: static/js/crypto.js:530
+#: static/js/crypto.js:533
 msgid "Encrypt & Share"
 msgstr "Kryptera och dela"
 
-#: static/js/crypto.js:541
+#: static/js/crypto.js:544
 msgid "Copied!"
 msgstr "Kopierat!"
 
-#: static/js/crypto.js:542
+#: static/js/crypto.js:545
 msgid "Copy"
 msgstr "Kopiera"
 
-#: static/js/crypto.js:560
+#: static/js/crypto.js:563
 msgid "Creating…"
 msgstr "Skapar…"
 
-#: static/js/crypto.js:639
+#: static/js/crypto.js:642
 msgid "The whisper will be destroyed after you view it once."
 msgstr "Whispern raderas när du har visat den en gång."
 
-#: static/js/crypto.js:641
+#: static/js/crypto.js:644
 #, javascript-format
 msgid "The whisper will be destroyed after %s views."
 msgstr "Whispern raderas efter %s visningar."
 
-#: static/js/crypto.js:653
+#: static/js/crypto.js:656
 msgid "Create Request"
 msgstr "Skapa förfrågan"
 
-#: static/js/crypto.js:690
+#: static/js/crypto.js:693
 msgid "No encryption key found in URL. The link may be incomplete."
 msgstr ""
 "Ingen krypteringsnyckel hittades i URL:en. Länken kan vara ofullständig."
 
-#: static/js/crypto.js:730
+#: static/js/crypto.js:734
 msgid "Encrypt & Submit"
 msgstr "Kryptera och skicka in"
 
@@ -127,6 +126,17 @@ msgstr "Det gick inte att uppdatera åtkomsten."
 #: static/js/receive-access.js:58
 msgid "Access updated."
 msgstr "Åtkomsten har uppdaterats."
+
+#: static/js/rich-text.js:155
+msgid "Whisper content"
+msgstr "Whisper-innehåll"
+
+#: static/js/rich-text.js:166
+#, javascript-format
+msgid "%s character"
+msgid_plural "%s characters"
+msgstr[0] "%s tecken"
+msgstr[1] "%s tecken"
 
 #: static/js/secret-generator.js:94
 msgid "Secure random number generation is not available in this browser."
@@ -145,6 +155,12 @@ msgstr "Minsta antalen blir sammanlagt fler än längden."
 msgid "The word list could not be loaded."
 msgstr "Ordlistan kunde inte läsas in."
 
-#: static/js/secret-generator.js:431
+#: static/js/secret-generator.js:450
 msgid "Estimated strength: ≈ %(bits)s bits"
 msgstr "Uppskattad styrka: ≈ %(bits)s bitar"
+
+#~ msgid "Link URL"
+#~ msgstr "Länk-URL"
+
+#~ msgid "Only http, https, and mailto links are allowed."
+#~ msgstr "Endast http-, https- och mailto-länkar är tillåtna."

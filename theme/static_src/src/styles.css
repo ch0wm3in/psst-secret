@@ -4,6 +4,74 @@
 @source "../../../static/js";
 @source not "../../../static/js/wordlist-en.js";
 
+@layer components {
+	.icon {
+		display: inline-block;
+		flex-shrink: 0;
+		width: 1.25em;
+		height: 1.25em;
+		vertical-align: -0.25em;
+	}
+
+	.psst-toolbar button {
+		@apply rounded-md p-1.5 text-gray-400 transition hover:bg-gray-700 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:pointer-events-none disabled:opacity-40;
+	}
+	.psst-toolbar button[aria-pressed="true"] {
+		@apply bg-brand-900/60 text-brand-300;
+	}
+
+	.psst-editor {
+		@apply min-h-48 max-h-[60vh] overflow-y-auto px-4 py-3 text-sm text-gray-100 focus:outline-none;
+	}
+	.psst-editor .is-editor-empty:first-child::before {
+		@apply pointer-events-none float-left h-0 text-gray-500;
+		content: attr(data-placeholder);
+	}
+
+	.psst-prose {
+		@apply break-words leading-relaxed;
+	}
+	.psst-prose > * + * {
+		@apply mt-3;
+	}
+	.psst-prose h1 {
+		@apply text-xl font-bold text-white;
+	}
+	.psst-prose h2 {
+		@apply text-lg font-semibold text-white;
+	}
+	.psst-prose h3 {
+		@apply font-semibold text-white;
+	}
+	.psst-prose ul {
+		@apply list-disc pl-6;
+	}
+	.psst-prose ol {
+		@apply list-decimal pl-6;
+	}
+	.psst-prose li > * + * {
+		@apply mt-1;
+	}
+	.psst-prose blockquote {
+		@apply border-l-2 border-gray-600 pl-3 text-gray-300;
+	}
+	.psst-prose a {
+		@apply text-brand-400 underline hover:text-brand-300;
+	}
+	.psst-prose code {
+		@apply rounded bg-gray-900 px-1 py-0.5 font-mono text-[0.9em] text-brand-300;
+	}
+	.psst-prose pre {
+		@apply overflow-x-auto rounded-lg border border-gray-700 bg-gray-900 p-3 font-mono text-gray-100;
+	}
+	.psst-prose pre code {
+		@apply bg-transparent p-0 text-inherit;
+	}
+	.psst-prose hr {
+		@apply border-gray-700;
+	}
+}
+
 @theme inline {
 	--color-brand-50: var(--brand-50);
 	--color-brand-100: var(--brand-100);

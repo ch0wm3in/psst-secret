@@ -11,14 +11,14 @@
     </div>
 
     <!-- Send / Receive toggle -->
-    <div class="flex gap-2">
+    <div id="direction-toggle" class="flex gap-2">
         <button id="tab-send" onclick="switchDirection('send')"
             class="px-4 py-1.5 rounded-lg text-sm font-medium bg-brand-600 text-white transition">
-            📤 {% trans "Send" %}
+            {% icon "paper-airplane" %} {% trans "Send" %}
         </button>
         <button id="tab-receive" onclick="switchDirection('receive')"
             class="px-4 py-1.5 rounded-lg text-sm font-medium bg-gray-800 text-gray-400 hover:text-white transition">
-            📥 {% trans "Receive" %}
+            {% icon "inbox-arrow-down" %} {% trans "Receive" %}
         </button>
     </div>
 
@@ -27,11 +27,11 @@
         <div id="content-toggle" class="flex gap-2">
             <button id="tab-text" onclick="switchMode('text')"
                 class="px-4 py-1.5 rounded-lg text-sm font-medium bg-brand-600 text-white transition">
-                📝 {% trans "Text" %}
+                {% icon "pencil-square" %} {% trans "Text" %}
             </button>
             <button id="tab-file" onclick="switchMode('file')"
                 class="px-4 py-1.5 rounded-lg text-sm font-medium bg-gray-800 text-gray-400 hover:text-white transition">
-                📎 {% trans "File" %}
+                {% icon "paper-clip" %} {% trans "File" %}
             </button>
         </div>
 
@@ -42,20 +42,18 @@
                 <div class="inline-flex rounded-lg shadow-sm" role="group">
                     <button type="button" id="generate-secret-btn"
                         class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-l-lg text-sm font-semibold bg-brand-600 hover:bg-brand-500 text-white transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:z-10">
-                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/>
-                        </svg>
+                        {% icon "sparkles" class="w-4 h-4" %}
                         {% trans "Generate secret" %}
                     </button>
                     <button type="button" id="generate-secret-options-btn" aria-haspopup="dialog" aria-controls="secret-generator"
                         aria-label="{% trans "Secret generator options" %}" title="{% trans "Secret generator options" %}"
                         class="inline-flex items-center px-2.5 py-1.5 rounded-r-lg bg-gray-800 hover:bg-gray-700 border border-gray-700 text-brand-300 hover:text-brand-200 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:z-10">
-                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
-                            <path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M14 2v4M8 10v4M16 18v4"/>
-                        </svg>
+                        {% icon "adjustments-horizontal" class="w-4 h-4" %}
                     </button>
                 </div>
             </div>
+            {% settings_value "PSST_ENABLE_RICH_TEXT" as rich_text %}
+            {% if rich_text %}{% include "whispers/rich_editor.html" %}{% endif %}
             <textarea id="whisper" rows="8"
                 class="w-full rounded-lg bg-gray-800 border border-gray-700 text-gray-100 px-4 py-3 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent font-mono text-sm resize-y"
                 placeholder="{% trans "Type your whisper here…" %}"></textarea>
@@ -69,7 +67,7 @@
                 onclick="document.getElementById('file-input').click()">
                 <input type="file" id="file-input" class="hidden" multiple onchange="onFileSelected()">
                 <div id="file-placeholder" class="space-y-2 py-4">
-                    <div class="text-3xl">📁</div>
+                    <div>{% icon "folder-open" class="size-9 text-gray-400" %}</div>
                     <p class="text-sm text-gray-400">{% trans "Click to select files or drag & drop" %}</p>
                     <p class="text-xs text-gray-500">{% settings_value "DATA_UPLOAD_MAX_MEMORY_SIZE" as max_size %}{% trans "Any file type supported." %} {% blocktrans with max_size=max_size|filesizeformat %}Max total upload size: {{ max_size }}{% endblocktrans %}</p>
                 </div>
@@ -82,7 +80,7 @@
 
         <!-- Receive mode description -->
         <div id="receive-info" class="hidden rounded-lg bg-gray-800 border border-gray-700 p-5 space-y-2">
-            <p class="text-sm text-gray-300">📥 <strong class="text-white">{% trans "Receive mode" %}</strong> — {% trans "create a request for someone to send you a whisper." %}</p>
+            <p class="text-sm text-gray-300">{% icon "inbox-arrow-down" %} <strong class="text-white">{% trans "Receive mode" %}</strong> — {% trans "create a request for someone to send you a whisper." %}</p>
             <p class="text-xs text-gray-500">{% trans "You'll get two links: a <strong>submit link</strong> to share with the sender, and a <strong>view link</strong> for you to retrieve the whisper once it's been submitted." %}</p>
         </div>
 
@@ -115,7 +113,7 @@
                 <select id="max-views"
                     class="w-full rounded-lg bg-gray-800 border border-gray-700 text-gray-100 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"
                     onchange="onMaxViewsChanged()">
-                    <option value="1" selected>{% trans "1 view (burn 🔥)" %}</option>
+                    <option value="1" selected>{% trans "1 view (burn)" %}</option>
                     <option value="3">{% trans "3 views" %}</option>
                     <option value="5">{% trans "5 views" %}</option>
                     <option value="10">{% trans "10 views" %}</option>
@@ -130,17 +128,17 @@
             <!-- Submit -->
             <button id="encrypt-btn" onclick="handleCreate()"
                 class="px-6 py-2 rounded-lg bg-brand-600 hover:bg-brand-500 text-white font-semibold transition focus:outline-none focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 focus:ring-offset-gray-950">
-                🔒 {% trans "Encrypt & Share" %}
+                {% icon "lock-closed" %} <span data-btn-label>{% trans "Encrypt & Share" %}</span>
             </button>
             <button id="request-btn" onclick="handleCreateRequest()" class="hidden px-6 py-2 rounded-lg bg-brand-600 hover:bg-brand-500 text-white font-semibold transition focus:outline-none focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 focus:ring-offset-gray-950">
-                🔗 {% trans "Create Request" %}
+                {% icon "link" %} <span data-btn-label>{% trans "Create Request" %}</span>
             </button>
         </div>
 
         <!-- Advanced Options -->
         <details id="advanced-options" class="group">
             <summary class="cursor-pointer text-sm text-gray-400 hover:text-white transition select-none">
-                ⚙️ {% trans "Advanced Options" %}
+                {% icon "cog-6-tooth" %} {% trans "Advanced Options" %}
             </summary>
             <div class="mt-3 space-y-3 rounded-lg bg-gray-800/50 border border-gray-700 p-4">
                 <div>
@@ -154,12 +152,12 @@
                             placeholder="{% trans "Use own password" %}">
                         <button type="button" id="password-visibility-btn"
                             data-label-show="{% trans "Show password" %}" data-label-hide="{% trans "Hide password" %}"
-                            class="shrink-0 px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-white text-sm font-medium transition">
-                            👁️
+                            class="shrink-0 px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 aria-pressed:bg-brand-600 aria-pressed:hover:bg-brand-500 text-white text-sm font-medium transition">
+                            {% icon "eye" %}
                         </button>
                         <button type="button" id="password-generate-btn"
                             class="shrink-0 px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-white text-sm font-medium transition">
-                            🎲 {% trans "Generate" %}
+                            {% icon "sparkles" %} {% trans "Generate" %}
                         </button>
                     </div>
                     <p class="mt-1 text-xs text-gray-500">{% trans "Use your own password for encryption instead of the randomly generated one in the url fragment. The recipient will need this password in addition to the link to decrypt the psst." %}</p>
@@ -267,7 +265,7 @@
     <!-- Result (hidden initially) -->
     <div id="result" class="hidden space-y-4">
         <div class="rounded-lg bg-gray-800 border border-gray-700 p-6 space-y-3">
-            <h2 class="text-lg font-semibold text-brand-400">✅ {% trans "Whisper created!" %}</h2>
+            <h2 class="text-lg font-semibold text-brand-400">{% icon "check-circle" %} {% trans "Whisper created!" %}</h2>
             <p class="text-sm text-gray-400">{% trans "Share this link. The decryption key is in the URL fragment and is <strong>never sent to the server</strong>." %}</p>
             <div class="flex gap-2">
                 <input id="result-url" type="text" readonly
@@ -278,10 +276,10 @@
                 </button>
             </div>
             <div id="password-notice" class="hidden text-sm text-brand-300">
-                🔑 {% trans "This whisper is password-protected. The recipient will need the password to decrypt it." %}
+                {% icon "key" %} {% trans "This whisper is password-protected. The recipient will need the password to decrypt it." %}
             </div>
             <div id="burn-warning" class="hidden text-sm text-amber-400">
-                ⚠️ <span id="burn-warning-text">{% trans "This whisper will be destroyed after being viewed once." %}</span>
+                {% icon "exclamation-triangle" %} <span id="burn-warning-text">{% trans "This whisper will be destroyed after being viewed once." %}</span>
             </div>
         </div>
         <button onclick="location.reload()"
@@ -293,12 +291,12 @@
     <!-- Receive result (hidden initially) -->
     <div id="receive-result" class="hidden space-y-4">
         <div class="rounded-lg bg-gray-800 border border-gray-700 p-6 space-y-4">
-            <h2 class="text-lg font-semibold text-brand-400">✅ {% trans "Request created!" %}</h2>
+            <h2 class="text-lg font-semibold text-brand-400">{% icon "check-circle" %} {% trans "Request created!" %}</h2>
             <p class="text-sm text-gray-400">{% trans "Share the <strong>submit link</strong> with the person who should send you a whisper. Use the <strong>view link</strong> to retrieve it once they've submitted." %}</p>
 
             <div class="space-y-3">
                 <div>
-                    <label class="block text-xs font-medium text-gray-400 mb-1">📤 {% trans "Submit link — share this with the sender" %}</label>
+                    <label class="block text-xs font-medium text-gray-400 mb-1">{% icon "paper-airplane" %} {% trans "Submit link — share this with the sender" %}</label>
                     <div class="flex gap-2">
                         <input id="submit-url" type="text" readonly
                             class="flex-1 rounded-lg bg-gray-900 border border-gray-600 text-gray-100 px-3 py-2 font-mono text-sm focus:outline-none">
@@ -309,7 +307,7 @@
                     </div>
                 </div>
                 <div>
-                    <label class="block text-xs font-medium text-gray-400 mb-1">👁️ {% trans "View link — for you to retrieve the whisper" %}</label>
+                    <label class="block text-xs font-medium text-gray-400 mb-1">{% icon "eye" %} {% trans "View link — for you to retrieve the whisper" %}</label>
                     <div class="flex gap-2">
                         <input id="view-url" type="text" readonly
                             class="flex-1 rounded-lg bg-gray-900 border border-gray-600 text-gray-100 px-3 py-2 font-mono text-sm focus:outline-none">
@@ -322,10 +320,10 @@
             </div>
 
             <div id="receive-password-notice" class="hidden text-sm text-brand-300">
-                🔑 {% trans "This request is password-protected. You will need the password to open the view link. Do not share it with the sender." %}
+                {% icon "key" %} {% trans "This request is password-protected. You will need the password to open the view link. Do not share it with the sender." %}
             </div>
             <div id="receive-burn-warning" class="hidden text-sm text-amber-400">
-                ⚠️ <span id="receive-burn-warning-text">{% trans "The whisper will be destroyed after you view it once." %}</span>
+                {% icon "exclamation-triangle" %} <span id="receive-burn-warning-text">{% trans "The whisper will be destroyed after you view it once." %}</span>
             </div>
         </div>
         <button onclick="location.reload()"
@@ -344,21 +342,21 @@
     <div class="p-5 space-y-4">
         <div class="flex items-start justify-between gap-4">
             <div>
-                <h2 id="secret-generator-title" class="text-lg font-semibold text-white">🎲 {% trans "Secret generator" %}</h2>
+                <h2 id="secret-generator-title" class="text-lg font-semibold text-white">{% icon "sparkles" %} {% trans "Secret generator" %}</h2>
                 <p class="mt-1 text-xs text-gray-500">{% trans "Generated in your browser with a cryptographically secure random number generator. Nothing is sent to the server until you encrypt your whisper." %}</p>
             </div>
             <button type="button" data-sg-cancel aria-label="{% trans "Close" %}" title="{% trans "Close" %}"
-                class="shrink-0 rounded-lg px-2 py-1 text-gray-400 hover:text-white hover:bg-gray-800 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500">✕</button>
+                class="shrink-0 rounded-lg px-2 py-1 text-gray-400 hover:text-white hover:bg-gray-800 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500">{% icon "x-mark" %}</button>
         </div>
 
         <div role="tablist" aria-label="{% trans "Secret type" %}" class="flex gap-2">
             <button type="button" role="tab" id="sg-tab-password" data-sg-tab="password" aria-controls="sg-panel-password"
                 class="px-4 py-1.5 rounded-lg text-sm font-medium bg-brand-600 text-white transition">
-                🔣 {% trans "Password" %}
+                {% icon "hashtag" %} {% trans "Password" %}
             </button>
             <button type="button" role="tab" id="sg-tab-passphrase" data-sg-tab="passphrase" aria-controls="sg-panel-passphrase"
                 class="px-4 py-1.5 rounded-lg text-sm font-medium bg-gray-800 text-gray-400 hover:text-white transition">
-                📖 {% trans "Passphrase" %}
+                {% icon "book-open" %} {% trans "Passphrase" %}
             </button>
         </div>
 
@@ -367,7 +365,7 @@
                 <output id="sg-preview" data-sg-preview aria-live="polite" aria-label="{% trans "Preview" %}"
                     class="flex-1 min-h-6 font-mono text-sm text-gray-100 break-all"></output>
                 <button type="button" data-sg-regenerate aria-label="{% trans "Regenerate" %}" title="{% trans "Regenerate" %}"
-                    class="shrink-0 rounded-lg px-2 py-1 bg-gray-800 hover:bg-gray-700 text-sm transition focus:outline-none focus:ring-2 focus:ring-brand-500">🔄</button>
+                    class="shrink-0 rounded-lg px-2 py-1 bg-gray-800 hover:bg-gray-700 text-sm transition focus:outline-none focus:ring-2 focus:ring-brand-500">{% icon "arrow-path" %}</button>
             </div>
             <p id="sg-entropy" data-sg-entropy class="mt-2 text-xs"></p>
             <p id="sg-error" data-sg-error role="alert" class="hidden mt-2 text-xs text-red-400"></p>
@@ -498,6 +496,7 @@
 </dialog>
 
 {% csrf_token %}
+<template id="file-icon">{% icon "document" class="text-gray-400" %}</template>
 {% load static %}
 {% settings_value "DATA_UPLOAD_MAX_MEMORY_SIZE" as max_upload_size %}
 <script>window.PSST_MAX_UPLOAD_SIZE = {{ max_upload_size }};</script>
@@ -511,6 +510,10 @@
 <script src="{% static 'js/password-strength.min.js' %}"></script>
 <script src="{% static 'js/wordlist-en.min.js' %}"></script>
 <script src="{% static 'js/secret-generator.min.js' %}"></script>
+{% if rich_text %}
+<script src="{% static 'js/tiptap.min.js' %}"></script>
+<script src="{% static 'js/rich-text.min.js' %}"></script>
+{% endif %}
 <script src="{% static 'js/pqc.min.js' %}"></script>
 <script src="{% static 'js/crypto.min.js' %}"></script>
 <script>
