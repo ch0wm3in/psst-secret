@@ -66,6 +66,9 @@ jobs:
 
       - name: Run migrations
         run: uv run --env-file .env.docker python manage.py migrate --noinput
+      
+      - name: Compile translations
+        run: uv run --env-file .env.docker python manage.py compilemessages
 
       - name: Run unit tests
         run: uv run --env-file .env.docker pytest --ignore=whispers/tests/browser -n 4
