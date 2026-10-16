@@ -126,7 +126,7 @@ jobs:
 
       - name: Run migrations
         run: uv run --env-file .env.docker python manage.py migrate --noinput
-      
+
       - name: Compile translations
         run: |
           sudo apt-get update && sudo apt-get install -y --no-install-recommends gettext
