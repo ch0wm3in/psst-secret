@@ -11,11 +11,13 @@ RUN npm run build
 FROM python:3.14-slim-trixie
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    gettext
 
+# Environment variables for UV configuration
 ENV UV_NO_DEV=1
 ENV UV_LOCKED=1
+ENV UV_COMPILE_BYTECODE=1
+ENV UV_NO_CACHE=1
+
 ENV GRANIAN_HOST=0.0.0.0
 WORKDIR /app
 COPY pyproject.toml uv.lock ./
