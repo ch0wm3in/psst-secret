@@ -1,5 +1,5 @@
 {% extends "base/layout.html" %}
-{% load i18n %}
+{% load i18n whispers_extras %}
 
 {% block title %}{{ brand_name }} — {% trans "About" %}{% endblock %}
 
@@ -25,11 +25,11 @@
         <div class="rounded-lg bg-gray-800 border border-gray-700 p-5 space-y-4 text-sm text-gray-300 leading-relaxed">
             <p>{% blocktrans %}{{ brand_name }} ensures that <strong class="text-white">your whispers never exist in plaintext on our server</strong>. All encryption and decryption happens entirely in your browser using the <a href="https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API" class="text-brand-400 underline hover:text-brand-300" target="_blank" rel="noopener noreferrer">Web Crypto API</a>.{% endblocktrans %}</p>
 
-            <h3 class="text-base font-semibold text-white pt-2">📤 {% trans "Send Mode" %}</h3>
+            <h3 class="text-base font-semibold text-white pt-2">{% icon "paper-airplane" %} {% trans "Send Mode" %}</h3>
             <p>{% trans "Share a whisper with someone. The key travels only inside the link you share." %}</p>
             <div class="grid gap-4 sm:grid-cols-2">
                 <div class="rounded-lg bg-gray-900 p-4 space-y-2">
-                    <h3 class="font-semibold text-white">🔒 {% trans "Creating a Whisper" %}</h3>
+                    <h3 class="font-semibold text-white">{% icon "lock-closed" %} {% trans "Creating a Whisper" %}</h3>
                     <ol class="list-decimal list-inside space-y-1 text-gray-400">
                         <li>{% trans "You type your whisper in the browser" %}</li>
                         <li>{% trans 'A random <strong class="text-gray-200">AES-256-GCM</strong> key is generated client-side' %}</li>
@@ -39,7 +39,7 @@
                     </ol>
                 </div>
                 <div class="rounded-lg bg-gray-900 p-4 space-y-2">
-                    <h3 class="font-semibold text-white">🔓 {% trans "Viewing a Whisper" %}</h3>
+                    <h3 class="font-semibold text-white">{% icon "lock-open" %} {% trans "Viewing a Whisper" %}</h3>
                     <ol class="list-decimal list-inside space-y-1 text-gray-400">
                         <li>{% trans "You open the shared link" %}</li>
                         <li>{% trans "The server returns the ciphertext" %}</li>
@@ -48,13 +48,13 @@
                     </ol>
                 </div>
             </div>
-            <p class="text-gray-400">⚛️ {% trans "Send mode uses only symmetric encryption (<strong class='text-gray-200'>AES-256-GCM</strong>), which is not broken by quantum computers. The known quantum attack on symmetric ciphers (Grover's algorithm) at most halves the effective key strength, leaving 128 bits — still far beyond reach. Shor's algorithm, the real quantum threat, only affects public-key cryptography, which send mode does not use." %}</p>
+            <p class="text-gray-400">{% icon "cube-transparent" %} {% trans "Send mode uses only symmetric encryption (<strong class='text-gray-200'>AES-256-GCM</strong>), which is not broken by quantum computers. The known quantum attack on symmetric ciphers (Grover's algorithm) at most halves the effective key strength, leaving 128 bits — still far beyond reach. Shor's algorithm, the real quantum threat, only affects public-key cryptography, which send mode does not use." %}</p>
 
-            <h3 class="text-base font-semibold text-white pt-4 border-t border-gray-700">📥 {% trans "Receive Mode" %}</h3>
+            <h3 class="text-base font-semibold text-white pt-4 border-t border-gray-700">{% icon "inbox-arrow-down" %} {% trans "Receive Mode" %}</h3>
             <p>{% trans 'Ask someone to send a whisper <em>to you</em>. Receive mode uses public-key encryption, so the person submitting can encrypt but never decrypt.' %}</p>
             <div class="grid gap-4 sm:grid-cols-2">
                 <div class="rounded-lg bg-gray-900 p-4 space-y-2">
-                    <h3 class="font-semibold text-white">🔑 {% trans "Creating a Request" %}</h3>
+                    <h3 class="font-semibold text-white">{% icon "key" %} {% trans "Creating a Request" %}</h3>
                     <ol class="list-decimal list-inside space-y-1 text-gray-400">
                         <li>{% trans 'Your browser generates a key pair using <strong class="text-gray-200">X-Wing</strong>, a hybrid of <strong class="text-gray-200">ML-KEM-768</strong> (post-quantum, FIPS 203) and <strong class="text-gray-200">X25519</strong>' %}</li>
                         <li>{% trans "The public key is stored on the server. The submit link contains only its fingerprint, so the server cannot swap in a key of its own" %}</li>
@@ -63,7 +63,7 @@
                     </ol>
                 </div>
                 <div class="rounded-lg bg-gray-900 p-4 space-y-2">
-                    <h3 class="font-semibold text-white">🔓 {% trans "Submitting & Viewing" %}</h3>
+                    <h3 class="font-semibold text-white">{% icon "lock-open" %} {% trans "Submitting & Viewing" %}</h3>
                     <ol class="list-decimal list-inside space-y-1 text-gray-400">
                         <li>{% trans "The sender opens the submit link and types their whisper" %}</li>
                         <li>{% trans "The sender's browser encrypts to your public key and uploads only the ciphertext" %}</li>
@@ -73,7 +73,7 @@
                 </div>
             </div>
             <p class="text-gray-400">{% trans "The submit link and view link use different identifiers. Someone who gets hold of the submit link cannot find, read, or burn the submitted whisper." %}</p>
-            <p class="text-gray-400">⚛️ {% trans "Because the key exchange is hybrid, the whisper stays protected as long as either algorithm holds — including against attackers who record traffic today and hope to decrypt it with a quantum computer later." %}</p>
+            <p class="text-gray-400">{% icon "cube-transparent" %} {% trans "Because the key exchange is hybrid, the whisper stays protected as long as either algorithm holds — including against attackers who record traffic today and hope to decrypt it with a quantum computer later." %}</p>
         </div>
     </section>
 
@@ -92,7 +92,7 @@
 
     <!-- Password Protection -->
     <section class="space-y-3">
-        <h2 class="text-xl font-semibold text-brand-400">🔑 {% trans "Password Protection" %}</h2>
+        <h2 class="text-xl font-semibold text-brand-400">{% icon "key" %} {% trans "Password Protection" %}</h2>
         <div class="rounded-lg bg-gray-800 border border-gray-700 p-5 text-sm text-gray-300 leading-relaxed space-y-2">
             <p>{% trans "Optionally, you can set a password when creating a whisper. When a password is used:" %}</p>
             <ul class="list-disc list-inside space-y-1 text-gray-400 ml-2">
@@ -112,7 +112,7 @@
         <dl class="rounded-lg bg-gray-800 border border-gray-700 divide-y divide-gray-700">
             {% for feature in deployment_features %}
             <div class="p-4 sm:grid sm:grid-cols-3 sm:gap-4" data-deployment-feature="{{ feature.key }}" data-state="{{ feature.state }}">
-                <dt class="font-semibold text-white text-sm"><span aria-hidden="true">{{ feature.icon }}</span> {{ feature.title }}</dt>
+                <dt class="font-semibold text-white text-sm">{% icon feature.icon %} {{ feature.title }}</dt>
                 <dd class="mt-2 sm:mt-0 sm:col-span-2 space-y-1 text-sm text-gray-400">
                     <span data-feature-status class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold border {% if feature.state == 'on' %}bg-brand-900/60 border-brand-700 text-brand-300{% elif feature.state == 'off' %}bg-gray-900 border-gray-700 text-gray-400{% else %}bg-gray-900 border-gray-600 text-gray-200{% endif %}">{{ feature.status }}</span>
                     <p>{{ feature.description }}</p>
@@ -128,7 +128,7 @@
         <h2 class="text-xl font-semibold text-brand-400">{% trans "Security Features" %}</h2>
         <div class="grid gap-3 sm:grid-cols-2">
             <div class="rounded-lg bg-gray-800 border border-gray-700 p-4">
-                <h3 class="font-semibold text-white mb-1">🔥 {% trans "Burn After Reading" %}</h3>
+                <h3 class="font-semibold text-white mb-1">{% icon "fire" %} {% trans "Burn After Reading" %}</h3>
                 {% if persistence_enabled %}
                 <p class="text-sm text-gray-400">{% trans 'Whispers marked as burn-after-read are <strong class="text-gray-300">permanently deleted</strong> the moment they are viewed — not just flagged, but gone.' %}</p>
                 {% else %}
@@ -136,23 +136,23 @@
                 {% endif %}
             </div>
             <div class="rounded-lg bg-gray-800 border border-gray-700 p-4">
-                <h3 class="font-semibold text-white mb-1">⏰ {% trans "Auto-Expiry" %}</h3>
+                <h3 class="font-semibold text-white mb-1">{% icon "clock" %} {% trans "Auto-Expiry" %}</h3>
                 <p class="text-sm text-gray-400">{% trans "All whispers require an expiration time (5 minutes to 1 month). Expired whispers are automatically evicted from Redis via TTL and continuously purged by a background process." %}</p>
             </div>
             <div class="rounded-lg bg-gray-800 border border-gray-700 p-4">
-                <h3 class="font-semibold text-white mb-1">🛡️ AES-256-GCM</h3>
+                <h3 class="font-semibold text-white mb-1">{% icon "shield-check" %} AES-256-GCM</h3>
                 <p class="text-sm text-gray-400">{% trans "Industry-standard authenticated encryption. Provides both confidentiality and integrity — any tampering with the ciphertext is detected." %}</p>
             </div>
             <div class="rounded-lg bg-gray-800 border border-gray-700 p-4">
-                <h3 class="font-semibold text-white mb-1">⚛️ {% trans "Post-Quantum Ready" %}</h3>
+                <h3 class="font-semibold text-white mb-1">{% icon "cube-transparent" %} {% trans "Post-Quantum Ready" %}</h3>
                 <p class="text-sm text-gray-400">{% trans "Send mode uses 256-bit symmetric keys, which remain secure against quantum computers. Receive mode uses the hybrid ML-KEM-768 + X25519 key exchange." %}</p>
             </div>
             <div class="rounded-lg bg-gray-800 border border-gray-700 p-4 sm:col-span-2">
-                <h3 class="font-semibold text-white mb-1">🎲 {% trans "Secret Generator" %}</h3>
+                <h3 class="font-semibold text-white mb-1">{% icon "sparkles" %} {% trans "Secret Generator" %}</h3>
                 <p class="text-sm text-gray-400">{% trans "Need a fresh password to share? Generate a random password or an English passphrase directly in your browser, using its cryptographically secure random number generator. You choose the length, character types, words, and symbols — nothing is sent to the server until you encrypt the whisper." %}</p>
             </div>
             <div class="rounded-lg bg-gray-800 border border-gray-700 p-4 sm:col-span-2">
-                <h3 class="font-semibold text-white mb-1">🚫 {% trans "Zero Knowledge" %}</h3>
+                <h3 class="font-semibold text-white mb-1">{% icon "no-symbol" %} {% trans "Zero Knowledge" %}</h3>
                 {% if persistence_enabled %}
                 <p class="text-sm text-gray-400">{% trans "The server stores only encrypted data and public key material in Redis. It has no ability to decrypt your data, even under compulsion." %}</p>
                 {% else %}
@@ -168,9 +168,9 @@
         <div class="rounded-lg bg-gray-800 border border-gray-700 p-5 space-y-4">
             <div>
                 {% if persistence_enabled %}
-                <h3 class="text-sm font-semibold text-white mb-2">💾 {% trans "Redis (with persistence enabled)" %}</h3>
+                <h3 class="text-sm font-semibold text-white mb-2">{% icon "circle-stack" %} {% trans "Redis (with persistence enabled)" %}</h3>
                 {% else %}
-                <h3 class="text-sm font-semibold text-white mb-2">💾 {% trans "Redis (in-memory only — never touches disk)" %}</h3>
+                <h3 class="text-sm font-semibold text-white mb-2">{% icon "circle-stack" %} {% trans "Redis (in-memory only — never touches disk)" %}</h3>
                 {% endif %}
                 <table class="w-full text-sm">
                     <thead>
@@ -191,7 +191,7 @@
                 </table>
             </div>
             <div>
-                <h3 class="text-sm font-semibold text-white mb-2">🗄️ {% trans "PostgreSQL (metadata only)" %}</h3>
+                <h3 class="text-sm font-semibold text-white mb-2">{% icon "server-stack" %} {% trans "PostgreSQL (metadata only)" %}</h3>
                 <table class="w-full text-sm">
                     <thead>
                         <tr class="text-left text-gray-400 border-b border-gray-700">
@@ -215,9 +215,9 @@
                 </table>
             </div>
             {% if persistence_enabled %}
-            <p class="text-xs text-gray-500">❌ {% trans "The server does <strong>not</strong> store: plaintext, encryption keys, private keys, or passwords. An email address is only stored if you opt in to notifications. Encrypted data is stored in Redis with persistence enabled." %}</p>
+            <p class="text-xs text-gray-500">{% icon "x-circle" %} {% trans "The server does <strong>not</strong> store: plaintext, encryption keys, private keys, or passwords. An email address is only stored if you opt in to notifications. Encrypted data is stored in Redis with persistence enabled." %}</p>
             {% else %}
-            <p class="text-xs text-gray-500">❌ {% trans "The server does <strong>not</strong> store: plaintext, encryption keys, private keys, or passwords. An email address is only stored if you opt in to notifications. Encrypted data lives only in volatile memory and is lost if Redis restarts." %}</p>
+            <p class="text-xs text-gray-500">{% icon "x-circle" %} {% trans "The server does <strong>not</strong> store: plaintext, encryption keys, private keys, or passwords. An email address is only stored if you opt in to notifications. Encrypted data lives only in volatile memory and is lost if Redis restarts." %}</p>
             {% endif %}
         </div>
     </section>

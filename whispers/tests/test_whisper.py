@@ -1389,6 +1389,49 @@ class PageRenderTests(TestCase):
         resp = self.client.get("/")
         self.assertEqual(resp["Referrer-Policy"], "same-origin")
 
+    @override_settings(PSST_ENABLE_RICH_TEXT=False)
+    def test_rich_text_editor_disabled(self):
+        resp = self.client.get("/")
+        self.assertNotContains(resp, "data-rich-editor")
+        self.assertNotContains(resp, "tiptap.min.js")
+        self.assertContains(resp, 'id="whisper"')
+
+    @override_settings(PSST_ENABLE_RICH_TEXT=True)
+    def test_rich_text_editor_enabled(self):
+        resp = self.client.get("/")
+        self.assertContains(resp, 'data-rich-editor="whisper"')
+        self.assertContains(resp, 'src="/static/js/tiptap.min.js"')
+        self.assertContains(resp, 'src="/static/js/rich-text.min.js"')
+        self.assertContains(resp, 'id="whisper"')
+        self.assertContains(resp, 'aria-label="Heading 1"')
+
+    def test_create_page_uses_heroicons_sprite(self):
+        resp = self.client.get("/")
+        self.assertContains(
+            resp,
+            '<use href="/static/icons/heroicons.svg#outline-adjustments-horizontal">',
+        )
+
+    def test_icon_tag_styles_and_escaping(self):
+        from django.template import Context, Template
+
+        html = Template(
+            '{% load whispers_extras %}{% icon "mini/x-mark" class=css %}'
+        ).render(Context({"css": 'a"b'}))
+        self.assertIn('href="/static/icons/heroicons.svg#mini-x-mark"', html)
+        self.assertIn('class="icon a&quot;b"', html)
+        self.assertIn('aria-hidden="true"', html)
+
+    def test_pages_use_heroicons_instead_of_emoji(self):
+        emoji = re.compile(
+            "[\U0001f300-\U0001faff\u2600-\u27bf\u2b00-\u2bff\u23e9-\u23fa\ufe0f]"
+        )
+        for url in ("/", "/about", "/does-not-exist"):
+            content = self.client.get(url).content.decode()
+            self.assertIsNone(emoji.search(content), url)
+        about = self.client.get("/about")
+        self.assertContains(about, "#outline-lock-closed")
+
 
 _LOGIN_MIDDLEWARE_STACK = [
     *_BASE_MIDDLEWARE,
@@ -1417,6 +1460,7 @@ _DEFAULT_EXEMPT_URLS = [
     PSST_FORCE_RECEIVE_ACCESS=False,
     PSST_ENABLE_EMAIL=False,
     PSST_ENABLE_STATS=False,
+    PSST_ENABLE_RICH_TEXT=False,
     ABOUT_PAGE_PERSISTENCE_ENABLED=False,
     ENABLE_LOCAL_LOGIN=False,
     SOCIAL_AUTH_PROVIDERS=[],
@@ -1441,7 +1485,7 @@ class DeploymentFeaturesTests(TestCase):
         features = self._features()
         self.assertEqual(
             list(features),
-            ["sign_in", "email", "stats", "upload_limit", "storage"],
+            ["sign_in", "email", "stats", "rich_text", "upload_limit", "storage"],
         )
         self.assertEqual(self._status("sign_in"), ("Not used", "off"))
 
@@ -1542,18 +1586,21 @@ class DeploymentFeaturesTests(TestCase):
     @override_settings(
         PSST_ENABLE_EMAIL=True,
         PSST_ENABLE_STATS=True,
+        PSST_ENABLE_RICH_TEXT=True,
         ABOUT_PAGE_PERSISTENCE_ENABLED=True,
         DATA_UPLOAD_MAX_MEMORY_SIZE=5 * 1024**2,
     )
     def test_optional_features_enabled(self):
         self.assertEqual(self._status("email"), ("Available", "on"))
         self.assertEqual(self._status("stats"), ("On", "on"))
+        self.assertEqual(self._status("rich_text"), ("On", "on"))
         self.assertEqual(self._status("storage"), ("Saved to disk", "neutral"))
         self.assertEqual(self._status("upload_limit"), ("5.0 MB", "neutral"))
 
     def test_optional_features_disabled(self):
         self.assertEqual(self._status("email"), ("Off", "off"))
         self.assertEqual(self._status("stats"), ("Off", "off"))
+        self.assertEqual(self._status("rich_text"), ("Off", "off"))
         self.assertEqual(self._status("storage"), ("Memory only", "neutral"))
 
     @override_settings(MIDDLEWARE=_BASE_MIDDLEWARE, PSST_FORCE_AUTH_VIEW=True)
@@ -1577,11 +1624,20 @@ class BrandingTests(TestCase):
     def test_default_branding(self):
         resp = self.client.get("/")
         self.assertContains(resp, "<title>psst-secret — New Whisper</title>", html=True)
-        self.assertContains(resp, 'href="/static/favicon.svg"')
-        self.assertContains(resp, "🤫")
+        self.assertContains(resp, 'href="data:image/svg+xml,%3Csvg')
+        self.assertContains(resp, "fill%3D%22%232dd4bf%22")
+        self.assertContains(resp, "#outline-lock-closed")
         self.assertNotContains(resp, "data-brand-logo")
         self.assertContains(resp, "https://github.com/ch0wm3in/psst-secret")
         self.assertContains(resp, "data-footer-text")
+
+    def test_default_favicon_follows_brand_color(self):
+        with override_settings(BRAND_COLORS={"400": "#ff0000"}):
+            self.assertContains(self.client.get("/"), "fill%3D%22%23ff0000%22")
+        with override_settings(BRAND_COLORS={"400": 'red"><script>'}):
+            resp = self.client.get("/")
+            self.assertContains(resp, "fill%3D%22%232dd4bf%22")
+            self.assertNotContains(resp, "script%3E")
 
     @override_settings(
         PSST_BRAND_NAME="Acme <Vault>",

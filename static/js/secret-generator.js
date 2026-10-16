@@ -308,6 +308,10 @@
      * and leave the inserted secret selected, so generating again replaces it.
      */
     function insertIntoTarget(target, value) {
+        if (typeof target.insertSecret === 'function') {
+            target.insertSecret(value);
+            return;
+        }
         if (typeof target.setRangeText === 'function' && target.selectionStart != null) {
             var start = target.selectionStart;
             var end = target.selectionEnd;

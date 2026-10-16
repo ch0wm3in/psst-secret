@@ -1,0 +1,64 @@
+{% load i18n whispers_extras %}
+{% comment %}Markdown editor for the #whisper textarea; rich-text.js reveals it and moves the textarea inside for plain-text mode.{% endcomment %}
+<div data-rich-editor="whisper"
+    class="hidden rounded-lg bg-gray-800 border border-gray-700 focus-within:ring-2 focus-within:ring-brand-500 focus-within:border-transparent">
+    <div role="toolbar" aria-label="{% trans "Formatting" %}"
+        class="psst-toolbar flex items-center gap-2 border-b border-gray-700 px-2 py-1.5">
+        <div data-rich-editor-formatting class="flex flex-wrap items-center gap-0.5">
+        <button type="button" data-command="bold" aria-pressed="false" aria-label="{% trans "Bold" %}" title="{% trans "Bold" %}">{% icon "bold" class="size-4" %}</button>
+        <button type="button" data-command="italic" aria-pressed="false" aria-label="{% trans "Italic" %}" title="{% trans "Italic" %}">{% icon "italic" class="size-4" %}</button>
+        <button type="button" data-command="strike" aria-pressed="false" aria-label="{% trans "Strikethrough" %}" title="{% trans "Strikethrough" %}">{% icon "strikethrough" class="size-4" %}</button>
+        <button type="button" data-command="code" aria-pressed="false" aria-label="{% trans "Inline code" %}" title="{% trans "Inline code" %}">{% icon "code-bracket" class="size-4" %}</button>
+        <button type="button" data-command="link" aria-pressed="false" aria-label="{% trans "Link" %}" title="{% trans "Link" %}">{% icon "link" class="size-4" %}</button>
+        <button type="button" data-command="unlink" disabled aria-label="{% trans "Remove link" %}" title="{% trans "Remove link" %}">{% icon "link-slash" class="size-4" %}</button>
+        <span class="mx-1 h-5 w-px bg-gray-700" aria-hidden="true"></span>
+        <button type="button" data-command="paragraph" aria-pressed="false" aria-label="{% trans "Paragraph" %}" title="{% trans "Paragraph" %}">{% icon "bars-3-bottom-left" class="size-4" %}</button>
+        <button type="button" data-command="h1" aria-pressed="false" aria-label="{% trans "Heading 1" %}" title="{% trans "Heading 1" %}">{% icon "h1" class="size-4" %}</button>
+        <button type="button" data-command="h2" aria-pressed="false" aria-label="{% trans "Heading 2" %}" title="{% trans "Heading 2" %}">{% icon "h2" class="size-4" %}</button>
+        <button type="button" data-command="h3" aria-pressed="false" aria-label="{% trans "Heading 3" %}" title="{% trans "Heading 3" %}">{% icon "h3" class="size-4" %}</button>
+        <span class="mx-1 h-5 w-px bg-gray-700" aria-hidden="true"></span>
+        <button type="button" data-command="bulletList" aria-pressed="false" aria-label="{% trans "Bulleted list" %}" title="{% trans "Bulleted list" %}">{% icon "list-bullet" class="size-4" %}</button>
+        <button type="button" data-command="orderedList" aria-pressed="false" aria-label="{% trans "Numbered list" %}" title="{% trans "Numbered list" %}">{% icon "numbered-list" class="size-4" %}</button>
+        <button type="button" data-command="blockquote" aria-pressed="false" aria-label="{% trans "Quote" %}" title="{% trans "Quote" %}">{% icon "chat-bubble-bottom-center-text" class="size-4" %}</button>
+        <button type="button" data-command="codeBlock" aria-pressed="false" aria-label="{% trans "Code block" %}" title="{% trans "Code block" %}">{% icon "code-bracket-square" class="size-4" %}</button>
+        </div>
+        <button type="button" data-editor-mode-toggle aria-pressed="false" title="{% trans "Write raw text without formatting" %}"
+            class="ml-auto inline-flex shrink-0 items-center gap-1 text-xs font-medium">{% icon "document-text" class="size-4" %}<span>{% trans "Plain text" %}</span></button>
+    </div>
+    <div data-rich-editor-content></div>
+    <p data-rich-editor-count class="px-3 pb-2 text-right font-mono text-xs text-gray-500"></p>
+</div>
+<dialog data-link-dialog="whisper" aria-labelledby="link-dialog-title"
+    class="fixed inset-0 m-auto h-fit w-[calc(100%-2rem)] max-w-md rounded-xl bg-gray-900 border border-gray-700 text-gray-100 p-0 shadow-2xl backdrop:bg-black/70">
+    <form method="dialog" class="p-5 space-y-4" novalidate>
+        <div class="flex items-start justify-between gap-4">
+            <h2 id="link-dialog-title" class="text-lg font-semibold text-white">{% icon "link" %} {% trans "Insert link" %}</h2>
+            <button type="button" data-link-cancel aria-label="{% trans "Close" %}" title="{% trans "Close" %}"
+                class="shrink-0 rounded-lg px-2 py-1 text-gray-400 hover:text-white hover:bg-gray-800 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500">{% icon "x-mark" %}</button>
+        </div>
+        <div>
+            <label for="link-dialog-url" class="block text-sm font-medium text-gray-300 mb-1">{% trans "URL" %}</label>
+            <input type="text" id="link-dialog-url" data-link-url inputmode="url" autocomplete="off" spellcheck="false"
+                aria-describedby="link-dialog-error" placeholder="https://example.com"
+                class="w-full rounded-lg bg-gray-800 border border-gray-700 text-gray-100 px-3 py-2 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500">
+            <p id="link-dialog-error" data-link-error role="alert" hidden class="mt-2 text-xs text-red-400">{% trans "Only http, https, and mailto links are allowed." %}</p>
+        </div>
+        <div data-link-text-row>
+            <label for="link-dialog-text" class="block text-sm font-medium text-gray-300 mb-1">
+                {% trans "Link text" %} <span class="text-gray-500">({% trans "optional" %})</span>
+            </label>
+            <input type="text" id="link-dialog-text" data-link-text autocomplete="off"
+                class="w-full rounded-lg bg-gray-800 border border-gray-700 text-gray-100 px-3 py-2 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500">
+        </div>
+        <div class="flex flex-wrap items-center justify-between gap-2">
+            <button type="button" data-link-remove hidden
+                class="text-sm text-red-400 hover:text-red-300 underline transition">{% trans "Remove link" %}</button>
+            <div class="ml-auto flex gap-2">
+                <button type="button" data-link-cancel
+                    class="px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-white text-sm font-medium transition">{% trans "Cancel" %}</button>
+                <button type="submit"
+                    class="px-4 py-2 rounded-lg bg-brand-600 hover:bg-brand-500 text-white text-sm font-semibold transition">{% trans "Save link" %}</button>
+            </div>
+        </div>
+    </form>
+</dialog>

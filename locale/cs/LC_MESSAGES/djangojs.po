@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psst-secret\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-15 13:25+0000\n"
+"POT-Creation-Date: 2026-10-16 21:19+0000\n"
 "PO-Revision-Date: 2026-10-09 07:02+0000\n"
 "Last-Translator: \n"
 "Language-Team: Czech\n"
@@ -13,102 +13,101 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n == 1) ? 0 : (n >= 2 && n <= 4) ? 1 : 2;\n"
 
-#: static/js/crypto.js:108
+#: static/js/crypto.js:110
 msgid "Remove"
 msgstr "Odstranit"
 
-#: static/js/crypto.js:117
+#: static/js/crypto.js:119
 #, javascript-format
 msgid "Total: %s / %s"
 msgstr "Celkem: %s / %s"
 
-#: static/js/crypto.js:122
+#: static/js/crypto.js:124
 #, javascript-format
 msgid "Skipped (would exceed %s total): %s"
 msgstr "Vynecháno (překročilo by celkový limit %s): %s"
 
-#: static/js/crypto.js:304
+#: static/js/crypto.js:306
 msgid "Post-quantum crypto module failed to load."
 msgstr "Nepodařilo se načíst modul postkvantové kryptografie."
 
-#: static/js/crypto.js:345
+#: static/js/crypto.js:347
 msgid ""
 "The request key does not match the link. The link may be incomplete or "
 "tampered with."
-msgstr ""
-"Klíč žádosti neodpovídá odkazu. Odkaz může být neúplný nebo pozměněný."
+msgstr "Klíč žádosti neodpovídá odkazu. Odkaz může být neúplný nebo pozměněný."
 
-#: static/js/crypto.js:427 static/js/crypto.js:674
+#: static/js/crypto.js:429 static/js/crypto.js:677
 msgid "Please enter some content or select a file to encrypt."
 msgstr "Zadejte obsah nebo vyberte soubor k zašifrování."
 
-#: static/js/crypto.js:433 static/js/crypto.js:680
+#: static/js/crypto.js:435 static/js/crypto.js:683
 #, javascript-format
 msgid "Selected files exceed the maximum total size of %s."
 msgstr "Vybrané soubory překračují maximální celkovou velikost %s."
 
-#: static/js/crypto.js:439 static/js/crypto.js:686
+#: static/js/crypto.js:441 static/js/crypto.js:689
 msgid "Encrypting…"
 msgstr "Šifrování…"
 
-#: static/js/crypto.js:452 static/js/crypto.js:573
+#: static/js/crypto.js:454 static/js/crypto.js:576
 msgid ""
 "Passphrase does not meet the strength requirements shown below the field."
 msgstr "Heslo nesplňuje požadavky na sílu uvedené pod polem."
 
-#: static/js/crypto.js:495 static/js/crypto.js:618 static/js/crypto.js:718
+#: static/js/crypto.js:498 static/js/crypto.js:621 static/js/crypto.js:722
 #, javascript-format
 msgid "Server error (%s)"
 msgstr "Chyba serveru (%s)"
 
-#: static/js/crypto.js:516
+#: static/js/crypto.js:519
 msgid "This whisper will be destroyed after being viewed once."
 msgstr "Tento whisper bude po jednom zobrazení smazán."
 
-#: static/js/crypto.js:518
+#: static/js/crypto.js:521
 #, javascript-format
 msgid "This whisper will be destroyed after %s views."
 msgstr "Tento whisper bude smazán po dosažení tohoto počtu zobrazení: %s."
 
-#: static/js/crypto.js:526 static/js/crypto.js:649 static/js/crypto.js:726
+#: static/js/crypto.js:529 static/js/crypto.js:652 static/js/crypto.js:730
 #, javascript-format
 msgid "Error: %s"
 msgstr "Chyba: %s"
 
-#: static/js/crypto.js:530
+#: static/js/crypto.js:533
 msgid "Encrypt & Share"
 msgstr "Zašifrovat a sdílet"
 
-#: static/js/crypto.js:541
+#: static/js/crypto.js:544
 msgid "Copied!"
 msgstr "Zkopírováno!"
 
-#: static/js/crypto.js:542
+#: static/js/crypto.js:545
 msgid "Copy"
 msgstr "Kopírovat"
 
-#: static/js/crypto.js:560
+#: static/js/crypto.js:563
 msgid "Creating…"
 msgstr "Vytváření…"
 
-#: static/js/crypto.js:639
+#: static/js/crypto.js:642
 msgid "The whisper will be destroyed after you view it once."
 msgstr "Whisper bude smazán, jakmile jej jednou zobrazíte."
 
-#: static/js/crypto.js:641
+#: static/js/crypto.js:644
 #, javascript-format
 msgid "The whisper will be destroyed after %s views."
 msgstr "Whisper bude smazán po dosažení tohoto počtu zobrazení: %s."
 
-#: static/js/crypto.js:653
+#: static/js/crypto.js:656
 msgid "Create Request"
 msgstr "Vytvořit žádost"
 
-#: static/js/crypto.js:690
+#: static/js/crypto.js:693
 msgid "No encryption key found in URL. The link may be incomplete."
 msgstr "V URL nebyl nalezen šifrovací klíč. Odkaz může být neúplný."
 
-#: static/js/crypto.js:730
+#: static/js/crypto.js:734
 msgid "Encrypt & Submit"
 msgstr "Zašifrovat a odeslat"
 
@@ -124,6 +123,18 @@ msgstr "Přístup se nepodařilo aktualizovat."
 #: static/js/receive-access.js:58
 msgid "Access updated."
 msgstr "Přístup byl aktualizován."
+
+#: static/js/rich-text.js:155
+msgid "Whisper content"
+msgstr "Obsah whisperu"
+
+#: static/js/rich-text.js:166
+#, javascript-format
+msgid "%s character"
+msgid_plural "%s characters"
+msgstr[0] "%s znak"
+msgstr[1] "%s znaky"
+msgstr[2] "%s znaků"
 
 #: static/js/secret-generator.js:94
 msgid "Secure random number generation is not available in this browser."
@@ -142,6 +153,12 @@ msgstr "Součet minimálních počtů přesahuje délku."
 msgid "The word list could not be loaded."
 msgstr "Seznam slov se nepodařilo načíst."
 
-#: static/js/secret-generator.js:431
+#: static/js/secret-generator.js:450
 msgid "Estimated strength: ≈ %(bits)s bits"
 msgstr "Odhadovaná síla: ≈ %(bits)s bitů"
+
+#~ msgid "Link URL"
+#~ msgstr "URL odkazu"
+
+#~ msgid "Only http, https, and mailto links are allowed."
+#~ msgstr "Povoleny jsou pouze odkazy http, https a mailto."

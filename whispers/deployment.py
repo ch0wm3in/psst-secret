@@ -53,7 +53,7 @@ def _auth_features():
         return [
             _feature(
                 "sign_in",
-                "🔐",
+                "outline/lock-closed",
                 _("Sign-in"),
                 _("Not used"),
                 "off",
@@ -71,7 +71,7 @@ def _auth_features():
     if send_required and request_required:
         sign_in = _feature(
             "sign_in",
-            "🔐",
+            "outline/lock-closed",
             _("Sign-in"),
             _("Required"),
             "on",
@@ -81,7 +81,7 @@ def _auth_features():
     elif send_required:
         sign_in = _feature(
             "sign_in",
-            "🔐",
+            "outline/lock-closed",
             _("Sign-in"),
             _("Partly required"),
             "neutral",
@@ -94,7 +94,7 @@ def _auth_features():
     elif request_required:
         sign_in = _feature(
             "sign_in",
-            "🔐",
+            "outline/lock-closed",
             _("Sign-in"),
             _("Partly required"),
             "neutral",
@@ -107,7 +107,7 @@ def _auth_features():
     else:
         sign_in = _feature(
             "sign_in",
-            "🔐",
+            "outline/lock-closed",
             _("Sign-in"),
             _("Optional"),
             "neutral",
@@ -120,7 +120,7 @@ def _auth_features():
     ):
         view = _feature(
             "view_auth",
-            "👁️",
+            "outline/eye",
             _("Viewing whispers"),
             _("Sign-in required"),
             "on",
@@ -129,7 +129,7 @@ def _auth_features():
     else:
         view = _feature(
             "view_auth",
-            "👁️",
+            "outline/eye",
             _("Viewing whispers"),
             _("Link only"),
             "off",
@@ -144,7 +144,7 @@ def _auth_features():
     ):
         submit = _feature(
             "submit_auth",
-            "📨",
+            "outline/inbox-arrow-down",
             _("Submitting to requests"),
             _("Sign-in required"),
             "on",
@@ -153,7 +153,7 @@ def _auth_features():
     else:
         submit = _feature(
             "submit_auth",
-            "📨",
+            "outline/inbox-arrow-down",
             _("Submitting to requests"),
             _("Link only"),
             "off",
@@ -167,7 +167,7 @@ def _auth_features():
     if not getattr(settings, "PSST_ENABLE_RECEIVE_ACCESS", False):
         access = _feature(
             "receive_access",
-            "👥",
+            "outline/user-group",
             title,
             _("Off"),
             "off",
@@ -176,7 +176,7 @@ def _auth_features():
     elif getattr(settings, "PSST_FORCE_RECEIVE_ACCESS", False):
         access = _feature(
             "receive_access",
-            "👥",
+            "outline/user-group",
             title,
             _("Always on"),
             "on",
@@ -190,7 +190,7 @@ def _auth_features():
     elif getattr(settings, "PSST_RECEIVE_ACCESS_DEFAULT", False):
         access = _feature(
             "receive_access",
-            "👥",
+            "outline/user-group",
             title,
             _("On by default"),
             "on",
@@ -202,7 +202,7 @@ def _auth_features():
     else:
         access = _feature(
             "receive_access",
-            "👥",
+            "outline/user-group",
             title,
             _("Optional"),
             "neutral",
@@ -222,7 +222,7 @@ def deployment_features():
         features.append(
             _feature(
                 "email",
-                "✉️",
+                "outline/envelope",
                 _("Email notifications"),
                 _("Available"),
                 "on",
@@ -236,7 +236,7 @@ def deployment_features():
         features.append(
             _feature(
                 "email",
-                "✉️",
+                "outline/envelope",
                 _("Email notifications"),
                 _("Off"),
                 "off",
@@ -248,7 +248,7 @@ def deployment_features():
         features.append(
             _feature(
                 "stats",
-                "📊",
+                "outline/chart-bar",
                 _("Usage statistics"),
                 _("On"),
                 "on",
@@ -263,7 +263,7 @@ def deployment_features():
         features.append(
             _feature(
                 "stats",
-                "📊",
+                "outline/chart-bar",
                 _("Usage statistics"),
                 _("Off"),
                 "off",
@@ -271,10 +271,37 @@ def deployment_features():
             )
         )
 
+    if getattr(settings, "PSST_ENABLE_RICH_TEXT", False):
+        features.append(
+            _feature(
+                "rich_text",
+                "outline/document-text",
+                _("Formatted text"),
+                _("On"),
+                "on",
+                _(
+                    "Whispers can use headings, lists, links, and code, written in a "
+                    "Markdown editor, or be written as plain text. Formatting stays "
+                    "inside the encrypted whisper."
+                ),
+            )
+        )
+    else:
+        features.append(
+            _feature(
+                "rich_text",
+                "outline/document-text",
+                _("Formatted text"),
+                _("Off"),
+                "off",
+                _("Whispers are written and shown as plain text."),
+            )
+        )
+
     features.append(
         _feature(
             "upload_limit",
-            "📎",
+            "outline/paper-clip",
             _("File size limit"),
             filesizeformat(settings.DATA_UPLOAD_MAX_MEMORY_SIZE),
             "neutral",
@@ -286,7 +313,7 @@ def deployment_features():
         features.append(
             _feature(
                 "storage",
-                "💾",
+                "outline/circle-stack",
                 _("Encrypted storage"),
                 _("Saved to disk"),
                 "neutral",
@@ -300,7 +327,7 @@ def deployment_features():
         features.append(
             _feature(
                 "storage",
-                "💾",
+                "outline/circle-stack",
                 _("Encrypted storage"),
                 _("Memory only"),
                 "neutral",

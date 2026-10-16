@@ -45,6 +45,7 @@ def browser_app(settings, transactional_db, request):
     ]
     settings.PSST_ENABLE_EMAIL = False
     settings.PSST_ENABLE_STATS = False
+    settings.PSST_ENABLE_RICH_TEXT = False
     settings.PSST_ENABLE_RECEIVE_ACCESS = False
     settings.PSST_RECEIVE_ACCESS_DEFAULT = False
     settings.PSST_FORCE_RECEIVE_ACCESS = False

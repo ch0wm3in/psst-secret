@@ -6,6 +6,7 @@ RUN npm ci
 COPY theme/static_src ./
 COPY templates/ /app/templates/
 COPY static/js/ /app/static/js/
+COPY whispers/ /app/whispers/
 RUN npm run build
 
 FROM python:3.14-slim-trixie

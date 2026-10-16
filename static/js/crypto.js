@@ -64,10 +64,14 @@ function clearAllFiles() {
     renderFileList();
 }
 
+function setButtonLabel(btn, text) {
+    btn.querySelector('[data-btn-label]').textContent = text;
+}
+
 /**
  * Render the queued-files list and update placeholder/error UI.
  * Expects markup added by create.html / submit.html:
- *   #file-placeholder, #file-list (ul), #file-total, #file-size-error
+ *   #file-placeholder, #file-list (ul), #file-total, #file-size-error, #file-icon (template)
  */
 function renderFileList(rejected) {
     const placeholder = document.getElementById('file-placeholder');
@@ -87,9 +91,7 @@ function renderFileList(rejected) {
         li.className = 'flex items-center justify-between gap-3 rounded-lg bg-gray-900 border border-gray-700 px-3 py-2';
         const meta = document.createElement('div');
         meta.className = 'flex items-center gap-2 min-w-0';
-        const icon = document.createElement('span');
-        icon.className = 'text-lg';
-        icon.textContent = '📄';
+        const icon = document.getElementById('file-icon').content.firstElementChild.cloneNode(true);
         const text = document.createElement('div');
         text.className = 'min-w-0';
         const name = document.createElement('p');
@@ -436,7 +438,7 @@ async function handleCreate() {
     }
 
     btn.disabled = true;
-    btn.textContent = gettext('Encrypting…');
+    setButtonLabel(btn, gettext('Encrypting…'));
 
     try {
         const passwordEl = document.getElementById('password');
@@ -462,6 +464,7 @@ async function handleCreate() {
             payload = JSON.stringify({
                 type: 'text',
                 content: plaintext,
+                ...(whisperEl.dataset.format ? { format: whisperEl.dataset.format } : {}),
             });
         }
 
@@ -521,13 +524,14 @@ async function handleCreate() {
         }
 
         formEl.classList.add('hidden');
+        document.getElementById('direction-toggle').classList.add('hidden');
         resultEl.classList.remove('hidden');
     } catch (e) {
         errorEl.textContent = interpolate(gettext('Error: %s'), [e.message]);
         errorEl.classList.remove('hidden');
     } finally {
         btn.disabled = false;
-        btn.textContent = '🔒 ' + gettext('Encrypt & Share');
+        setButtonLabel(btn, gettext('Encrypt & Share'));
     }
 }
 
@@ -557,7 +561,7 @@ async function handleCreateRequest() {
     const maxViews = readMaxViews();
 
     btn.disabled = true;
-    btn.textContent = gettext('Creating…');
+    setButtonLabel(btn, gettext('Creating…'));
 
     try {
         const passwordEl = document.getElementById('password');
@@ -644,13 +648,14 @@ async function handleCreateRequest() {
         }
 
         formEl.classList.add('hidden');
+        document.getElementById('direction-toggle').classList.add('hidden');
         document.getElementById('receive-result').classList.remove('hidden');
     } catch (e) {
         errorEl.textContent = interpolate(gettext('Error: %s'), [e.message]);
         errorEl.classList.remove('hidden');
     } finally {
         btn.disabled = false;
-        btn.textContent = '🔗 ' + gettext('Create Request');
+        setButtonLabel(btn, gettext('Create Request'));
     }
 }
 
@@ -683,7 +688,7 @@ async function handleSubmit() {
     }
 
     btn.disabled = true;
-    btn.textContent = gettext('Encrypting…');
+    setButtonLabel(btn, gettext('Encrypting…'));
 
     try {
         if (!keyB64) {
@@ -698,6 +703,7 @@ async function handleSubmit() {
             payload = JSON.stringify({
                 type: 'text',
                 content: plaintext,
+                ...(whisperEl.dataset.format ? { format: whisperEl.dataset.format } : {}),
             });
         }
 
@@ -727,6 +733,6 @@ async function handleSubmit() {
         errorEl.classList.remove('hidden');
     } finally {
         btn.disabled = false;
-        btn.textContent = '🔒 ' + gettext('Encrypt & Submit');
+        setButtonLabel(btn, gettext('Encrypt & Submit'));
     }
 }

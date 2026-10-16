@@ -21,8 +21,10 @@ repos:
       - id: name-tests-test  # verify test-files are named correctly
         args: [ "--django" ]
       - id: trailing-whitespace  # trims trailing whitespace
+        exclude: ^theme/static/  # generated bundles must stay byte-for-byte
       - id: mixed-line-ending  # Check and fix mixed line ending (only LF for compatibility)
         args: ["--fix=lf"]
+        exclude: ^theme/static/
       - id: check-yaml  # check yaml files for parseable syntax
       - id: check-toml  # check toml files for parseable syntax
       - id: check-json  # check json files for parseable syntax

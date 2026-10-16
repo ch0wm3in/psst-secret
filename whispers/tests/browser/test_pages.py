@@ -36,14 +36,26 @@ def test_navigation_optional_features_and_not_found(page, app_url):
 _LOGO = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiIvPg=="
 
 
+def test_heroicons_sprite_renders(page, app_url):
+    sprite = page.request.get(app_url + "/static/icons/heroicons.svg")
+    assert sprite.ok
+    assert 'id="outline-adjustments-horizontal"' in sprite.text()
+    page.goto(app_url)
+    icon = page.locator("#generate-secret-options-btn svg")
+    expect(icon).to_be_visible()
+    box = icon.bounding_box()
+    assert box["width"] > 0 and box["height"] > 0
+
+
 def test_default_branding_and_footer(page, app_url):
     page.goto(app_url)
     expect(page).to_have_title("psst-secret — New Whisper")
-    expect(page.locator("nav")).to_contain_text("🤫 psst-secret")
+    expect(page.locator("nav")).to_contain_text("psst-secret")
+    expect(page.locator('nav use[href$="#outline-lock-closed"]')).to_have_count(1)
     expect(page.locator("[data-brand-logo]")).to_have_count(0)
     expect(page.locator("nav [data-nav-brand-name]")).not_to_have_class("sr-only")
     expect(page.locator('link[rel="icon"]')).to_have_attribute(
-        "href", "/static/favicon.svg"
+        "href", re.compile(r"^data:image/svg\+xml,.*%232dd4bf")
     )
     footer = page.locator("footer")
     expect(footer).to_contain_text("psst-secret — Psst! Don't tell anyone.")
@@ -64,7 +76,7 @@ def test_white_label_branding(page, app_url, create_whisper):
     nav = page.locator("nav")
     expect(nav).to_contain_text("Acme Vault")
     expect(nav).not_to_contain_text("psst-secret")
-    expect(nav).not_to_contain_text("🤫")
+    expect(nav.locator('use[href$="#outline-lock-closed"]')).to_have_count(0)
     logo = nav.locator("[data-brand-logo]")
     expect(logo).to_be_visible()
     assert logo.evaluate("img => img.complete && img.naturalWidth > 0")
@@ -114,7 +126,14 @@ def _deployment_rows(page):
 def test_about_page_lists_deployment_features(page, app_url):
     page.goto(app_url + "/about")
     rows = _deployment_rows(page)
-    assert list(rows) == ["sign_in", "email", "stats", "upload_limit", "storage"]
+    assert list(rows) == [
+        "sign_in",
+        "email",
+        "stats",
+        "rich_text",
+        "upload_limit",
+        "storage",
+    ]
     expect(rows["sign_in"].locator("[data-feature-status]")).to_have_text("Not used")
     expect(rows["email"].locator("[data-feature-status]")).to_have_text("Off")
     expect(rows["stats"]).to_contain_text("No usage statistics are collected.")
@@ -146,6 +165,7 @@ def test_about_page_reflects_enabled_deployment_features(page, app_url):
         "receive_access",
         "email",
         "stats",
+        "rich_text",
         "upload_limit",
         "storage",
     ]
