@@ -140,9 +140,15 @@ def test_link_dialog_inserts_text_and_cancels(page, app_url):
 
 def test_secret_generator_inserts_into_editor(page, app_url):
     page.goto(app_url)
-    page.locator("#generate-secret-btn").click()
+    generate = page.locator("#generate-secret-btn")
+    generate.click()
     expect(_editor(page)).not_to_have_text("")
     expect(page.locator("#whisper")).not_to_have_value("")
+    first = _editor(page).inner_text()
+    assert page.evaluate("() => window.getSelection().toString()") == first
+    generate.click()
+    expect(_editor(page)).not_to_have_text(first)
+    assert first not in _editor(page).inner_text()
 
 
 def test_markdown_submission_to_receive_request(page, create_whisper):
@@ -193,5 +199,6 @@ def test_plain_text_mode_is_remembered_and_reversible(page, app_url):
     toggle.click()
     expect(toggle).to_have_attribute("aria-pressed", "false")
     expect(page.locator("#whisper")).to_be_hidden()
+    expect(_editor(page)).to_be_focused()
     expect(_editor(page).locator("strong")).to_have_text("bold")
     expect(page.locator("#whisper")).to_have_value("**bold** text")
