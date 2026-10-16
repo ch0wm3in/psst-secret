@@ -68,7 +68,9 @@ jobs:
         run: uv run --env-file .env.docker python manage.py migrate --noinput
 
       - name: Compile translations
-        run: uv run --env-file .env.docker python manage.py compilemessages
+        run: |
+          apt-get update && apt-get install -y --no-install-recommends gettext
+          uv run --env-file .env.docker python manage.py compilemessages
 
       - name: Run unit tests
         run: uv run --env-file .env.docker pytest --ignore=whispers/tests/browser -n 4
