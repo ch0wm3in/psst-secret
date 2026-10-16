@@ -11,6 +11,9 @@ RUN npm run build
 FROM python:3.14-slim-trixie
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
+# Dependency for compilemessages
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gettext
 
 # Environment variables for UV configuration
 ENV UV_NO_DEV=1
