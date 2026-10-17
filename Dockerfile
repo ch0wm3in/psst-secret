@@ -1,4 +1,4 @@
-FROM node:24-slim AS frontend
+FROM node:26-slim AS frontend
 
 WORKDIR /app/theme/static_src
 COPY theme/static_src/package*.json ./
