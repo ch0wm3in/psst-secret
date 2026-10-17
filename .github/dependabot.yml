@@ -29,3 +29,13 @@ updates:
     directory: /
     schedule:
       interval: weekly
+  
+  - package-ecosystem: npm
+    directory: /theme/static_src
+    schedule:
+      interval: weekly
+    groups:
+      npm-minor-patch:
+        update-types:
+          - minor
+          - patch
