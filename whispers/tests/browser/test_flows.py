@@ -49,6 +49,78 @@ def test_text_round_trip_and_burn(page, app_url):
     expect(page.locator("h1")).to_contain_text("burned")
 
 
+@pytest.mark.parametrize("kind", ["send", "receive"])
+@pytest.mark.parametrize("rich_text", [False, True])
+def test_whitespace_round_trip(
+    page, app_url, create_whisper, settings, kind, rich_text
+):
+    settings.PSST_ENABLE_RICH_TEXT = rich_text
+    content = " \t\n  password with spaces  \t\n\n"
+    if kind == "receive":
+        submit_url, view_url = create_whisper(kind="receive")
+        page.goto(submit_url)
+    else:
+        page.goto(app_url)
+    if rich_text:
+        page.get_by_role("button", name="Plain text").click()
+    page.locator("#whisper").fill(content)
+    page.locator("#submit-btn" if kind == "receive" else "#encrypt-btn").click()
+    if kind == "receive":
+        expect(page.locator("#submit-success")).to_be_visible()
+    else:
+        expect(page.locator("#result")).to_be_visible()
+        view_url = page.locator("#result-url").input_value()
+    _reveal(page, view_url)
+    decrypted = page.locator("#decrypted-content")
+    expect(decrypted).to_be_visible()
+    assert decrypted.text_content() == content
+
+
+@pytest.mark.parametrize("kind", ["send", "receive"])
+@pytest.mark.parametrize("content", ["", " \t\n \u00a0\n"])
+def test_empty_whisper_is_not_submitted(page, app_url, create_whisper, kind, content):
+    if kind == "receive":
+        submit_url, _ = create_whisper(kind="receive")
+        page.goto(submit_url)
+    else:
+        page.goto(app_url)
+    submissions = []
+    page.on(
+        "request",
+        lambda request: (
+            submissions.append(request) if request.method == "POST" else None
+        ),
+    )
+    page.locator("#whisper").fill(content)
+    page.locator("#submit-btn" if kind == "receive" else "#encrypt-btn").click()
+    expect(page.locator("#error")).to_contain_text("Please enter some content")
+    assert not submissions
+
+
+@pytest.mark.parametrize("kind", ["send", "receive"])
+def test_whitespace_only_text_allows_file_upload(page, app_url, create_whisper, kind):
+    if kind == "receive":
+        submit_url, view_url = create_whisper(kind="receive")
+        page.goto(submit_url)
+    else:
+        page.goto(app_url)
+    page.locator("#whisper").fill(" \t\n ")
+    page.locator("#tab-file").click()
+    page.locator("#file-input").set_input_files(
+        {"name": "whisper.txt", "mimeType": "text/plain", "buffer": b"file content"}
+    )
+    page.locator("#submit-btn" if kind == "receive" else "#encrypt-btn").click()
+    if kind == "receive":
+        expect(page.locator("#submit-success")).to_be_visible()
+    else:
+        expect(page.locator("#result")).to_be_visible()
+        view_url = page.locator("#result-url").input_value()
+    _reveal(page, view_url)
+    with page.expect_download() as download:
+        page.locator("#decrypted-file-list li").get_by_role("button").click()
+    assert Path(download.value.path()).read_bytes() == b"file content"
+
+
 def test_confirmation_does_not_consume_a_view(page, create_whisper):
     url = create_whisper()
     for _ in range(2):
