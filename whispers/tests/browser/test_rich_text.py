@@ -69,6 +69,27 @@ def test_markdown_special_characters_survive_round_trip(page, app_url):
     expect(rendered.locator("b, strong, s, code, h1, a")).to_have_count(0)
 
 
+@pytest.mark.parametrize("kind", ["send", "receive"])
+def test_formatted_whisper_preserves_whitespace(page, app_url, create_whisper, kind):
+    content = "  password with spaces  "
+    if kind == "receive":
+        submit_url, view_url = create_whisper(kind="receive")
+        page.goto(submit_url)
+    else:
+        page.goto(app_url)
+    page.evaluate("v => document.getElementById('whisper').insertSecret(v)", content)
+    expect(page.locator("#whisper")).to_have_value(content)
+    page.locator("#submit-btn" if kind == "receive" else "#encrypt-btn").click()
+    if kind == "receive":
+        expect(page.locator("#submit-success")).to_be_visible()
+    else:
+        expect(page.locator("#result")).to_be_visible()
+        view_url = page.locator("#result-url").input_value()
+    _reveal(page, view_url)
+    expect(page.locator("#decrypted-rendered")).to_be_visible()
+    assert page.locator("#decrypted-content").text_content() == content
+
+
 def test_markdown_rendering_blocks_unsafe_content(page, app_url):
     page.goto(app_url)
     html = page.evaluate(

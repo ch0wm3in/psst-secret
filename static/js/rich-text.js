@@ -169,7 +169,7 @@
 
         function sync() {
             if (plain) return;
-            textarea.value = editor.isEmpty ? '' : editor.getMarkdown().trimEnd();
+            textarea.value = editor.isEmpty ? '' : editor.getMarkdown();
             updateCount(editor.storage.characterCount.characters());
             buttons.forEach(function (button) {
                 var name = button.getAttribute('data-command');

@@ -423,9 +423,9 @@ async function handleCreate() {
     const maxViews = readMaxViews();
 
     const isFileMode = selectedFiles.length > 0;
-    const plaintext = whisperEl.value.trim();
+    const plaintext = whisperEl.value;
 
-    if (!isFileMode && !plaintext) {
+    if (!isFileMode && !plaintext.trim()) {
         errorEl.textContent = gettext('Please enter some content or select a file to encrypt.');
         errorEl.classList.remove('hidden');
         return;
@@ -673,9 +673,9 @@ async function handleSubmit() {
     errorEl.classList.add('hidden');
 
     const isFileMode = selectedFiles.length > 0;
-    const plaintext = whisperEl.value.trim();
+    const plaintext = whisperEl.value;
 
-    if (!isFileMode && !plaintext) {
+    if (!isFileMode && !plaintext.trim()) {
         errorEl.textContent = gettext('Please enter some content or select a file to encrypt.');
         errorEl.classList.remove('hidden');
         return;
