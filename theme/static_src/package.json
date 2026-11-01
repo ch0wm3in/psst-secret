@@ -19,11 +19,11 @@
   "license": "MIT",
   "dependencies": {
     "@noble/post-quantum": "0.7.1",
-    "@tiptap/core": "3.32.0",
-    "@tiptap/extensions": "3.32.0",
-    "@tiptap/markdown": "3.32.0",
-    "@tiptap/pm": "3.32.0",
-    "@tiptap/starter-kit": "3.32.0",
+    "@tiptap/core": "3.32.1",
+    "@tiptap/extensions": "3.32.1",
+    "@tiptap/markdown": "3.32.1",
+    "@tiptap/pm": "3.32.1",
+    "@tiptap/starter-kit": "3.32.1",
     "alpinejs": "^3.15.1"
   },
   "devDependencies": {
