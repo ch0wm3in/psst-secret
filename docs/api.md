@@ -47,4 +47,10 @@ Errors return JSON with an `error` message.
 | `409` | A receive request has already been submitted |
 | `410` | The whisper or request has expired |
 | `429` | Rate limit exceeded |
-| `503` | Redis rejected the write (for example, out of memory or unreachable). Nothing is stored, so it is safe to retry later. |
+| `503` | Redis is unavailable or rejected the request (for example, out of memory or unreachable), including during rate limiting. |
+
+A `503` means the outcome is uncertain, not that nothing was stored. Failed creations
+roll back their database row and try to delete any Redis entry, but that cleanup is
+best-effort. Leftover entries expire with their TTL, and a link was never returned for them.
+A submission may have been saved if the connection failed after Redis accepted it; if
+retrying returns `409`, the earlier submission succeeded.

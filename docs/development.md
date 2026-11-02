@@ -145,5 +145,5 @@ pytest whispers/tests/browser --browser-tests -n 4 --browser chromium --browser 
 - Browser tests do not cover real SSO providers, email delivery, or production proxy
   setups.
 
-CI runs the Django tests and the Chromium and Firefox browser tests as separate parallel
+CI runs the Django tests and the Chromium and WebKit browser tests as separate parallel
 jobs.

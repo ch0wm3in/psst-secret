@@ -6,7 +6,7 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
 from pathlib import Path
 from threading import Barrier
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import fakeredis
 import redis
@@ -15,6 +15,7 @@ from django.contrib.auth.models import User
 from django.core.cache import cache
 from django.test import TestCase, override_settings
 from django.utils import timezone
+from rest_framework.throttling import SimpleRateThrottle
 
 from whispers import redis_store
 from whispers.models import HourlyWhisperStats, Whisper
@@ -680,6 +681,28 @@ class ApiCreateWhisperTests(TestCase):
         self.assertEqual(resp.status_code, 503)
         stats.assert_not_called()
         email.assert_not_called()
+
+    def test_throttle_cache_failure_returns_503_without_running_view(self):
+        broken_cache = Mock()
+        broken_cache.get.side_effect = redis.exceptions.ConnectionError("down")
+        with patch.object(SimpleRateThrottle, "cache", broken_cache):
+            for endpoint, payload in (
+                ("/api/whisper", {"ciphertext": "ct", "iv": "iv"}),
+                ("/api/whisper/request", {"public_key": "pk"}),
+                (f"/api/whisper/submit/{uuid.uuid4()}", {"ciphertext": "ct"}),
+            ):
+                with self.subTest(endpoint=endpoint):
+                    resp = self.client.post(
+                        endpoint,
+                        data=json.dumps(
+                            {"reveal_token_hash": _REVEAL_TOKEN_HASH, **payload}
+                        ),
+                        content_type="application/json",
+                    )
+                    self.assertEqual(resp.status_code, 503)
+                    self.assertIn("error", resp.json())
+        self.assertFalse(Whisper.objects.exists())
+        self.assertEqual(self.redis.keys("whisper:*"), [])
 
     def test_max_views_flag(self):
         resp = self._post({"ciphertext": "ct", "iv": "iv", "max_views": 1})
@@ -1987,7 +2010,8 @@ class DeploymentFeaturesTests(TestCase):
 
 @override_settings(MIDDLEWARE=_BASE_MIDDLEWARE, REST_FRAMEWORK=_TEST_REST_FRAMEWORK)
 class BrandingTests(TestCase):
-
+    
+    @override_settings(BRAND_COLORS={})
     def test_default_branding(self):
         resp = self.client.get("/")
         self.assertContains(resp, "<title>psst-secret — New Whisper</title>", html=True)
