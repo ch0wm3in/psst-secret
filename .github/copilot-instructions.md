@@ -16,14 +16,14 @@ Always run Python through `uv` and load `.env`:
 - Django: `uv run --env-file .env python manage.py <command>`
 - Migrations: `uv run --env-file .env python manage.py makemigrations`. Never edit applied migrations.
 - Tailwind: after changing Tailwind classes in templates or JavaScript, run `uv run --env-file .env python manage.py tailwind build`.
-- While you use the `uv run --env-file .env` prefix which is fine, most developers will not need to type it manually for every command and load the .env once and then source the venv, thus the readme.md, should not contain these prefixes for every command.
+- While you use the `uv run --env-file .env` prefix which is fine, most developers will not need to type it manually for every command and load the .env once and then source the venv, thus the README and `docs/` should not contain these prefixes for every command.
 
 Without `DEBUG=True` and a non-default `SECRET_KEY`, settings refuse to start; `.env` supplies both.
 
 ## When finished
 1. Run the relevant tests, then the full suite.
 2. Always run pre-commit: `uv run --env-file .env pre-commit run --files <changed files>` or `uv run --env-file .env pre-commit run --all-files`. If Black or isort modify files, rerun the hooks. `check-untracked-migrations` requires new migrations to be staged.
-3. Update `README.md` when adding environment variables, features, API endpoints, or changing security behavior.
+3. Update the docs when adding environment variables, features, API endpoints, or changing security behavior: `docs/configuration.md` for settings, `docs/api.md` for endpoints, `docs/how-it-works.md` for security and storage behavior, `docs/development.md` for tooling, and the README feature list for major features.
 
 ## Translations
 Whenever user-facing strings are added or changed in templates, Python, or JavaScript:
@@ -32,7 +32,7 @@ Whenever user-facing strings are added or changed in templates, Python, or JavaS
    - `uv run --env-file .env python manage.py makemessages -l da -l cs -l sv -l fil --ignore='node_modules' --ignore='theme/static_src/*' --ignore='staticfiles/*' --ignore='.venv/*'`
    - `uv run --env-file .env python manage.py makemessages -l da -l cs -l sv -l fil -d djangojs --ignore='node_modules' --ignore='theme/*' --ignore='staticfiles/*' --ignore='.venv/*'`
 3. Translate each empty `msgstr` into the catalog's language (Danish, Czech, Swedish, or Filipino). Review `#, fuzzy` entries, fix their translations, and remove the fuzzy flag. Preserve format placeholders and HTML markup.
-4. Run `uv run --env-file .env python scripts/check_translations.py` and `uv run --env-file .env python manage.py compilemessages -l da -l cs -l sv -l fil`. Commit the `.po` and `.mo` files.
+4. Run `uv run --env-file .env python scripts/check_translations.py` and `uv run --env-file .env python manage.py compilemessages -l da -l cs -l sv -l fil`.
 
 ## Security and privacy
 - The server must never receive plaintext, decryption keys, private keys, or passwords. Key material stays in URL fragments or is encrypted client-side.
@@ -55,5 +55,6 @@ Whenever user-facing strings are added or changed in templates, Python, or JavaS
 - Whenever features that impact core features are added or changed(whispers in particular), update the about page to reflect the latest information.
 
 ## Documentation
-- Documentation should be kept up-to-date with the latest changes in the project, in the README and any other relevant documentation files.
+- Documentation should be kept up-to-date with the latest changes in the project, in the README and the topic files in `docs/`.
+- State each fact once in the most relevant document and link to it from elsewhere instead of repeating it.
 - When adding new features or making significant changes, ensure that the documentation reflects these updates accurately.
