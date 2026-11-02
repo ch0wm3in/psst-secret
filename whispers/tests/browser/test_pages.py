@@ -47,6 +47,7 @@ def test_heroicons_sprite_renders(page, app_url):
     assert box["width"] > 0 and box["height"] > 0
 
 
+@pytest.mark.browser_settings(BRAND_COLORS={})
 def test_default_branding_and_footer(page, app_url):
     page.goto(app_url)
     expect(page).to_have_title("psst-secret — New Whisper")
