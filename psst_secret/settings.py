@@ -263,6 +263,8 @@ REST_FRAMEWORK = {
     ],
     # Without this DRF trusts any client-supplied X-Forwarded-For for throttling.
     "NUM_PROXIES": NUM_PROXIES,
+    # Return 503 instead of 500 when Redis (storage or throttle cache) fails.
+    "EXCEPTION_HANDLER": "whispers.views.api_exception_handler",
     "DEFAULT_THROTTLE_CLASSES": [
         "rest_framework.throttling.AnonRateThrottle",
     ],

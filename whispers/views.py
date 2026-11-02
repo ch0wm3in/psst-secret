@@ -20,6 +20,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
 from rest_framework.views import APIView
+from rest_framework.views import exception_handler as drf_exception_handler
 
 from whispers.constants import EXPIRY_DELTAS
 
@@ -49,7 +50,7 @@ def _storage_unavailable(exc, whisper_id=None):
     When *whisper_id* is given, the Redis entry may have been written before the
     error surfaced, so it is removed on a best-effort basis.
     """
-    logger.warning("Redis rejected a whisper write: %s", type(exc).__name__)
+    logger.warning("Redis is unavailable: %s", type(exc).__name__)
     if whisper_id is not None:
         try:
             redis_store.delete_crypto(whisper_id)
@@ -63,6 +64,17 @@ def _storage_unavailable(exc, whisper_id=None):
         },
         status=status.HTTP_503_SERVICE_UNAVAILABLE,
     )
+
+
+def api_exception_handler(exc, context):
+    """DRF exception handler that turns Redis failures into a 503.
+
+    Throttling also uses Redis (via the cache), so this covers errors raised
+    before a view method runs, not just storage writes.
+    """
+    if isinstance(exc, redis.RedisError):
+        return _storage_unavailable(exc)
+    return drf_exception_handler(exc, context)
 
 
 class WhisperCreateThrottle(AnonRateThrottle):
@@ -800,12 +812,6 @@ class SubmitWhisperView(APIView):
         responses={200: SubmitWhisperResponseSerializer},
     )
     def post(self, request, submit_token):
-        try:
-            return self._submit(request, submit_token)
-        except redis.RedisError as exc:
-            return _storage_unavailable(exc)
-
-    def _submit(self, request, submit_token):
         whisper = get_object_or_404(Whisper, submit_token=submit_token, mode="receive")
 
         if whisper.is_expired:
