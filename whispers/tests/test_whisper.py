@@ -9,6 +9,7 @@ from threading import Barrier
 from unittest.mock import patch
 
 import fakeredis
+import redis
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.cache import cache
@@ -650,6 +651,36 @@ class ApiCreateWhisperTests(TestCase):
                     self.assertEqual(response.status_code, 400)
         self.assertFalse(Whisper.objects.exists())
 
+    def test_redis_failure_rolls_back_whisper_and_returns_503(self):
+        for exc in (
+            redis.exceptions.OutOfMemoryError("OOM command not allowed"),
+            redis.exceptions.ConnectionError("down"),
+        ):
+            with (
+                self.subTest(exc=type(exc).__name__),
+                patch.object(self.redis, "set", side_effect=exc),
+            ):
+                resp = self._post({"ciphertext": "ct", "iv": "iv"})
+                self.assertEqual(resp.status_code, 503)
+                self.assertIn("error", resp.json())
+        self.assertFalse(Whisper.objects.exists())
+        self.assertEqual(self.redis.keys("whisper:*"), [])
+
+    def test_redis_failure_does_not_record_stats_or_send_email(self):
+        with (
+            patch.object(
+                self.redis, "set", side_effect=redis.exceptions.OutOfMemoryError()
+            ),
+            patch("whispers.views.record_stats") as stats,
+            patch("whispers.views.send_whisper_created_email") as email,
+        ):
+            resp = self._post(
+                {"ciphertext": "ct", "iv": "iv", "notify_email": "a@example.com"}
+            )
+        self.assertEqual(resp.status_code, 503)
+        stats.assert_not_called()
+        email.assert_not_called()
+
     def test_max_views_flag(self):
         resp = self._post({"ciphertext": "ct", "iv": "iv", "max_views": 1})
         wid = resp.json()["id"]
@@ -1119,6 +1150,15 @@ class ApiCreateRequestTests(TestCase):
         resp = self._post({"allowed_cidr": "nope"})
         self.assertEqual(resp.status_code, 400)
 
+    def test_redis_failure_rolls_back_request_and_returns_503(self):
+        with patch.object(
+            self.redis, "set", side_effect=redis.exceptions.OutOfMemoryError()
+        ):
+            resp = self._post({})
+        self.assertEqual(resp.status_code, 503)
+        self.assertFalse(Whisper.objects.exists())
+        self.assertEqual(self.redis.keys("whisper:*"), [])
+
 
 @override_settings(MIDDLEWARE=_BASE_MIDDLEWARE, REST_FRAMEWORK=_TEST_REST_FRAMEWORK)
 class SubmitWhisperFlowTests(TestCase):
@@ -1155,6 +1195,18 @@ class SubmitWhisperFlowTests(TestCase):
         )
 
     # -- submit page --
+
+    def test_submit_redis_failure_returns_503_and_keeps_request(self):
+        w = self._create_request()
+        with patch.object(
+            redis_store,
+            "submit_crypto_once",
+            side_effect=redis.exceptions.OutOfMemoryError(),
+        ):
+            resp = self._submit(w)
+        self.assertEqual(resp.status_code, 503)
+        self.assertTrue(Whisper.objects.filter(id=w.id).exists())
+        self.assertEqual(redis_store.get_crypto(w.id)["ciphertext"], "")
 
     def test_submit_page_renders(self):
         w = self._create_request()

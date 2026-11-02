@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-02 13:13+0000\n"
+"POT-Creation-Date: 2026-11-02 13:24+0000\n"
 "PO-Revision-Date: 2026-04-17 15:26+0000\n"
 "Last-Translator: \n"
 "Language-Team: Danish\n"
@@ -720,7 +720,7 @@ msgstr ""
 "Ingen dekrypteringsnøgle fundet i URL'en. Linket kan være ufuldstændigt."
 
 #: templates/whispers/confirm.html:36 templates/whispers/forbidden.html:10
-#: whispers/views.py:471
+#: whispers/views.py:499
 msgid ""
 "The reveal authorization is missing or invalid. Use the complete view link."
 msgstr ""
@@ -998,7 +998,7 @@ msgid "The person submitting a whisper to this request must be signed in."
 msgstr "Personen der sender en whisper skal være logget ind."
 
 #: templates/whispers/create.html:233 templates/whispers/receive_access.html:8
-#: whispers/views.py:724
+#: whispers/views.py:757
 msgid "Restricted receive access is required."
 msgstr "Begrænset læseadgang i modtagertilstand er påkrævet."
 
@@ -1310,7 +1310,7 @@ msgstr "Adgang nægtet"
 msgid "Access denied"
 msgstr "Adgang nægtet"
 
-#: templates/whispers/forbidden.html:10 whispers/views.py:428
+#: templates/whispers/forbidden.html:10 whispers/views.py:456
 msgid "You do not have access to this whisper."
 msgstr "Du har ikke adgang til denne whisper."
 
@@ -2054,19 +2054,23 @@ msgstr "5 minutter"
 msgid "1 hour"
 msgstr "1 time"
 
-#: whispers/views.py:146 whispers/views.py:646 whispers/views.py:739
+#: whispers/views.py:61
+msgid "Whisper storage is temporarily unavailable. Please try again later."
+msgstr "Whisper-lageret er midlertidigt utilgængeligt. Prøv igen senere."
+
+#: whispers/views.py:169 whispers/views.py:674 whispers/views.py:772
 msgid "Enter the verified primary email of each additional reader."
 msgstr "Angiv hver ekstra læsers bekræftede primære e-mailadresse."
 
-#: whispers/views.py:629
+#: whispers/views.py:657
 msgid "Receive reader restrictions are not enabled."
 msgstr "Begrænset læseadgang i modtagertilstand er ikke aktiveret."
 
-#: whispers/views.py:633
+#: whispers/views.py:661
 msgid "Sign in to manage reader access."
 msgstr "Log ind for at administrere læseadgang."
 
-#: whispers/views.py:637 whispers/views.py:730
+#: whispers/views.py:665 whispers/views.py:763
 msgid "Enable restricted access before adding readers."
 msgstr "Aktivér begrænset adgang, før du tilføjer læsere."
 
