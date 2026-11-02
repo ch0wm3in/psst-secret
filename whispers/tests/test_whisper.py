@@ -2010,7 +2010,7 @@ class DeploymentFeaturesTests(TestCase):
 
 @override_settings(MIDDLEWARE=_BASE_MIDDLEWARE, REST_FRAMEWORK=_TEST_REST_FRAMEWORK)
 class BrandingTests(TestCase):
-    
+
     @override_settings(BRAND_COLORS={})
     def test_default_branding(self):
         resp = self.client.get("/")
