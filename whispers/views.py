@@ -13,6 +13,7 @@ from django.utils.translation import gettext as _
 from django.views.decorators.http import require_GET
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
+from rest_framework.exceptions import ValidationError
 from rest_framework.parsers import FormParser, JSONParser
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -32,6 +33,7 @@ from .serializers import (
     CreateWhisperSerializer,
     ReceiveAccessSerializer,
     RevealWhisperResponseSerializer,
+    RevealWhisperSerializer,
     SubmitWhisperResponseSerializer,
     SubmitWhisperSerializer,
 )
@@ -316,6 +318,7 @@ class CreateWhisperView(APIView):
             ciphertext=d["ciphertext"],
             iv=d["iv"],
             salt=d["salt"],
+            reveal_token_hash=d["reveal_token_hash"],
         )
 
         whisper_url = request.build_absolute_uri(f"/whisper/{whisper.id}")
@@ -401,12 +404,14 @@ class RevealWhisperView(APIView):
             {
                 "whisper": whisper,
                 "reveal_url": request.path,
+                "password_protected": bool(crypto.get("salt")),
+                "legacy_reveal": not crypto.get("reveal_token_hash"),
                 **_receive_access_context(request, whisper),
             },
         )
 
     @extend_schema(
-        request=None,
+        request=RevealWhisperSerializer,
         responses={200: RevealWhisperResponseSerializer},
     )
     def post(self, request, whisper_id):
@@ -451,37 +456,37 @@ class RevealWhisperView(APIView):
                 render_status=403,
             )
 
-        if whisper.mode == "receive":
-            # For receive-mode requests, a pre-submit POST must not increment the
-            # counter (or trigger max_views deletion). Check pending state first.
-            crypto = redis_store.get_crypto(whisper_id)
-            if crypto is None:
-                whisper.delete()
-                return _reveal_error_response(
-                    request,
-                    should_render,
-                    template="whispers/expired.html",
-                    error="This whisper has expired",
-                    api_status=status.HTTP_410_GONE,
-                    render_status=410,
-                )
-            if not crypto.get("ciphertext"):
-                return _reveal_error_response(
-                    request,
-                    should_render,
-                    template="whispers/pending.html",
-                    error="No content has been submitted yet",
-                    api_status=status.HTTP_404_NOT_FOUND,
-                    render_status=200,
-                    context={
-                        "whisper": whisper,
-                        **_receive_access_context(request, whisper),
-                    },
-                )
-
-        crypto, count, exhausted = redis_store.increment_and_reveal(
-            whisper_id, whisper.max_views
-        )
+        serializer = RevealWhisperSerializer(data=request.data)
+        try:
+            serializer.is_valid(raise_exception=True)
+            crypto, count, exhausted = redis_store.increment_and_reveal(
+                whisper_id, whisper.max_views, serializer.validated_data["reveal_token"]
+            )
+        except ValidationError, redis_store.RevealAuthorizationError:
+            return _reveal_error_response(
+                request,
+                should_render,
+                template="whispers/forbidden.html",
+                error=_(
+                    "The reveal authorization is missing or invalid. Use the complete view link."
+                ),
+                api_status=status.HTTP_403_FORBIDDEN,
+                render_status=403,
+                context={"reveal_authorization_denied": True},
+            )
+        except redis_store.RevealPendingError:
+            return _reveal_error_response(
+                request,
+                should_render,
+                template="whispers/pending.html",
+                error="No content has been submitted yet",
+                api_status=status.HTTP_404_NOT_FOUND,
+                render_status=200,
+                context={
+                    "whisper": whisper,
+                    **_receive_access_context(request, whisper),
+                },
+            )
         if crypto is None:
             whisper.delete()
             return _reveal_error_response(
@@ -519,6 +524,7 @@ class RevealWhisperView(APIView):
                 {
                     "burn_after_read": whisper.burn_after_read,
                     "paste_data": paste_data,
+                    "legacy_reveal": not crypto.get("reveal_token_hash"),
                     **(
                         _receive_access_context(request, whisper)
                         if not exhausted
@@ -669,6 +675,7 @@ class CreateRequestView(APIView):
             public_key=d["public_key"],
             wrapped_key=d["wrapped_key"],
             wrapped_key_iv=d["wrapped_key_iv"],
+            reveal_token_hash=d["reveal_token_hash"],
         )
 
         return Response(

@@ -2,7 +2,8 @@
  * psst-secret — Client-side encryption/decryption using Web Crypto API (AES-256-GCM).
  *
  * The encryption key NEVER leaves the browser. It is stored only in the URL
- * fragment (#key), which is not sent to the server per the HTTP spec.
+ * fragment (#key=...&reveal=...), which is not sent to the server per the HTTP spec.
+ * The independent reveal token is sent only in the reveal POST.
  *
  * Encrypted payload format (JSON before encryption):
  *   Text:  { type: "text", content: "..." }
@@ -212,6 +213,29 @@ async function generateKey() {
     );
     const raw = await crypto.subtle.exportKey('raw', key);
     return bufToBase64(raw);
+}
+
+async function generateRevealAuthorization() {
+    const bytes = crypto.getRandomValues(new Uint8Array(32));
+    const hex = value => Array.from(value, b => b.toString(16).padStart(2, '0')).join('');
+    const token = hex(bytes);
+    const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(token));
+    return { token, tokenHash: hex(new Uint8Array(digest)) };
+}
+
+function revealFragment(key, token) {
+    const params = new URLSearchParams({ reveal: token });
+    if (key) params.set('key', key);
+    return '#' + params.toString();
+}
+
+function readRevealFragment(allowLegacy = false) {
+    const raw = window.location.hash.substring(1);
+    if (allowLegacy && /^[A-Za-z0-9+/]+={0,2}$/.test(raw)) {
+        return { key: raw, token: '' };
+    }
+    const params = new URLSearchParams(raw);
+    return { key: params.get('key') || '', token: params.get('reveal') || '' };
 }
 
 /**
@@ -473,6 +497,7 @@ async function handleCreate() {
 
         // 2. Encrypt in-browser (with optional password-derived key)
         const { ciphertext, iv, salt } = await encryptContent(payload, keyB64, password || undefined);
+        const authorization = await generateRevealAuthorization();
 
         // 3. Send only ciphertext to server
         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
@@ -486,6 +511,7 @@ async function handleCreate() {
                 ciphertext,
                 iv,
                 salt,
+                reveal_token_hash: authorization.tokenHash,
                 max_views: maxViews,
                 expiry: expiryEl.value,
                 allowed_cidr: (document.getElementById('allowed-cidr') || {}).value || '',
@@ -502,11 +528,8 @@ async function handleCreate() {
 
         const data = await response.json();
 
-        // 4. Build the share URL with key in fragment (never sent to server)
-        //    If password-protected, key is not needed in URL
-        const shareUrl = password
-            ? data.url
-            : data.url + '#' + keyB64;
+        // Password-protected links carry authorization but no decryption key.
+        const shareUrl = data.url + revealFragment(password ? '' : keyB64, authorization.token);
 
         document.getElementById('result-url').value = shareUrl;
         if (password) {
@@ -580,6 +603,7 @@ async function handleCreateRequest() {
         }
 
         const { seedB64, publicKeyB64, fingerprintB64 } = await generateRequestKeyPair();
+        const authorization = await generateRevealAuthorization();
         let salt = '';
         let wrappedKey = '';
         let wrappedKeyIv = '';
@@ -605,6 +629,7 @@ async function handleCreateRequest() {
             },
             body: JSON.stringify({
                 public_key: publicKeyB64,
+                reveal_token_hash: authorization.tokenHash,
                 salt,
                 wrapped_key: wrappedKey,
                 wrapped_key_iv: wrappedKeyIv,
@@ -628,7 +653,7 @@ async function handleCreateRequest() {
 
         // Submit link gets the public-key fingerprint; view link gets the key seed unless password-wrapped.
         const submitUrl = data.submit_url + '#' + fingerprintB64;
-        const viewUrl = password ? data.view_url : data.view_url + '#' + seedB64;
+        const viewUrl = data.view_url + revealFragment(password ? '' : seedB64, authorization.token);
 
         document.getElementById('submit-url').value = submitUrl;
         document.getElementById('view-url').value = viewUrl;

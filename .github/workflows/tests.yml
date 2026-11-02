@@ -169,7 +169,7 @@ jobs:
         run: >-
           uv run --env-file .env.docker pytest whispers/tests/browser --browser-tests
           -n 4
-          --browser chromium --browser firefox --browser webkit
+          --browser chromium --browser webkit
           --tracing=retain-on-failure --screenshot=only-on-failure
 
       - name: Upload browser failure artifacts

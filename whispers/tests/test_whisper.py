@@ -1,3 +1,4 @@
+import hashlib
 import json
 import re
 import uuid
@@ -17,6 +18,9 @@ from django.utils import timezone
 from whispers import redis_store
 from whispers.models import HourlyWhisperStats, Whisper
 from whispers.stats import prune_stats, record_stats, stats_report
+
+_REVEAL_TOKEN = "ab" * 32
+_REVEAL_TOKEN_HASH = hashlib.sha256(_REVEAL_TOKEN.encode("ascii")).hexdigest()
 
 
 class AnonymousStatsTests(TestCase):
@@ -163,14 +167,21 @@ class AnonymousStatsTests(TestCase):
         with patcher:
             send = self.client.post(
                 "/api/whisper",
-                data=json.dumps({"ciphertext": "ct", "iv": "iv", "expiry": "1d"}),
+                data=json.dumps(
+                    {
+                        "ciphertext": "ct",
+                        "iv": "iv",
+                        "expiry": "1d",
+                        "reveal_token_hash": _REVEAL_TOKEN_HASH,
+                    }
+                ),
                 content_type="application/json",
             )
             self.assertEqual(send.status_code, 200)
             self.assertEqual(
                 self.client.post(
                     f"/whisper/{send.json()['id']}",
-                    data="{}",
+                    data=json.dumps({"reveal_token": _REVEAL_TOKEN}),
                     content_type="application/json",
                 ).status_code,
                 200,
@@ -488,6 +499,93 @@ class RedisStoreTests(TestCase):
         redis_store.store_crypto(wid, 60, ciphertext="c", iv="i")
         self.assertTrue(self.redis.exists(f"whisper:{wid}"))
 
+    def test_reveal_authorization_does_not_change_data_or_counter_on_failure(self):
+        wid = uuid.uuid4()
+        redis_store.store_crypto(
+            wid, 60, ciphertext="ct", reveal_token_hash=_REVEAL_TOKEN_HASH
+        )
+        redis_store.increment_and_reveal(wid, 3, _REVEAL_TOKEN)
+        original = self.redis.get(redis_store._key(wid))
+        ttl = self.redis.pttl(redis_store._key(wid))
+        for token in ("", "cd" * 32, _REVEAL_TOKEN_HASH, None, [], "x" * 1000):
+            with self.subTest(token=token):
+                with self.assertRaises(redis_store.RevealAuthorizationError):
+                    redis_store.increment_and_reveal(wid, 3, token)
+                self.assertEqual(self.redis.get(redis_store._key(wid)), original)
+                self.assertEqual(redis_store.get_view_count(wid), 1)
+        self.assertGreater(self.redis.pttl(redis_store._key(wid)), 0)
+        self.assertLessEqual(self.redis.pttl(redis_store._key(wid)), ttl)
+
+    def test_legacy_reveal_without_token_succeeds(self):
+        for missing_hash in (False, True):
+            with self.subTest(missing_hash=missing_hash):
+                wid = uuid.uuid4()
+                redis_store.store_crypto(wid, 60, ciphertext="ct")
+                if missing_hash:
+                    data = redis_store.get_crypto(wid)
+                    del data["reveal_token_hash"]
+                    self.redis.set(
+                        redis_store._key(wid), json.dumps(data), keepttl=True
+                    )
+                crypto, count, exhausted = redis_store.increment_and_reveal(wid, 1, "")
+                self.assertEqual(crypto["ciphertext"], "ct")
+                self.assertEqual(count, 1)
+                self.assertTrue(exhausted)
+                self.assertIsNone(redis_store.get_crypto(wid))
+                self.assertFalse(self.redis.exists(redis_store._views_key(wid)))
+
+    def test_reveal_missing_or_pending_data_does_not_create_counter(self):
+        wid = uuid.uuid4()
+        self.assertEqual(
+            redis_store.increment_and_reveal(wid, 1, _REVEAL_TOKEN), (None, 0, False)
+        )
+        redis_store.store_crypto(wid, 60, reveal_token_hash=_REVEAL_TOKEN_HASH)
+        with self.assertRaises(redis_store.RevealPendingError):
+            redis_store.increment_and_reveal(wid, 1, _REVEAL_TOKEN)
+        self.assertFalse(self.redis.exists(redis_store._views_key(wid)))
+
+    def test_concurrent_reveals_enforce_limits_and_align_counter_ttl(self):
+        for max_views, token_hash in (
+            (1, _REVEAL_TOKEN_HASH),
+            (3, _REVEAL_TOKEN_HASH),
+            (0, _REVEAL_TOKEN_HASH),
+            (1, ""),
+            (3, ""),
+            (0, ""),
+        ):
+            with self.subTest(max_views=max_views, token_hash=token_hash):
+                wid = uuid.uuid4()
+                redis_store.store_crypto(
+                    wid, 60, ciphertext="ct", reveal_token_hash=token_hash
+                )
+                barrier = Barrier(8)
+
+                def reveal(_):
+                    barrier.wait(timeout=5)
+                    return redis_store.increment_and_reveal(
+                        wid, max_views, _REVEAL_TOKEN if token_hash else ""
+                    )
+
+                with ThreadPoolExecutor(max_workers=8) as executor:
+                    results = list(executor.map(reveal, range(8)))
+                accepted = [result for result in results if result[0] is not None]
+                self.assertEqual(len(accepted), max_views or 8)
+                self.assertEqual(
+                    sorted(result[1] for result in accepted),
+                    list(range(1, (max_views or 8) + 1)),
+                )
+                self.assertEqual(sum(result[2] for result in results), bool(max_views))
+                if max_views:
+                    self.assertIsNone(redis_store.get_crypto(wid))
+                    self.assertFalse(self.redis.exists(redis_store._views_key(wid)))
+                else:
+                    self.assertEqual(redis_store.get_view_count(wid), 8)
+                    self.assertGreater(self.redis.pttl(redis_store._views_key(wid)), 0)
+                    self.assertLessEqual(
+                        self.redis.pttl(redis_store._views_key(wid)),
+                        self.redis.pttl(redis_store._key(wid)) + 100,
+                    )
+
 
 # ---------------------------------------------------------------------------
 # API / View tests
@@ -498,6 +596,8 @@ class RedisStoreTests(TestCase):
 class ApiCreateWhisperTests(TestCase):
 
     def setUp(self):
+        cache.clear()
+        self.addCleanup(cache.clear)
         self.patcher, self.redis = _patch_redis()
         self.patcher.start()
 
@@ -508,7 +608,7 @@ class ApiCreateWhisperTests(TestCase):
     def _post(self, payload):
         return self.client.post(
             "/api/whisper",
-            data=json.dumps(payload),
+            data=json.dumps({"reveal_token_hash": _REVEAL_TOKEN_HASH, **payload}),
             content_type="application/json",
         )
 
@@ -531,6 +631,24 @@ class ApiCreateWhisperTests(TestCase):
         wid = resp.json()["id"]
         data = redis_store.get_crypto(wid)
         self.assertEqual(data["ciphertext"], "ct")
+        self.assertEqual(data["reveal_token_hash"], _REVEAL_TOKEN_HASH)
+        self.assertNotIn(_REVEAL_TOKEN, json.dumps(data))
+
+    def test_creation_requires_valid_reveal_token_hash_in_both_modes(self):
+        for endpoint, payload in (
+            ("/api/whisper", {"ciphertext": "ct", "iv": "iv"}),
+            ("/api/whisper/request", {"public_key": "pk"}),
+        ):
+            for value in (None, "", "abcd", "g" * 64, "a" * 65, " " + "a" * 64):
+                with self.subTest(endpoint=endpoint, value=value):
+                    data = {**payload}
+                    if value is not None:
+                        data["reveal_token_hash"] = value
+                    response = self.client.post(
+                        endpoint, data=json.dumps(data), content_type="application/json"
+                    )
+                    self.assertEqual(response.status_code, 400)
+        self.assertFalse(Whisper.objects.exists())
 
     def test_max_views_flag(self):
         resp = self._post({"ciphertext": "ct", "iv": "iv", "max_views": 1})
@@ -610,6 +728,8 @@ class ApiCreateWhisperTests(TestCase):
 class ViewWhisperTests(TestCase):
 
     def setUp(self):
+        cache.clear()
+        self.addCleanup(cache.clear)
         self.patcher, self.redis = _patch_redis()
         self.patcher.start()
 
@@ -630,6 +750,7 @@ class ViewWhisperTests(TestCase):
             ciphertext="ct",
             iv="iv",
             salt="s",
+            reveal_token_hash=_REVEAL_TOKEN_HASH,
         )
         return w
 
@@ -643,6 +764,62 @@ class ViewWhisperTests(TestCase):
         resp = self.client.get(f"/whisper/{uuid.uuid4()}")
         self.assertEqual(resp.status_code, 404)
         self.assertTemplateUsed(resp, "whispers/burned.html")
+
+    def test_missing_invalid_reveal_authorization_is_forbidden(self):
+        for suffix in ("", "?render=1"):
+            w = self._create_whisper(max_views=1)
+            original = self.redis.get(redis_store._key(w.id))
+            for token in (None, "", "cd" * 32, _REVEAL_TOKEN_HASH, []):
+                with self.subTest(suffix=suffix, token=token):
+                    data = {} if token is None else {"reveal_token": token}
+                    response = self.client.post(
+                        f"/whisper/{w.id}{suffix}",
+                        data=json.dumps(data),
+                        content_type="application/json",
+                    )
+                    self.assertEqual(response.status_code, 403)
+                    self.assertNotContains(response, '"ciphertext":', status_code=403)
+                    self.assertTrue(Whisper.objects.filter(pk=w.pk).exists())
+                    self.assertEqual(self.redis.get(redis_store._key(w.id)), original)
+                    self.assertFalse(self.redis.exists(redis_store._views_key(w.id)))
+
+    def test_legacy_api_and_form_reveal_without_token(self):
+        for mode in ("send", "receive"):
+            for suffix in ("", "?render=1"):
+                with self.subTest(mode=mode, suffix=suffix):
+                    w = self._create_whisper(mode=mode, max_views=1)
+                    crypto = redis_store.get_crypto(w.id)
+                    del crypto["reveal_token_hash"]
+                    self.redis.set(
+                        redis_store._key(w.id), json.dumps(crypto), keepttl=True
+                    )
+                    confirmation = self.client.get(f"/whisper/{w.id}")
+                    self.assertTrue(confirmation.context["legacy_reveal"])
+                    response = self.client.post(
+                        f"/whisper/{w.id}{suffix}",
+                        data="",
+                        content_type="application/x-www-form-urlencoded",
+                    )
+                    self.assertEqual(response.status_code, 200)
+                    if suffix:
+                        self.assertTrue(response.context["legacy_reveal"])
+                        self.assertEqual(
+                            response.context["paste_data"]["view_count"], 1
+                        )
+                    else:
+                        self.assertEqual(response.json()["view_count"], 1)
+                    self.assertFalse(Whisper.objects.filter(pk=w.pk).exists())
+
+    @override_settings(PSST_ENABLE_STATS=True)
+    def test_denied_reveals_do_not_record_statistics(self):
+        w = self._create_whisper()
+        response = self.client.post(
+            f"/whisper/{w.id}",
+            data=json.dumps({"reveal_token": "cd" * 32}),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertFalse(HourlyWhisperStats.objects.exists())
 
     def test_view_expired_whisper(self):
         w = self._create_whisper(expires_at=timezone.now() - timedelta(seconds=1))
@@ -659,7 +836,11 @@ class ViewWhisperTests(TestCase):
         # Whisper still exists — bot GETs don't burn
         self.assertTrue(Whisper.objects.filter(id=w.id).exists())
         # POST to reveal endpoint burns the whisper
-        resp2 = self.client.post(f"/whisper/{w.id}")
+        resp2 = self.client.post(
+            f"/whisper/{w.id}",
+            data=json.dumps({"reveal_token": _REVEAL_TOKEN}),
+            content_type="application/json",
+        )
         self.assertEqual(resp2.status_code, 200)
         data = resp2.json()
         self.assertIn("ciphertext", data)
@@ -674,7 +855,11 @@ class ViewWhisperTests(TestCase):
         self.assertTemplateUsed(revisit, "whispers/burned.html")
         self.assertEqual(revisit["Content-Type"], "text/html; charset=utf-8")
         # Second reveal should 404
-        resp3 = self.client.post(f"/whisper/{w.id}")
+        resp3 = self.client.post(
+            f"/whisper/{w.id}",
+            data=json.dumps({"reveal_token": _REVEAL_TOKEN}),
+            content_type="application/json",
+        )
         self.assertEqual(resp3.status_code, 404)
 
     def test_browser_reveal_renders_large_payload_without_web_storage(self):
@@ -684,7 +869,7 @@ class ViewWhisperTests(TestCase):
 
         resp = self.client.post(
             f"/whisper/{w.id}?render=1",
-            data="",
+            data=f"reveal_token={_REVEAL_TOKEN}",
             content_type="application/x-www-form-urlencoded",
         )
 
@@ -697,7 +882,11 @@ class ViewWhisperTests(TestCase):
     def test_browser_reveal_expired_renders_expired_page(self):
         w = self._create_whisper(expires_at=timezone.now() - timedelta(seconds=1))
 
-        resp = self.client.post(f"/whisper/{w.id}?render=1")
+        resp = self.client.post(
+            f"/whisper/{w.id}?render=1",
+            data=json.dumps({"reveal_token": _REVEAL_TOKEN}),
+            content_type="application/json",
+        )
 
         self.assertEqual(resp.status_code, 410)
         self.assertTemplateUsed(resp, "whispers/expired.html")
@@ -705,7 +894,11 @@ class ViewWhisperTests(TestCase):
     def test_api_reveal_expired_returns_json(self):
         w = self._create_whisper(expires_at=timezone.now() - timedelta(seconds=1))
 
-        resp = self.client.post(f"/whisper/{w.id}")
+        resp = self.client.post(
+            f"/whisper/{w.id}",
+            data=json.dumps({"reveal_token": _REVEAL_TOKEN}),
+            content_type="application/json",
+        )
 
         self.assertEqual(resp.status_code, 410)
         self.assertEqual(resp.json()["error"], "This whisper has expired")
@@ -713,7 +906,11 @@ class ViewWhisperTests(TestCase):
     def test_browser_reveal_requires_auth_redirects_to_login(self):
         w = self._create_whisper(require_auth_view=True)
 
-        resp = self.client.post(f"/whisper/{w.id}?render=1")
+        resp = self.client.post(
+            f"/whisper/{w.id}?render=1",
+            data=json.dumps({"reveal_token": _REVEAL_TOKEN}),
+            content_type="application/json",
+        )
 
         self.assertEqual(resp.status_code, 302)
         self.assertIn(settings.LOGIN_URL, resp.url)
@@ -722,7 +919,11 @@ class ViewWhisperTests(TestCase):
     def test_api_reveal_requires_auth_returns_json(self):
         w = self._create_whisper(require_auth_view=True)
 
-        resp = self.client.post(f"/whisper/{w.id}")
+        resp = self.client.post(
+            f"/whisper/{w.id}",
+            data=json.dumps({"reveal_token": _REVEAL_TOKEN}),
+            content_type="application/json",
+        )
 
         self.assertEqual(resp.status_code, 403)
         self.assertEqual(resp.json()["error"], "Authentication required")
@@ -730,7 +931,11 @@ class ViewWhisperTests(TestCase):
     def test_browser_reveal_ip_denial_renders_forbidden_page(self):
         w = self._create_whisper(allowed_cidr="192.168.1.0/24")
 
-        resp = self.client.post(f"/whisper/{w.id}?render=1")
+        resp = self.client.post(
+            f"/whisper/{w.id}?render=1",
+            data=json.dumps({"reveal_token": _REVEAL_TOKEN}),
+            content_type="application/json",
+        )
 
         self.assertEqual(resp.status_code, 403)
         self.assertTemplateUsed(resp, "whispers/forbidden.html")
@@ -738,7 +943,11 @@ class ViewWhisperTests(TestCase):
     def test_api_reveal_ip_denial_returns_json(self):
         w = self._create_whisper(allowed_cidr="192.168.1.0/24")
 
-        resp = self.client.post(f"/whisper/{w.id}")
+        resp = self.client.post(
+            f"/whisper/{w.id}",
+            data=json.dumps({"reveal_token": _REVEAL_TOKEN}),
+            content_type="application/json",
+        )
 
         self.assertEqual(resp.status_code, 403)
         self.assertEqual(resp.json()["error"], "Access denied from your IP address")
@@ -747,7 +956,11 @@ class ViewWhisperTests(TestCase):
         w = self._create_whisper()
         redis_store.delete_crypto(w.id)
 
-        resp = self.client.post(f"/whisper/{w.id}?render=1")
+        resp = self.client.post(
+            f"/whisper/{w.id}?render=1",
+            data=json.dumps({"reveal_token": _REVEAL_TOKEN}),
+            content_type="application/json",
+        )
 
         self.assertEqual(resp.status_code, 410)
         self.assertTemplateUsed(resp, "whispers/expired.html")
@@ -757,7 +970,11 @@ class ViewWhisperTests(TestCase):
         w = self._create_whisper()
         redis_store.delete_crypto(w.id)
 
-        resp = self.client.post(f"/whisper/{w.id}")
+        resp = self.client.post(
+            f"/whisper/{w.id}",
+            data=json.dumps({"reveal_token": _REVEAL_TOKEN}),
+            content_type="application/json",
+        )
 
         self.assertEqual(resp.status_code, 410)
         self.assertEqual(resp.json()["error"], "This whisper has expired")
@@ -766,7 +983,11 @@ class ViewWhisperTests(TestCase):
         w = self._create_whisper(max_views=3)
         # First two reveals succeed, whisper survives.
         for expected_count in (1, 2):
-            resp = self.client.post(f"/whisper/{w.id}")
+            resp = self.client.post(
+                f"/whisper/{w.id}",
+                data=json.dumps({"reveal_token": _REVEAL_TOKEN}),
+                content_type="application/json",
+            )
             self.assertEqual(resp.status_code, 200)
             data = resp.json()
             self.assertEqual(data["view_count"], expected_count)
@@ -774,19 +995,31 @@ class ViewWhisperTests(TestCase):
             self.assertEqual(data["remaining_views"], 3 - expected_count)
             self.assertTrue(Whisper.objects.filter(id=w.id).exists())
         # Third reveal is the final one — still returns content, then destroys.
-        resp = self.client.post(f"/whisper/{w.id}")
+        resp = self.client.post(
+            f"/whisper/{w.id}",
+            data=json.dumps({"reveal_token": _REVEAL_TOKEN}),
+            content_type="application/json",
+        )
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.json()["view_count"], 3)
         self.assertEqual(resp.json()["remaining_views"], 0)
         self.assertFalse(Whisper.objects.filter(id=w.id).exists())
         # Fourth reveal: 404 (whisper gone).
-        resp = self.client.post(f"/whisper/{w.id}")
+        resp = self.client.post(
+            f"/whisper/{w.id}",
+            data=json.dumps({"reveal_token": _REVEAL_TOKEN}),
+            content_type="application/json",
+        )
         self.assertEqual(resp.status_code, 404)
 
     def test_max_views_unlimited_does_not_destroy(self):
         w = self._create_whisper(max_views=0)
         for expected_count in range(1, 5):
-            resp = self.client.post(f"/whisper/{w.id}")
+            resp = self.client.post(
+                f"/whisper/{w.id}",
+                data=json.dumps({"reveal_token": _REVEAL_TOKEN}),
+                content_type="application/json",
+            )
             self.assertEqual(resp.status_code, 200)
             data = resp.json()
             self.assertEqual(data["view_count"], expected_count)
@@ -821,6 +1054,8 @@ class ViewWhisperTests(TestCase):
 class ApiCreateRequestTests(TestCase):
 
     def setUp(self):
+        cache.clear()
+        self.addCleanup(cache.clear)
         self.patcher, self.redis = _patch_redis()
         self.patcher.start()
 
@@ -831,7 +1066,9 @@ class ApiCreateRequestTests(TestCase):
     def _post(self, payload):
         return self.client.post(
             "/api/whisper/request",
-            data=json.dumps({"public_key": "pk", **payload}),
+            data=json.dumps(
+                {"public_key": "pk", "reveal_token_hash": _REVEAL_TOKEN_HASH, **payload}
+            ),
             content_type="application/json",
         )
 
@@ -887,6 +1124,8 @@ class ApiCreateRequestTests(TestCase):
 class SubmitWhisperFlowTests(TestCase):
 
     def setUp(self):
+        cache.clear()
+        self.addCleanup(cache.clear)
         self.patcher, self.redis = _patch_redis()
         self.patcher.start()
 
@@ -903,7 +1142,7 @@ class SubmitWhisperFlowTests(TestCase):
         }
         defaults.update(kwargs)
         w = Whisper.objects.create(**defaults)
-        redis_store.store_crypto(w.id, 86400)
+        redis_store.store_crypto(w.id, 86400, reveal_token_hash=_REVEAL_TOKEN_HASH)
         return w
 
     def _submit(self, w, payload=None):
@@ -970,7 +1209,12 @@ class SubmitWhisperFlowTests(TestCase):
         self._submit(w)
         self.assertEqual(self.client.get(f"/whisper/{w.submit_token}").status_code, 404)
         self.assertEqual(
-            self.client.post(f"/whisper/{w.submit_token}").status_code, 404
+            self.client.post(
+                f"/whisper/{w.submit_token}",
+                data=json.dumps({"reveal_token": _REVEAL_TOKEN}),
+                content_type="application/json",
+            ).status_code,
+            404,
         )
         self.assertEqual(redis_store.get_crypto(w.id)["ciphertext"], "ct")
 
@@ -1007,7 +1251,11 @@ class SubmitWhisperFlowTests(TestCase):
 
     def test_post_reveal_pending_request_does_not_delete_payload(self):
         w = self._create_request(max_views=1)
-        resp = self.client.post(f"/whisper/{w.id}")
+        resp = self.client.post(
+            f"/whisper/{w.id}",
+            data=json.dumps({"reveal_token": _REVEAL_TOKEN}),
+            content_type="application/json",
+        )
         self.assertEqual(resp.status_code, 404)
 
         crypto = redis_store.get_crypto(w.id)
@@ -1017,7 +1265,11 @@ class SubmitWhisperFlowTests(TestCase):
         submit_resp = self._submit(w)
         self.assertEqual(submit_resp.status_code, 200)
 
-        reveal_resp = self.client.post(f"/whisper/{w.id}")
+        reveal_resp = self.client.post(
+            f"/whisper/{w.id}",
+            data=json.dumps({"reveal_token": _REVEAL_TOKEN}),
+            content_type="application/json",
+        )
         self.assertEqual(reveal_resp.status_code, 200)
         self.assertEqual(reveal_resp.json()["ciphertext"], "ct")
         self.assertEqual(reveal_resp.json()["encapsulated_key"], "epk")
@@ -1025,7 +1277,11 @@ class SubmitWhisperFlowTests(TestCase):
     def test_browser_reveal_pending_request_renders_pending_page(self):
         w = self._create_request(max_views=1)
 
-        resp = self.client.post(f"/whisper/{w.id}?render=1")
+        resp = self.client.post(
+            f"/whisper/{w.id}?render=1",
+            data=json.dumps({"reveal_token": _REVEAL_TOKEN}),
+            content_type="application/json",
+        )
 
         self.assertEqual(resp.status_code, 200)
         self.assertTemplateUsed(resp, "whispers/pending.html")
@@ -1043,7 +1299,11 @@ class SubmitWhisperFlowTests(TestCase):
     def test_non_burn_reveal_keeps_whisper(self):
         w = self._create_request(max_views=0)
         redis_store.update_crypto(w.id, ciphertext="ct", iv="iv")
-        resp = self.client.post(f"/whisper/{w.id}")
+        resp = self.client.post(
+            f"/whisper/{w.id}",
+            data=json.dumps({"reveal_token": _REVEAL_TOKEN}),
+            content_type="application/json",
+        )
         self.assertEqual(resp.status_code, 200)
         data = resp.json()
         self.assertIn("ciphertext", data)
@@ -1085,7 +1345,14 @@ class ReceiveAccessTests(TestCase):
     def _create(self, **options):
         return self.client.post(
             "/api/whisper/request",
-            data=json.dumps({"public_key": "pk", "max_views": 0, **options}),
+            data=json.dumps(
+                {
+                    "public_key": "pk",
+                    "max_views": 0,
+                    "reveal_token_hash": _REVEAL_TOKEN_HASH,
+                    **options,
+                }
+            ),
             content_type="application/json",
         )
 
@@ -1185,19 +1452,38 @@ class ReceiveAccessTests(TestCase):
             self.assertEqual(self.client.get(f"/whisper/{whisper.id}").status_code, 403)
             for suffix in ("", "?render=1"):
                 self.assertEqual(
-                    self.client.post(f"/whisper/{whisper.id}{suffix}").status_code, 403
+                    self.client.post(
+                        f"/whisper/{whisper.id}{suffix}",
+                        data=json.dumps({"reveal_token": _REVEAL_TOKEN}),
+                        content_type="application/json",
+                    ).status_code,
+                    403,
                 )
             get_crypto.assert_not_called()
             reveal.assert_not_called()
         self.client.force_login(self.creator)
-        self.assertEqual(self.client.post(f"/whisper/{whisper.id}").status_code, 200)
+        self.assertEqual(
+            self.client.post(
+                f"/whisper/{whisper.id}",
+                data=json.dumps({"reveal_token": _REVEAL_TOKEN}),
+                content_type="application/json",
+            ).status_code,
+            200,
+        )
 
     def test_anonymous_cannot_create_or_reveal_restricted(self):
         whisper = self._restricted()
         self.client.logout()
         self.assertEqual(self._create(creator_only=True).status_code, 403)
         self.assertEqual(self.client.get(f"/whisper/{whisper.id}").status_code, 302)
-        self.assertEqual(self.client.post(f"/whisper/{whisper.id}").status_code, 403)
+        self.assertEqual(
+            self.client.post(
+                f"/whisper/{whisper.id}",
+                data=json.dumps({"reveal_token": _REVEAL_TOKEN}),
+                content_type="application/json",
+            ).status_code,
+            403,
+        )
 
     @override_settings(PSST_ENABLE_RECEIVE_ACCESS=False)
     def test_disabled_feature_rejects_opt_in(self):
@@ -1210,7 +1496,14 @@ class ReceiveAccessTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["allowed_reader_emails"], [self.reader.email])
         self.client.force_login(self.reader)
-        self.assertEqual(self.client.post(f"/whisper/{whisper.id}").status_code, 200)
+        self.assertEqual(
+            self.client.post(
+                f"/whisper/{whisper.id}",
+                data=json.dumps({"reveal_token": _REVEAL_TOKEN}),
+                content_type="application/json",
+            ).status_code,
+            200,
+        )
         self.assertEqual(self._update(whisper, creator_only=False).status_code, 404)
         self.assertEqual(
             self.client.get(f"/api/whisper/{whisper.id}/access").status_code, 404
@@ -1220,7 +1513,14 @@ class ReceiveAccessTests(TestCase):
             self._update(whisper, allowed_reader_emails=[]).status_code, 200
         )
         self.client.force_login(self.reader)
-        self.assertEqual(self.client.post(f"/whisper/{whisper.id}").status_code, 403)
+        self.assertEqual(
+            self.client.post(
+                f"/whisper/{whisper.id}",
+                data=json.dumps({"reveal_token": _REVEAL_TOKEN}),
+                content_type="application/json",
+            ).status_code,
+            403,
+        )
 
     def test_emails_validated_before_state_changes(self):
         whisper = self._restricted()
@@ -1313,7 +1613,11 @@ class ReceiveAccessTests(TestCase):
             self.client.get(f"/whisper/{whisper.id}"), 'id="receive-access-form"'
         )
         self.assertContains(
-            self.client.post(f"/whisper/{whisper.id}?render=1"),
+            self.client.post(
+                f"/whisper/{whisper.id}?render=1",
+                data=json.dumps({"reveal_token": _REVEAL_TOKEN}),
+                content_type="application/json",
+            ),
             'id="receive-access-form"',
         )
         self._update(whisper, allowed_reader_emails=[self.reader.email])
@@ -1327,7 +1631,11 @@ class ReceiveAccessTests(TestCase):
         whisper = Whisper.objects.get(pk=response.json()["id"])
         redis_store.update_crypto(whisper.id, ciphertext="ct", iv="iv")
         self.assertNotContains(
-            self.client.post(f"/whisper/{whisper.id}?render=1"),
+            self.client.post(
+                f"/whisper/{whisper.id}?render=1",
+                data=json.dumps({"reveal_token": _REVEAL_TOKEN}),
+                content_type="application/json",
+            ),
             'id="receive-access-form"',
         )
 
@@ -1337,7 +1645,14 @@ class ReceiveAccessTests(TestCase):
             mode="receive", creator=self.creator, creator_only=True
         )
         self.client.force_login(self.other)
-        self.assertEqual(self.client.post(f"/whisper/{whisper.id}").status_code, 403)
+        self.assertEqual(
+            self.client.post(
+                f"/whisper/{whisper.id}",
+                data=json.dumps({"reveal_token": _REVEAL_TOKEN}),
+                content_type="application/json",
+            ).status_code,
+            403,
+        )
 
     def test_creator_controls_render_only_for_signed_in_enabled_feature(self):
         self.assertContains(self.client.get("/"), 'id="creator-only"')

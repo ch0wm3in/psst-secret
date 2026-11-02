@@ -1,11 +1,12 @@
 import base64
+import hashlib
 import json
 from datetime import timedelta
 from pathlib import Path
-from urllib.parse import urlsplit
+from urllib.parse import parse_qs, urlencode, urlsplit
 
 import pytest
-from django.utils import timezone
+from django.utils import timezone, translation
 from playwright.sync_api import expect
 
 from whispers import redis_store
@@ -32,6 +33,83 @@ def _submit(page, url, content="A reply encrypted in the sender's browser", file
     expect(page.locator("#submit-success")).to_be_visible()
 
 
+@pytest.mark.parametrize("kind", ["send", "receive"])
+@pytest.mark.parametrize("password", ["", PASSWORD])
+@pytest.mark.parametrize("max_views", [1, 3, 0])
+def test_legacy_view_links_survive_upgrade(
+    page, create_whisper, kind, password, max_views
+):
+    result = create_whisper(kind=kind, password=password, max_views=max_views)
+    if kind == "receive":
+        submit_url, url = result
+    else:
+        url = result
+    whisper = Whisper.objects.get()
+    crypto = redis_store.get_crypto(whisper.id)
+    del crypto["reveal_token_hash"]
+    redis_store.get_client().set(
+        redis_store._key(whisper.id), json.dumps(crypto), keepttl=True
+    )
+    if kind == "receive":
+        page.goto(url)
+        expect(page.locator("h1")).to_contain_text("Waiting")
+        _submit(page, submit_url)
+    key = parse_qs(urlsplit(url).fragment).get("key", [""])[0]
+    legacy_url = url.split("#")[0] + ("#" + key if key else "")
+    for count in range(1, (max_views or 2) + 1):
+        _reveal(page, legacy_url)
+        if password:
+            page.locator("#view-password").fill(password)
+            page.get_by_role("button", name="Decrypt", exact=True).click()
+        expect(page.locator("#decrypted-content")).to_have_text(
+            "A reply encrypted in the sender's browser"
+            if kind == "receive"
+            else "A private browser-only whisper"
+        )
+        expect(page.locator("#view-count-banner-text")).to_contain_text(str(count))
+    assert Whisper.objects.exists() == (max_views == 0)
+
+
+def test_legacy_keyless_browser_reveal_makes_no_post(page, create_whisper):
+    url = create_whisper()
+    whisper = Whisper.objects.get()
+    redis_store.update_crypto(whisper.id, reveal_token_hash="")
+    page.goto(url.split("#")[0])
+    requests = []
+    page.on(
+        "request",
+        lambda request: requests.append(request) if request.method == "POST" else None,
+    )
+    page.locator("#reveal-btn").click()
+    expect(page.locator("#reveal-error")).to_contain_text("No decryption key")
+    assert not requests
+    assert redis_store.get_view_count(whisper.id) == 0
+
+
+@pytest.mark.parametrize("kind", ["send", "receive"])
+@pytest.mark.parametrize("password", ["", PASSWORD])
+def test_protected_whisper_cannot_use_legacy_link(page, create_whisper, kind, password):
+    result = create_whisper(kind=kind, password=password)
+    if kind == "receive":
+        submit_url, url = result
+        _submit(page, submit_url)
+    else:
+        url = result
+    whisper = Whisper.objects.get()
+    key = parse_qs(urlsplit(url).fragment).get("key", [""])[0]
+    page.goto(url.split("#")[0] + ("#" + key if key else ""))
+    requests = []
+    page.on(
+        "request",
+        lambda request: requests.append(request) if request.method == "POST" else None,
+    )
+    page.locator("#reveal-btn").click()
+    expect(page.locator("#reveal-error")).to_be_visible()
+    assert not requests
+    assert redis_store.get_view_count(whisper.id) == 0
+    assert redis_store.get_crypto(whisper.id)["reveal_token_hash"]
+
+
 def test_text_round_trip_and_burn(page, app_url):
     page.goto(app_url)
     page.locator("#whisper").fill("A private browser-only whisper")
@@ -47,6 +125,74 @@ def test_text_round_trip_and_burn(page, app_url):
     page.goto(url)
     expect(page.locator("#reveal-btn")).to_have_count(0)
     expect(page.locator("h1")).to_contain_text("burned")
+
+
+@pytest.mark.parametrize("language", ["en", "da", "cs", "sv", "fil"])
+@pytest.mark.parametrize("kind", ["send", "receive"])
+def test_localized_reveal_validates_fragment_and_submits_token(
+    page, app_url, create_whisper, language, kind
+):
+    result = create_whisper(kind=kind)
+    if kind == "receive":
+        submit_url, url = result
+        _submit(page, submit_url)
+    else:
+        url = result
+    page.context.add_cookies(
+        [{"name": "django_language", "value": language, "url": app_url}]
+    )
+    errors = []
+    posts = []
+    page.on("pageerror", lambda error: errors.append(str(error)))
+    page.on(
+        "request",
+        lambda request: posts.append(request) if request.method == "POST" else None,
+    )
+    fragment = parse_qs(urlsplit(url).fragment)
+    bare_url = url.split("#")[0]
+    for incomplete, message in (
+        (bare_url, "No decryption key found in URL. The link may be incomplete."),
+        (
+            bare_url + "#" + urlencode({"key": fragment["key"][0]}),
+            "The reveal authorization is missing or invalid. Use the complete view link.",
+        ),
+    ):
+        page.goto(incomplete)
+        expect(page.locator("html")).to_have_attribute("lang", language)
+        assert not errors
+        page.locator("#reveal-btn").click()
+        with translation.override(language):
+            expected = translation.gettext(message)
+        expect(page.locator("#reveal-error")).to_have_text(expected)
+        assert not posts
+        assert redis_store.get_view_count(Whisper.objects.get().id) == 0
+    _reveal(page, url)
+    expect(page.locator("#decrypted-content")).to_have_text(
+        "A reply encrypted in the sender's browser"
+        if kind == "receive"
+        else "A private browser-only whisper"
+    )
+    assert len(posts) == 1
+    assert parse_qs(posts[0].post_data)["reveal_token"] == fragment["reveal"]
+    assert not errors
+    assert not Whisper.objects.exists()
+
+
+def test_reveal_handler_failure_does_not_submit_form(page, create_whisper):
+    url = create_whisper()
+    page.route("**/static/js/crypto.min.js", lambda route: route.abort())
+    page.goto(url)
+    posts = []
+    page.on(
+        "request",
+        lambda request: posts.append(request) if request.method == "POST" else None,
+    )
+    with page.expect_event("pageerror") as error:
+        page.locator("#reveal-btn").click()
+    assert "readRevealFragment" in str(error.value)
+    assert not posts
+    assert redis_store.get_view_count(Whisper.objects.get().id) == 0
+    expect(page.locator("#reveal-btn")).to_be_enabled()
 
 
 @pytest.mark.parametrize("kind", ["send", "receive"])
@@ -184,7 +330,9 @@ def test_password_round_trip_and_wrong_password(page, create_whisper, kind):
     else:
         url = result
         plaintext = "A private browser-only whisper"
-    assert not urlsplit(url).fragment
+    fragment = parse_qs(urlsplit(url).fragment)
+    assert "key" not in fragment
+    assert len(fragment["reveal"][0]) == 64
     _reveal(page, url)
     expect(page.locator("#password-prompt")).to_be_visible()
     page.locator("#view-password").fill("Incorrect-password-42!")
@@ -325,10 +473,114 @@ def test_password_strength_gate(page, app_url):
 @pytest.mark.parametrize("bad_fragment", ["", "AAAA"])
 def test_missing_or_corrupt_decryption_key(page, create_whisper, bad_fragment):
     url = create_whisper(max_views=0)
-    _reveal(page, url.split("#")[0] + ("#" + bad_fragment if bad_fragment else ""))
-    expect(page.locator("#error-message")).to_contain_text(
-        "Decryption failed" if bad_fragment else "No decryption key"
+    fragment = parse_qs(urlsplit(url).fragment)
+    requests = []
+    page.on(
+        "request",
+        lambda request: requests.append(request) if request.method == "POST" else None,
     )
+    _reveal(
+        page,
+        url.split("#")[0]
+        + "#"
+        + urlencode(
+            {
+                "key": bad_fragment,
+                "reveal": fragment["reveal"][0],
+            }
+        ),
+    )
+    expect(
+        page.locator("#error-message" if bad_fragment else "#reveal-error")
+    ).to_contain_text("Decryption failed" if bad_fragment else "No decryption key")
+    assert redis_store.get_view_count(Whisper.objects.get().id) == bool(bad_fragment)
+    assert len(requests) == bool(bad_fragment)
+
+
+@pytest.mark.parametrize("kind", ["send", "receive"])
+@pytest.mark.parametrize("password", ["", PASSWORD])
+def test_uuid_only_reveal_cannot_consume_a_view(page, create_whisper, kind, password):
+    result = create_whisper(kind=kind, password=password)
+    if kind == "receive":
+        submit_url, url = result
+        _submit(page, submit_url)
+    else:
+        url = result
+    whisper = Whisper.objects.get()
+    bare_url = url.split("#")[0]
+    original = redis_store.get_crypto(whisper.id)
+    for data in (
+        {},
+        {"reveal_token": "cd" * 32},
+        {
+            "reveal_token": original["reveal_token_hash"],
+        },
+    ):
+        response = page.request.post(bare_url, data=data)
+        assert response.status == 403
+        assert "ciphertext" not in response.json()
+        assert redis_store.get_crypto(whisper.id) == original
+        assert redis_store.get_view_count(whisper.id) == 0
+    page.goto(bare_url)
+    requests = []
+    page.on(
+        "request",
+        lambda request: requests.append(request) if request.method == "POST" else None,
+    )
+    page.locator("#reveal-btn").click()
+    expect(page.locator("#reveal-error")).to_be_visible()
+    expect(page.locator("#reveal-btn")).to_be_enabled()
+    assert not requests
+    assert redis_store.get_crypto(whisper.id) == original
+    _reveal(page, url)
+    if password:
+        page.locator("#view-password").fill(password)
+        page.get_by_role("button", name="Decrypt", exact=True).click()
+    expect(page.locator("#decrypted-content")).to_be_visible()
+    assert not Whisper.objects.exists()
+
+
+@pytest.mark.parametrize("kind", ["send", "receive"])
+@pytest.mark.parametrize("authorization", ["", "invalid", "cd" * 32])
+def test_fragment_authorization_is_required(page, create_whisper, kind, authorization):
+    result = create_whisper(kind=kind)
+    if kind == "receive":
+        submit_url, url = result
+        _submit(page, submit_url)
+    else:
+        url = result
+    fragment = parse_qs(urlsplit(url).fragment)
+    invalid_url = (
+        url.split("#")[0]
+        + "#"
+        + urlencode(
+            {
+                "key": fragment["key"][0],
+                "reveal": authorization,
+            }
+        )
+    )
+    page.goto(invalid_url)
+    requests = []
+    page.on(
+        "request",
+        lambda request: requests.append(request) if request.method == "POST" else None,
+    )
+    page.locator("#reveal-btn").click()
+    if len(authorization) == 64:
+        expect(page.locator("h1")).to_have_text("Access denied")
+        expect(page.locator("main")).to_contain_text(
+            "reveal authorization is missing or invalid"
+        )
+        assert len(requests) == 1
+    else:
+        expect(page.locator("#reveal-error")).to_contain_text(
+            "reveal authorization is missing or invalid"
+        )
+        assert not requests
+    whisper = Whisper.objects.get()
+    assert redis_store.get_view_count(whisper.id) == 0
+    assert redis_store.get_crypto(whisper.id)["ciphertext"]
 
 
 @pytest.mark.parametrize("bad_fragment", ["", "AAAA"])
@@ -363,13 +615,17 @@ def test_plaintext_and_secret_keys_never_leave_browser(
         _submit(page, submit_url, content=plaintext)
     else:
         url = result
-    key = urlsplit(url).fragment or password
+    fragment = parse_qs(urlsplit(url).fragment)
+    key = fragment.get("key", [password])[0]
+    token = fragment["reveal"][0]
     assert key
     whisper = Whisper.objects.get()
     stored = json.dumps(redis_store.get_crypto(whisper.id))
     metadata = json.dumps(Whisper.objects.values().get(), default=str)
     assert plaintext not in stored + metadata
     assert key not in stored + metadata
+    assert token not in stored + metadata
+    assert hashlib.sha256(token.encode("ascii")).hexdigest() in stored
     _reveal(page, url)
     if password:
         page.locator("#view-password").fill(password)
@@ -379,6 +635,13 @@ def test_plaintext_and_secret_keys_never_leave_browser(
         assert not urlsplit(request_url).fragment
         assert plaintext not in body + request_url
         assert key not in body + request_url
+        assert token not in request_url
+        if token in body:
+            assert urlsplit(request_url).path == urlsplit(url).path
+            assert parse_qs(body) == {
+                "csrfmiddlewaretoken": parse_qs(body)["csrfmiddlewaretoken"],
+                "reveal_token": [token],
+            }
     assert page.evaluate("[localStorage.length, sessionStorage.length]") == [0, 0]
 
 

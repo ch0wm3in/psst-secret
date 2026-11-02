@@ -10,5 +10,6 @@ our server never sees. The sender must share the full link — or just the
 fragment — with you through a separate, secure channel.
 
 Without the decryption key you will not be able to read the whisper.
+The notification link also omits the reveal authorization. Use the complete view link, including its fragment, even when a password is set.
 
 If you did not expect this message, you can safely ignore it.

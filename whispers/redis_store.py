@@ -1,5 +1,8 @@
+import hashlib
+import hmac
 import json
 import logging
+import re
 
 import redis
 from django.conf import settings
@@ -7,6 +10,14 @@ from django.conf import settings
 logger = logging.getLogger(__name__)
 
 _client = None
+
+
+class RevealAuthorizationError(Exception):
+    """The reveal capability is missing or invalid."""
+
+
+class RevealPendingError(Exception):
+    """The receive request has not been submitted yet."""
 
 
 def get_client():
@@ -35,6 +46,7 @@ def store_crypto(
     wrapped_key="",
     wrapped_key_iv="",
     encapsulated_key="",
+    reveal_token_hash="",
 ):
     """Store crypto fields in Redis with a TTL (seconds)."""
     payload = json.dumps(
@@ -46,6 +58,7 @@ def store_crypto(
             "wrapped_key": wrapped_key,
             "wrapped_key_iv": wrapped_key_iv,
             "encapsulated_key": encapsulated_key,
+            "reveal_token_hash": reveal_token_hash,
         }
     )
     get_client().set(_key(whisper_id), payload, ex=int(ttl_seconds))
@@ -147,8 +160,8 @@ def get_view_count(whisper_id):
         return 0
 
 
-def increment_and_reveal(whisper_id, max_views):
-    """Atomically increment the view counter and fetch the ciphertext.
+def increment_and_reveal(whisper_id, max_views, reveal_token):
+    """Atomically authorize a reveal, consume a view, and fetch the ciphertext.
 
     Returns a tuple ``(crypto_dict_or_None, count, exhausted)``:
       * ``crypto_dict_or_None`` — the crypto payload, or ``None`` if the blob
@@ -160,33 +173,43 @@ def increment_and_reveal(whisper_id, max_views):
     ``max_views == 0`` means "unlimited" — the counter still increments for
     visibility, but the data is never destroyed by this function.
     """
+    token_hash = (
+        hashlib.sha256(reveal_token.encode("ascii")).hexdigest()
+        if isinstance(reveal_token, str) and re.fullmatch(r"[0-9a-f]{64}", reveal_token)
+        else None
+    )
     client = get_client()
     key = _key(whisper_id)
     counter_key = _views_key(whisper_id)
 
-    # Atomic INCR; redis creates the key at 0 if absent.
-    count = client.incr(counter_key)
-
-    # On first view, align the counter TTL with the data TTL so it doesn't
-    # outlive the whisper.
-    if count == 1:
-        ttl = client.ttl(key)
-        if ttl and ttl > 0:
-            client.expire(counter_key, ttl)
-
-    exhausted = max_views > 0 and count >= max_views
-    if exhausted:
-        # Atomically read and delete the data + counter.
-        with client.pipeline() as pipe:
-            pipe.get(key)
-            pipe.delete(key)
-            pipe.delete(counter_key)
-            raw = pipe.execute()[0]
-        if raw is None:
-            return None, count, True
-        return json.loads(raw), count, True
-
-    raw = client.get(key)
-    if raw is None:
-        return None, count, False
-    return json.loads(raw), count, False
+    with client.pipeline() as pipe:
+        while True:
+            try:
+                pipe.watch(key, counter_key)
+                raw = pipe.get(key)
+                if raw is None:
+                    return None, 0, False
+                data = json.loads(raw)
+                expected_hash = data.get("reveal_token_hash", "")
+                # Only pre-token payloads may reveal without authorization.
+                if expected_hash and (
+                    token_hash is None
+                    or not hmac.compare_digest(expected_hash, token_hash)
+                ):
+                    raise RevealAuthorizationError
+                if not data.get("ciphertext"):
+                    raise RevealPendingError
+                ttl = pipe.pttl(key)
+                if ttl <= 0:
+                    return None, 0, False
+                count = int(pipe.get(counter_key) or 0) + 1
+                exhausted = max_views > 0 and count >= max_views
+                pipe.multi()
+                if exhausted:
+                    pipe.delete(key, counter_key)
+                else:
+                    pipe.set(counter_key, count, px=ttl)
+                pipe.execute()
+                return data, count, exhausted
+            except redis.WatchError:
+                continue

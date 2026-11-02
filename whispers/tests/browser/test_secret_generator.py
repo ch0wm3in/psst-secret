@@ -1,6 +1,6 @@
 import math
 import re
-from urllib.parse import urlsplit
+from urllib.parse import parse_qs, urlsplit
 
 import pytest
 from playwright.sync_api import expect
@@ -256,7 +256,9 @@ def test_password_field_generator(page, app_url, kind):
         page.locator("#encrypt-btn").click()
         expect(page.locator("#result")).to_be_visible()
         url = page.locator("#result-url").input_value()
-    assert not urlsplit(url).fragment
+    fragment = parse_qs(urlsplit(url).fragment)
+    assert "key" not in fragment
+    assert len(fragment["reveal"][0]) == 64
     _reveal(page, url)
     page.locator("#view-password").fill(value)
     page.get_by_role("button", name="Decrypt", exact=True).click()

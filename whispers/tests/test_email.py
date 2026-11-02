@@ -16,6 +16,7 @@ from django.utils import timezone
 from whispers import redis_store
 from whispers.email import send_whisper_created_email, send_whisper_submitted_email
 from whispers.models import Whisper
+from whispers.tests.test_whisper import _REVEAL_TOKEN_HASH
 
 # ---------------------------------------------------------------------------
 # Helpers (mirror test_whisper.py setup)
@@ -78,7 +79,7 @@ class SendModeEmailTests(TestCase):
     def _post(self, payload):
         return self.client.post(
             "/api/whisper",
-            data=json.dumps(payload),
+            data=json.dumps({"reveal_token_hash": _REVEAL_TOKEN_HASH, **payload}),
             content_type="application/json",
         )
 
@@ -88,6 +89,7 @@ class SendModeEmailTests(TestCase):
                 "ciphertext": "ct",
                 "iv": "iv",
                 "notify_email": "recipient@example.com",
+                "reveal_token_hash": _REVEAL_TOKEN_HASH,
             }
         )
         self.assertEqual(resp.status_code, 200)
@@ -192,6 +194,7 @@ class SendModeEmailDisabledTests(TestCase):
                     "ciphertext": "ct",
                     "iv": "iv",
                     "notify_email": "recipient@example.com",
+                    "reveal_token_hash": _REVEAL_TOKEN_HASH,
                 }
             ),
             content_type="application/json",
@@ -242,7 +245,11 @@ class ReceiveModeEmailTests(TestCase):
         resp = self.client.post(
             "/api/whisper/request",
             data=json.dumps(
-                {"public_key": "pk", "notify_email": "creator@example.com"}
+                {
+                    "public_key": "pk",
+                    "notify_email": "creator@example.com",
+                    "reveal_token_hash": _REVEAL_TOKEN_HASH,
+                }
             ),
             content_type="application/json",
         )
@@ -274,7 +281,11 @@ class ReceiveModeEmailTests(TestCase):
         resp = self.client.post(
             "/api/whisper/request",
             data=json.dumps(
-                {"public_key": "pk", "notify_email": "creator@example.com"}
+                {
+                    "public_key": "pk",
+                    "notify_email": "creator@example.com",
+                    "reveal_token_hash": _REVEAL_TOKEN_HASH,
+                }
             ),
             content_type="application/json",
         )
