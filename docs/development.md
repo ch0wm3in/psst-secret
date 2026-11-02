@@ -135,7 +135,7 @@ No running app or Redis is needed, and they must never target a deployed instanc
 playwright install chromium webkit   # once; on Linux also: playwright install-deps
 npm ci --prefix theme/static_src
 python manage.py tailwind build              # after changing JavaScript or templates
-pytest whispers/tests/browser --browser-tests -n 4 --browser chromium --browser firefox # Firefox is left out on purpose, since it's too unstable to run atm.
+pytest whispers/tests/browser --browser-tests -n 4 --browser chromium --browser webkit # Firefox is left out on purpose, since it's too unstable to run atm.
 ```
 
 - Debug with `-n 0 --headed` or `-k <test_name>`.
