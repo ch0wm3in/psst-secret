@@ -18,7 +18,16 @@ class CIDRField(serializers.CharField):
         return value
 
 
-class CreateWhisperSerializer(serializers.Serializer):
+class RevealProtectedSerializer(serializers.Serializer):
+    reveal_token_hash = serializers.RegexField(
+        regex=r"\A[0-9a-f]{64}\Z",
+        max_length=64,
+        trim_whitespace=False,
+        help_text="SHA-256 hex digest of an independent random 256-bit reveal token.",
+    )
+
+
+class CreateWhisperSerializer(RevealProtectedSerializer):
     ciphertext = serializers.CharField(max_length=70_000_000)
     iv = serializers.CharField(max_length=50)
     salt = serializers.CharField(max_length=50, default="", allow_blank=True)
@@ -50,7 +59,7 @@ class ReceiveAccessSerializer(serializers.Serializer):
     )
 
 
-class CreateRequestSerializer(ReceiveAccessSerializer):
+class CreateRequestSerializer(ReceiveAccessSerializer, RevealProtectedSerializer):
     public_key = serializers.CharField(
         max_length=2000,
         help_text="X-Wing (ML-KEM-768 + X25519) public key, base64.",
@@ -108,6 +117,18 @@ class RevealWhisperResponseSerializer(serializers.Serializer):
     view_count = serializers.IntegerField()
     max_views = serializers.IntegerField()
     remaining_views = serializers.IntegerField()
+
+
+class RevealWhisperSerializer(serializers.Serializer):
+    reveal_token = serializers.RegexField(
+        regex=r"\A[0-9a-f]{64}\Z",
+        max_length=64,
+        trim_whitespace=False,
+        default="",
+        allow_blank=True,
+        help_text="Reveal token from the view link fragment, required for token-protected whispers. "
+        "Omit only for pre-token whispers. Never send the decryption key.",
+    )
 
 
 class SubmitWhisperResponseSerializer(serializers.Serializer):

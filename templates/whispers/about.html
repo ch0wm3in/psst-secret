@@ -73,6 +73,7 @@
                 </div>
             </div>
             <p class="text-gray-400">{% trans "The submit link and view link use different identifiers. Someone who gets hold of the submit link cannot find, read, or burn the submitted whisper." %}</p>
+            <p class="text-gray-400">{% trans "Revealing a newly created whisper requires the authorization token in the complete view link. The address alone cannot use up a view. Your decryption key stays in your browser." %}</p>
             <p class="text-gray-400">{% icon "cube-transparent" %} {% trans "Because the key exchange is hybrid, the whisper stays protected as long as either algorithm holds — including against attackers who record traffic today and hope to decrypt it with a quantum computer later." %}</p>
         </div>
     </section>

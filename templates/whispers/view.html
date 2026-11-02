@@ -308,7 +308,7 @@
     if (!pasteData) {
         showError("{% trans "No encrypted data available. The psst may have already been viewed." %}");
     } else {
-        const keyB64 = window.location.hash.substring(1);
+        const keyB64 = readRevealFragment({{ legacy_reveal|yesno:"true,false" }}).key;
         const isPasswordProtected = !!pasteData.salt;
 
         (async () => {

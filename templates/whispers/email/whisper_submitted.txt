@@ -9,5 +9,6 @@ is stored only in the URL fragment (the part after the # symbol), which
 our server never sees. You should already have the full link (with the
 key) from when you created the request. Use that link to decrypt the
 submitted whisper.
+The notification link also omits the reveal authorization. Use the complete view link, including its fragment, even when a password is set.
 
 If you did not expect this message, you can safely ignore it.

@@ -15,6 +15,7 @@ A privacy-focused, zero-knowledge app for sharing secrets securely. We call them
 - **Password protection** — optionally protect whispers with a password (PBKDF2, 600,000 iterations, SHA-256). In send mode, the password derives the encryption key. In receive mode, it protects your private key seed; the sender does not need your password.
 - **Secret generator** — in send mode, generate a password or an English passphrase straight into the whisper with **Generate secret**, or open the options dialog next to it to choose the length, character types and minimum counts, ambiguous-character avoidance, word count, separator, capitalization, and the number and position of symbols, with a live preview and entropy estimate. The password field's **Generate** button uses a preset that meets the password requirements. Everything is generated in the browser with `crypto.getRandomValues` and unbiased rejection sampling; nothing is sent to the server. Passphrases use the [EFF large wordlist](https://www.eff.org/dice). Other scripts can call `window.PsstSecretGenerator.generate('password' | 'passphrase' | 'whisperPassword', overrides)`.
 - **View counter / burn-after-read** — configure how many successful reveals a whisper allows before it self-destructs. `1` = burn after first read; `0` = unlimited (no view-based destruction); any other value enforces a strict reveal counter atomically in Redis.
+- **Reveal authorization** — a separate random token in the view link protects against UUID-only reveal attempts. Redis stores only its hash, and checks authorization and consumes a view atomically. The decryption key never leaves the browser.
 - **Auto-expiry** — whispers expire after a configurable duration (5 minutes to 1 month). Redis TTLs evict keys automatically, and a background thread cleans up orphaned DB metadata every 60 seconds.
 - **IP/CIDR restriction** — restrict who can view (send mode) or submit (receive mode) a whisper by IP address or CIDR range.
 - **Optional authentication (SSO)** — opt-in [django-allauth](https://docs.allauth.org/) integration with pluggable social providers and/or local username/password. Disabled by default.
@@ -35,8 +36,8 @@ A privacy-focused, zero-knowledge app for sharing secrets securely. We call them
 1. You enter a whisper (text or file) in the browser.
 2. A random AES-256-GCM key is generated client-side.
 3. The whisper is encrypted in-browser. Only the ciphertext and encryption parameters are sent to the server.
-4. The key is placed in the URL fragment (`#key`), which is never sent to the server. If you set a password, the key is derived from it instead and the link contains no key fragment.
-5. You share the link. The recipient's browser decrypts it using the key from the fragment or a key derived from the password you share separately.
+4. The key and an independent random reveal token are placed in the URL fragment (`#reveal=TOKEN&key=KEY`). Only the token's SHA-256 hash is uploaded at creation. If you set a password, the key is derived from it instead and the fragment contains only `reveal=TOKEN`.
+5. You share the complete link. Before revealing, the browser checks for the key (unless password-protected) and authorization token. It sends only the token in the reveal POST; the server verifies its hash and consumes a view atomically. The recipient's browser decrypts using the fragment key or the password you share separately.
 
 For a password-protected whisper, the recipient enters the password to derive the key locally. The server stores only the random PBKDF2 salt, not the password or derived key.
 
@@ -45,16 +46,22 @@ Send mode uses symmetric AES-256-GCM encryption, not public-key cryptography. Gr
 ### Receive mode
 
 1. You configure options (expiry, password, burn-after-read, IP restriction) and create a request. Your browser generates an **X-Wing** key pair using ML-KEM-768 and X25519.
-2. The public key is stored on the server. You get a **submit link** containing its fingerprint and a **view link** containing the private key seed in its fragment. If you set a password, the seed is encrypted with that password instead.
+2. The public key and the hash of an independent random reveal token are stored on the server. You get a **submit link** containing the public-key fingerprint and a **view link** containing the reveal token and private key seed in its fragment. If you set a password, the seed is encrypted with that password instead; the view fragment still contains the reveal token.
 3. You share the submit link and keep the view link. These links use different random identifiers, so the submit link does not reveal the view link.
 4. The sender's browser verifies the public key against the fingerprint in the submit link, preventing the server from substituting a different key. It encrypts the whisper to your public key using X-Wing, HKDF-SHA256, and AES-256-GCM, then uploads the ciphertext and key encapsulation. The sender does not need your password.
-5. You open your view link and, if required, enter your password. Your browser uses the private key seed to decrypt the whisper. The submit link alone cannot decrypt it.
+5. You open your complete view link. Your browser submits the reveal token, and the server atomically verifies it and consumes a view. If required, you enter your password. Your browser uses the private key seed to decrypt the whisper. The submit link alone cannot reveal or decrypt it.
 
 The hybrid key exchange protects receive-mode whispers as long as either ML-KEM-768 or X25519 remains secure, including against attackers who record encrypted traffic today to try to decrypt it with a quantum computer later.
 
 ### Why the URL fragment?
 
-The fragment is the part of a URL after `#`. [RFC 3986 §3.5](https://www.rfc-editor.org/rfc/rfc3986#section-3.5) reserves it for browser-side processing, and [RFC 9110 §7.1](https://www.rfc-editor.org/rfc/rfc9110#section-7.1) excludes it from HTTP requests. Key material in the fragment is therefore not sent to the server or included in HTTP request logs. Password-protected view links contain no decryption key fragment.
+The fragment is the part of a URL after `#`. [RFC 3986 §3.5](https://www.rfc-editor.org/rfc/rfc3986#section-3.5) reserves it for browser-side processing, and [RFC 9110 §7.1](https://www.rfc-editor.org/rfc/rfc9110#section-7.1) excludes it from HTTP requests. Key material in the fragment is therefore not sent to the server or included in HTTP request logs. Password-protected view links contain a reveal token but no decryption key. The browser explicitly sends only that independent token in the reveal POST body, never in the request URL.
+
+The reveal token remains valid until expiry or the final permitted reveal, preserving multi-view and unlimited-view links. For token-protected whispers, missing or invalid tokens return HTTP 403 without returning ciphertext, incrementing the counter, or deleting a live whisper. Notification emails deliberately omit the entire fragment, so new whispers cannot be revealed without the complete link shared separately.
+
+Existing whispers created before reveal tokens were introduced remain readable after upgrading. Only Redis payloads without a reveal-token hash use this compatibility path: old raw-key fragments and password-protected links without a fragment continue to work until expiry or the final allowed reveal. Their views are still consumed atomically, but **legacy whispers retain the UUID-only API reveal/burn risk** because no authorization token exists to verify. The browser still refuses to reveal an unprotected whisper without its key fragment. New creations in both modes require a token hash; omitting a token or using an old-style fragment cannot downgrade a token-protected whisper. Older API clients must supply a token hash when creating new whispers.
+
+Authorization proves possession of the reveal token, not successful decryption. Someone holding that token can consume a view even without the key or password; a wrong key or password does not refund a view. The server cannot verify decryption keys without compromising the zero-knowledge design.
 
 ## Requirements
 
@@ -408,10 +415,10 @@ JavaScript or templates (Node.js is required for the asset build):
 
 ```bash
 uv sync --locked
-playwright install chromium firefox
+playwright install chromium webkit
 npm ci --prefix theme/static_src
 python manage.py tailwind build
-pytest whispers/tests/browser --browser-tests -n 4
+pytest whispers/tests/browser --browser-tests -n 4 --browser chromium --browser webkit
 ```
 
 On Linux, Playwright may require system libraries. Install them using
@@ -492,6 +499,8 @@ A small JSON API is exposed alongside the HTML views. The OpenAPI schema is gene
 | `POST` | `/api/whisper` | Create a send-mode whisper (ciphertext + metadata) |
 | `POST` | `/api/whisper/request` | Create a receive-mode request |
 | `POST` | `/api/whisper/submit/<request_id>` | Submit ciphertext to a receive-mode request |
+| `GET` | `/whisper/<view_id>` | Show a confirmation page without consuming a view |
+| `POST` | `/whisper/<view_id>` | Reveal ciphertext with a valid `reveal_token` (optional only for pre-token whispers); `?render=1` renders the decryption page |
 | `GET`, `PATCH` | `/api/whisper/<view_id>/access` | Read or update receive reader access (creator only; feature must be enabled) |
 
 Receive creation (`POST /api/whisper/request`) accepts optional `creator_only`
@@ -502,6 +511,14 @@ rejects attempts to disable it. Requests use the existing session authentication
 and CSRF protection; access responses contain only restriction settings, never
 ciphertext or keys.
 
+Both creation endpoints require `reveal_token_hash`: a lowercase, 64-character
+SHA-256 hex digest of a client-generated token. Generate the token independently
+of all encryption keys using 32 cryptographically random bytes, encode those bytes
+as 64 lowercase hex characters, and hash the ASCII token string. Keep the token
+in the view link fragment. Reveal POSTs accept `reveal_token` in a JSON or form
+body; do not send the fragment, decryption key, private key seed, or password.
+The authorization hash is not a valid token and is never returned by reveal.
+
 ## Security properties
 
 - By default, the server stores encrypted data and public key material **only in Redis memory** — never on disk (unless persistence is explicitly enabled). Metadata (identifiers, timestamps, mode, flags, counter limit, optional notification email) lives in PostgreSQL / SQLite.
@@ -510,7 +527,7 @@ ciphertext or keys.
 - Receive mode uses X-Wing (ML-KEM-768 + X25519), HKDF-SHA256, and AES-256-GCM. The submit-link fingerprint binds the sender's encryption to the request creator's public key.
 - Separate random submit and view identifiers prevent a submit-link holder from finding, reading, or burning the submitted whisper.
 - Password-derived keys use PBKDF2 with 600,000 iterations and SHA-256. In receive mode, the password encrypts the private key seed; it is not required for submission.
-- The reveal counter is decremented atomically in Redis (`WATCH`/`MULTI`/`EXEC`); when it reaches zero the whisper is deleted in the same transaction. Burn-after-read (`max_views=1`) is the default.
+- Reveal authorization is compared in constant time against the stored SHA-256 hash. Its check, view-counter increment, and final-view deletion run in one Redis transaction (`WATCH`/`MULTI`/`EXEC`), preventing concurrent requests from exceeding the view limit. Burn-after-read (`max_views=1`) is the default.
 - Redis runs with persistence disabled (`--save "" --appendonly no`) by default — all ciphertexts are lost on restart.
 - If Redis evicts a key before the DB row is cleaned up, the next access deletes the orphaned row automatically.
 - The app refuses to start in production (`DEBUG=False`) with the insecure default `SECRET_KEY`.

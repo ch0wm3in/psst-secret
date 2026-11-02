@@ -1,5 +1,5 @@
 {% extends "base/layout.html" %}
-{% load i18n whispers_extras %}
+{% load i18n static whispers_extras %}
 
 {% block title %}{{ brand_name }} — {% trans "Reveal Whisper" %}{% endblock %}
 
@@ -18,8 +18,10 @@
     <h1 class="text-2xl font-bold text-white">{% trans "View Whisper" %}</h1>
     <p class="text-gray-400 max-w-md mx-auto">{% trans "Click below to decrypt and view this whisper." %}</p>
     {% endif %}
-    <form id="reveal-form" method="post" action="{{ reveal_url }}?render=1" onsubmit="prepareReveal()">
+    <p id="reveal-error" role="alert" class="hidden text-red-400"></p>
+    <form id="reveal-form" method="post" action="{{ reveal_url }}?render=1" onsubmit="event.preventDefault(); if (prepareReveal()) this.submit()">
         {% csrf_token %}
+        <input id="reveal-token" type="hidden" name="reveal_token">
         <button id="reveal-btn" type="submit"
             class="inline-block mt-4 px-6 py-2 rounded-lg bg-brand-600 hover:bg-brand-500 text-white font-semibold transition">
             {% icon "lock-open" %} {% trans "Reveal whisper" %}
@@ -29,15 +31,35 @@
 
 {% include "whispers/receive_access.html" %}
 
+<script src="{% static 'js/crypto.min.js' %}"></script>
+{% trans "No decryption key found in URL. The link may be incomplete." as missing_key_error %}
+{% trans "The reveal authorization is missing or invalid. Use the complete view link." as reveal_authorization_error %}
+{% trans "Loading…" as loading_label %}
 <script>
     function prepareReveal() {
+        const legacy = {{ legacy_reveal|yesno:"true,false" }};
+        const fragment = readRevealFragment(legacy);
+        const error = document.getElementById('reveal-error');
+        const passwordProtected = {{ password_protected|yesno:"true,false" }};
+        if (!passwordProtected && !fragment.key) {
+            error.textContent = '{{ missing_key_error|escapejs }}';
+            error.classList.remove('hidden');
+            return false;
+        }
+        if (!legacy && !/^[0-9a-f]{64}$/.test(fragment.token)) {
+            error.textContent = '{{ reveal_authorization_error|escapejs }}';
+            error.classList.remove('hidden');
+            return false;
+        }
+        document.getElementById('reveal-token').value = fragment.token;
         const btn = document.getElementById('reveal-btn');
         btn.disabled = true;
-        btn.textContent = '{% trans "Loading…" %}';
+        btn.textContent = '{{ loading_label|escapejs }}';
         const form = document.getElementById('reveal-form');
         const url = new URL(form.action, window.location.href);
         url.hash = window.location.hash;
         form.action = url.toString();
+        return true;
     }
 </script>
 {% endblock %}
