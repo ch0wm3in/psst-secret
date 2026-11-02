@@ -519,6 +519,11 @@ in the view link fragment. Reveal POSTs accept `reveal_token` in a JSON or form
 body; do not send the fragment, decryption key, private key seed, or password.
 The authorization hash is not a valid token and is never returned by reveal.
 
+If Redis rejects a write (for example when it is out of memory or unreachable),
+the creation and submit endpoints return HTTP 503. A whisper is never left
+half-created: its database row is rolled back and any partially written Redis
+entry is removed, so clients can safely retry later.
+
 ## Security properties
 
 - By default, the server stores encrypted data and public key material **only in Redis memory** — never on disk (unless persistence is explicitly enabled). Metadata (identifiers, timestamps, mode, flags, counter limit, optional notification email) lives in PostgreSQL / SQLite.

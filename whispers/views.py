@@ -3,6 +3,7 @@ import logging
 import uuid
 from urllib.parse import urlencode
 
+import redis
 from django.conf import settings
 from django.db import transaction
 from django.http import Http404
@@ -40,6 +41,28 @@ from .serializers import (
 from .stats import record_stats, stats_report
 
 logger = logging.getLogger(__name__)
+
+
+def _storage_unavailable(exc, whisper_id=None):
+    """Log a Redis failure without whisper details and return a 503 response.
+
+    When *whisper_id* is given, the Redis entry may have been written before the
+    error surfaced, so it is removed on a best-effort basis.
+    """
+    logger.warning("Redis rejected a whisper write: %s", type(exc).__name__)
+    if whisper_id is not None:
+        try:
+            redis_store.delete_crypto(whisper_id)
+        except redis.RedisError:
+            pass
+    return Response(
+        {
+            "error": _(
+                "Whisper storage is temporarily unavailable. Please try again later."
+            )
+        },
+        status=status.HTTP_503_SERVICE_UNAVAILABLE,
+    )
 
 
 class WhisperCreateThrottle(AnonRateThrottle):
@@ -303,23 +326,28 @@ class CreateWhisperView(APIView):
             getattr(settings, "PSST_FORCE_AUTH_VIEW", False) or d["require_auth_view"]
         )
 
-        whisper = Whisper.objects.create(
-            max_views=d["max_views"],
-            allowed_cidr=d["allowed_cidr"],
-            require_auth_view=require_auth_view,
-            expiry_option=d["expiry"],
-            expires_at=expires_at,
-            notify_email=d["notify_email"],
-        )
-
-        redis_store.store_crypto(
-            whisper.id,
-            delta.total_seconds(),
-            ciphertext=d["ciphertext"],
-            iv=d["iv"],
-            salt=d["salt"],
-            reveal_token_hash=d["reveal_token_hash"],
-        )
+        whisper_id = uuid.uuid4()
+        try:
+            with transaction.atomic():
+                whisper = Whisper.objects.create(
+                    id=whisper_id,
+                    max_views=d["max_views"],
+                    allowed_cidr=d["allowed_cidr"],
+                    require_auth_view=require_auth_view,
+                    expiry_option=d["expiry"],
+                    expires_at=expires_at,
+                    notify_email=d["notify_email"],
+                )
+                redis_store.store_crypto(
+                    whisper.id,
+                    delta.total_seconds(),
+                    ciphertext=d["ciphertext"],
+                    iv=d["iv"],
+                    salt=d["salt"],
+                    reveal_token_hash=d["reveal_token_hash"],
+                )
+        except redis.RedisError as exc:
+            return _storage_unavailable(exc, whisper_id)
 
         whisper_url = request.build_absolute_uri(f"/whisper/{whisper.id}")
 
@@ -649,34 +677,39 @@ class CreateRequestView(APIView):
                 status=400,
             )
 
-        whisper = Whisper.objects.create(
-            mode="receive",
-            submit_token=uuid.uuid4(),
-            max_views=d["max_views"],
-            allowed_cidr=d["allowed_cidr"],
-            require_auth_view=require_auth_view,
-            require_auth_submit=require_auth_submit,
-            expiry_option=d["expiry"],
-            expires_at=expires_at,
-            notify_email=d["notify_email"],
-            creator=(
-                request.user
-                if access_enabled and request.user.is_authenticated
-                else None
-            ),
-            creator_only=creator_only,
-        )
-        whisper.allowed_readers.set(readers)
-
-        redis_store.store_crypto(
-            whisper.id,
-            delta.total_seconds(),
-            salt=d["salt"],
-            public_key=d["public_key"],
-            wrapped_key=d["wrapped_key"],
-            wrapped_key_iv=d["wrapped_key_iv"],
-            reveal_token_hash=d["reveal_token_hash"],
-        )
+        whisper_id = uuid.uuid4()
+        try:
+            with transaction.atomic():
+                whisper = Whisper.objects.create(
+                    id=whisper_id,
+                    mode="receive",
+                    submit_token=uuid.uuid4(),
+                    max_views=d["max_views"],
+                    allowed_cidr=d["allowed_cidr"],
+                    require_auth_view=require_auth_view,
+                    require_auth_submit=require_auth_submit,
+                    expiry_option=d["expiry"],
+                    expires_at=expires_at,
+                    notify_email=d["notify_email"],
+                    creator=(
+                        request.user
+                        if access_enabled and request.user.is_authenticated
+                        else None
+                    ),
+                    creator_only=creator_only,
+                )
+                whisper.allowed_readers.set(readers)
+                redis_store.store_crypto(
+                    whisper.id,
+                    delta.total_seconds(),
+                    salt=d["salt"],
+                    public_key=d["public_key"],
+                    wrapped_key=d["wrapped_key"],
+                    wrapped_key_iv=d["wrapped_key_iv"],
+                    reveal_token_hash=d["reveal_token_hash"],
+                )
+        except redis.RedisError as exc:
+            return _storage_unavailable(exc, whisper_id)
 
         return Response(
             {
@@ -767,6 +800,12 @@ class SubmitWhisperView(APIView):
         responses={200: SubmitWhisperResponseSerializer},
     )
     def post(self, request, submit_token):
+        try:
+            return self._submit(request, submit_token)
+        except redis.RedisError as exc:
+            return _storage_unavailable(exc)
+
+    def _submit(self, request, submit_token):
         whisper = get_object_or_404(Whisper, submit_token=submit_token, mode="receive")
 
         if whisper.is_expired:

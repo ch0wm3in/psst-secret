@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psst-secret\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-02 13:13+0000\n"
+"POT-Creation-Date: 2026-11-02 13:24+0000\n"
 "PO-Revision-Date: 2026-10-09 08:07+0000\n"
 "Last-Translator: \n"
 "Language-Team: Filipino\n"
@@ -745,7 +745,7 @@ msgstr ""
 "Walang susi para sa pag-decrypt sa URL. Maaaring hindi kumpleto ang link."
 
 #: templates/whispers/confirm.html:36 templates/whispers/forbidden.html:10
-#: whispers/views.py:471
+#: whispers/views.py:499
 msgid ""
 "The reveal authorization is missing or invalid. Use the complete view link."
 msgstr ""
@@ -1025,7 +1025,7 @@ msgstr ""
 "Kailangang naka-sign in ang taong magsusumite ng whisper sa kahilingang ito."
 
 #: templates/whispers/create.html:233 templates/whispers/receive_access.html:8
-#: whispers/views.py:724
+#: whispers/views.py:757
 msgid "Restricted receive access is required."
 msgstr "Kinakailangan ang limitadong access sa pagtanggap."
 
@@ -1341,7 +1341,7 @@ msgstr "Hindi pinapayagan ang pag-access"
 msgid "Access denied"
 msgstr "Hindi pinapayagan ang pag-access"
 
-#: templates/whispers/forbidden.html:10 whispers/views.py:428
+#: templates/whispers/forbidden.html:10 whispers/views.py:456
 msgid "You do not have access to this whisper."
 msgstr "Wala kang access sa whisper na ito."
 
@@ -2101,20 +2101,24 @@ msgstr "5 minuto"
 msgid "1 hour"
 msgstr "1 oras"
 
-#: whispers/views.py:146 whispers/views.py:646 whispers/views.py:739
+#: whispers/views.py:61
+msgid "Whisper storage is temporarily unavailable. Please try again later."
+msgstr "Pansamantalang hindi available ang storage ng whisper. Pakisubukang muli mamaya."
+
+#: whispers/views.py:169 whispers/views.py:674 whispers/views.py:772
 msgid "Enter the verified primary email of each additional reader."
 msgstr ""
 "Ilagay ang beripikadong pangunahing email ng bawat karagdagang mambabasa."
 
-#: whispers/views.py:629
+#: whispers/views.py:657
 msgid "Receive reader restrictions are not enabled."
 msgstr "Hindi naka-enable ang mga limitasyon sa mambabasa sa pagtanggap."
 
-#: whispers/views.py:633
+#: whispers/views.py:661
 msgid "Sign in to manage reader access."
 msgstr "Mag-sign in upang pamahalaan ang access ng mambabasa."
 
-#: whispers/views.py:637 whispers/views.py:730
+#: whispers/views.py:665 whispers/views.py:763
 msgid "Enable restricted access before adding readers."
 msgstr "I-enable ang limitadong access bago magdagdag ng mga mambabasa."
 
