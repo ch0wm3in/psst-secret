@@ -4,13 +4,13 @@ Only behavior that affects users is described. Secrets, hostnames, rate limits
 and infrastructure details are never exposed.
 """
 
-import re
 import uuid
 
 from django.conf import settings
 from django.utils.translation import gettext as _
 
 from whispers.auth_views import _build_providers
+from whispers.middleware import is_login_exempt
 from whispers.templatetags.whispers_extras import filesizeformat
 
 _LOGIN_MIDDLEWARE = "whispers.middleware.LoginRequiredMiddleware"
@@ -24,7 +24,7 @@ def _login_required_for(path):
     if _LOGIN_MIDDLEWARE not in settings.MIDDLEWARE:
         return False
     patterns = getattr(settings, "LOGIN_REQUIRED_EXEMPT_URLS", [])
-    return not any(re.match(pattern, path) for pattern in patterns)
+    return not is_login_exempt(path, patterns)
 
 
 def _feature(key, icon, title, status, state, description, detail=""):

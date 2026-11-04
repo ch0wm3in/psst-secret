@@ -216,3 +216,19 @@ def test_submit_link_versions(page, create_whisper, legacy):
     else:
         expect(page.locator("#error")).to_contain_text("unsupported format version")
         assert not redis_store.get_crypto(Whisper.objects.get().id)["ciphertext"]
+
+
+@pytest.mark.parametrize("legacy_link", [False, True])
+def test_unknown_request_version_is_not_submitted(page, create_whisper, legacy_link):
+    submit_url, _ = create_whisper(kind="receive")
+    whisper = Whisper.objects.get()
+    redis_store.update_crypto(whisper.id, v=2)
+    if legacy_link:
+        base, current = submit_url.split("#", 1)
+        submit_url = base + "#" + parse_qs(current)["fp"][0]
+    page.goto(submit_url)
+    page.locator("#whisper").fill("Must not be submitted")
+    page.locator("#submit-btn").click()
+    expect(page.locator("#error")).to_contain_text("unsupported format version")
+    stored = redis_store.get_crypto(whisper.id)
+    assert (stored["v"], stored["ciphertext"]) == (2, "")

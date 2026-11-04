@@ -762,7 +762,7 @@ async function handleSubmit() {
 
     try {
         const fragment = readSubmitFragment();
-        if (!isReadableFormat(fragment.version)) {
+        if (!isReadableFormat(fragment.version) || !isReadableFormat(parseFormatVersion(requestData.v))) {
             throw new Error(gettext('This link uses an unsupported format version. Ask for a new link.'));
         }
         if (!fragment.fingerprint) {
