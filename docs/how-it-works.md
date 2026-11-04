@@ -8,7 +8,7 @@ the server only ever handles ciphertext, public keys, and metadata.
 | Store | What it holds | Persistence |
 |---|---|---|
 | **Redis** | Ciphertext, IV, PBKDF2 salt, receive-mode public key, key encapsulation, password-encrypted private key seed and its IV, reveal-token hash, view counter | In memory only by default (`--save "" --appendonly no`) |
-| **PostgreSQL / SQLite** | Metadata: view identifier, separate submit token, timestamps, mode, view limit, IP restriction, auth flags, optional notification email, receive creator and approved readers | On disk |
+| **PostgreSQL / SQLite** | Metadata: view identifier, separate submit token, timestamps, mode, view limit, IP restriction, auth flags, optional notification email, receive creator and approved readers. With [API tokens](api.md#api-tokens) enabled, also SHA-256 hashes of API tokens and sign-in codes with their user, client name, scopes, and times | On disk |
 
 With the default configuration, encrypted data never touches disk, and a Redis restart
 deletes every whisper by design. The server never stores plaintext, unencrypted private
@@ -96,7 +96,8 @@ Cleanup happens in four layers:
    same `WATCH`/`MULTI`/`EXEC` transaction, so concurrent reveals cannot exceed the
    limit.
 3. **Background thread** deletes expired database rows and Redis keys every 60
-   seconds (also available as `python manage.py cleanup_expired`).
+   seconds, along with expired API tokens and old sign-in codes (also available as
+   `python manage.py cleanup_expired`).
 4. **On-access cleanup** deletes a database row whose Redis key has already gone.
 
 ## Further security notes
@@ -107,6 +108,10 @@ Cleanup happens in four layers:
   [receive reader access](configuration.md#receive-reader-access) are enforced before
   any Redis lookup or view counting. They add to client-side encryption, not replace it.
 - Whisper pages are served with no-cache headers so browsers and proxies do not store them.
+- [API tokens](api.md#api-tokens) are issued only after the user approves the client in a
+  signed-in browser session, are redirected only to loopback addresses, and require
+  PKCE. Tokens carry only the scopes the user approved and never give access to
+  decryption keys, which stay in link fragments.
 - The app refuses to start with `DEBUG=False` and the default `SECRET_KEY`.
 - Validation errors return fixed messages, never internal exception details.
 

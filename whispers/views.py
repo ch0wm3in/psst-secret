@@ -24,14 +24,7 @@ from rest_framework.views import exception_handler as drf_exception_handler
 
 from whispers.constants import API_VERSION, EXPIRY_DELTAS, SUPPORTED_FORMAT_VERSIONS
 
-from . import redis_store
-from .api_tokens import (
-    ApiTokenUserThrottle,
-    TokenScopePermission,
-    api_tokens_enabled,
-    manual_code_enabled,
-)
-from .api_tokens import SCOPES as API_TOKEN_SCOPES
+from . import api_tokens, redis_store
 from .deployment import _login_required_for, deployment_features
 from .email import send_whisper_created_email, send_whisper_submitted_email
 from .models import Whisper
@@ -327,9 +320,13 @@ class ApiInfoView(APIView):
                 "format_versions": list(SUPPORTED_FORMAT_VERSIONS),
                 "auth": {
                     "login_required": _login_required_for("api/v1/whisper"),
-                    "loopback_pkce": api_tokens_enabled(),
-                    "manual_code": manual_code_enabled(),
-                    "scopes": list(API_TOKEN_SCOPES) if api_tokens_enabled() else [],
+                    "loopback_pkce": api_tokens.api_tokens_enabled(),
+                    "manual_code": api_tokens.manual_code_enabled(),
+                    "scopes": (
+                        list(api_tokens.SCOPES)
+                        if api_tokens.api_tokens_enabled()
+                        else []
+                    ),
                 },
             }
         )
@@ -343,9 +340,9 @@ class CreateWhisperView(APIView):
     sees the plaintext or the encryption key.
     """
 
-    permission_classes = [AllowAny, TokenScopePermission]
+    permission_classes = [AllowAny, api_tokens.TokenScopePermission]
     required_scope = "whisper:create"
-    throttle_classes = [WhisperCreateThrottle, ApiTokenUserThrottle]
+    throttle_classes = [WhisperCreateThrottle, api_tokens.ApiTokenUserThrottle]
     serializer_class = CreateWhisperSerializer
 
     @extend_schema(
@@ -424,10 +421,10 @@ class RevealWhisperView(APIView):
     render the payload directly without copying it through Web Storage.
     """
 
-    permission_classes = [AllowAny, TokenScopePermission]
+    permission_classes = [AllowAny, api_tokens.TokenScopePermission]
     required_scope = "whisper:read"
     parser_classes = [JSONParser, FormParser]
-    throttle_classes = [WhisperViewThrottle, ApiTokenUserThrottle]
+    throttle_classes = [WhisperViewThrottle, api_tokens.ApiTokenUserThrottle]
     allow_render = True
 
     @extend_schema(exclude=True)
@@ -670,9 +667,13 @@ class CreateRequestView(APIView):
     a submit URL (to share) and a view URL (to check later).
     """
 
-    permission_classes = [AllowAny, TokenScopePermission]
+    permission_classes = [AllowAny, api_tokens.TokenScopePermission]
     required_scope = "request:manage"
-    throttle_classes = [WhisperCreateThrottle, ReceiveAccessThrottle, ApiTokenUserThrottle]
+    throttle_classes = [
+        WhisperCreateThrottle,
+        ReceiveAccessThrottle,
+        api_tokens.ApiTokenUserThrottle,
+    ]
     serializer_class = CreateRequestSerializer
 
     @extend_schema(
@@ -781,10 +782,14 @@ class CreateRequestView(APIView):
 
 
 class ReceiveAccessView(APIView):
-    permission_classes = [AllowAny, TokenScopePermission]
+    permission_classes = [AllowAny, api_tokens.TokenScopePermission]
     required_scope = "request:manage"
     parser_classes = [JSONParser]
-    throttle_classes = [WhisperViewThrottle, ReceiveAccessThrottle, ApiTokenUserThrottle]
+    throttle_classes = [
+        WhisperViewThrottle,
+        ReceiveAccessThrottle,
+        api_tokens.ApiTokenUserThrottle,
+    ]
 
     def _get_whisper(self, request, whisper_id):
         if not _receive_access_enabled() or not request.user.is_authenticated:
@@ -850,9 +855,9 @@ class SubmitWhisperView(APIView):
     Called by the third party who fills in the whisper.
     """
 
-    permission_classes = [AllowAny, TokenScopePermission]
+    permission_classes = [AllowAny, api_tokens.TokenScopePermission]
     required_scope = "whisper:create"
-    throttle_classes = [WhisperCreateThrottle, ApiTokenUserThrottle]
+    throttle_classes = [WhisperCreateThrottle, api_tokens.ApiTokenUserThrottle]
     serializer_class = SubmitWhisperSerializer
 
     def _open_request(self, request, submit_token):

@@ -62,7 +62,12 @@ def _require_enabled():
 def _login_redirect(data):
     params = {
         field: data[field]
-        for field in ("redirect_uri", "code_challenge", "code_challenge_method", "state")
+        for field in (
+            "redirect_uri",
+            "code_challenge",
+            "code_challenge_method",
+            "state",
+        )
     }
     params["scope"] = data["scope"]
     if data["client_name"]:
@@ -74,7 +79,9 @@ def _login_redirect(data):
 
 def _error_page(request, message, status_code=400):
     return _no_referrer(
-        render(request, "whispers/cli_error.html", {"error": message}, status=status_code)
+        render(
+            request, "whispers/cli_error.html", {"error": message}, status=status_code
+        )
     )
 
 
@@ -89,7 +96,11 @@ def cli_authorize(request):
     params = request.POST if request.method == "POST" else request.GET
     try:
         data = validate_authorization_request(
-            {field: params.get(field, "") for field in _AUTHORIZE_FIELDS if field in params}
+            {
+                field: params.get(field, "")
+                for field in _AUTHORIZE_FIELDS
+                if field in params
+            }
         )
     except AuthorizationRequestError as exc:
         return _error_page(request, str(exc))
@@ -119,14 +130,20 @@ def cli_authorize(request):
             return _error_page(request, _("You denied access."), status_code=200)
         code = create_authorization_code(request.user, data)
         return _no_referrer(
-            render(request, "whispers/cli_code.html", {"code": code, "state": data["state"]})
+            render(
+                request,
+                "whispers/cli_code.html",
+                {"code": code, "state": data["state"]},
+            )
         )
     if approved:
         query = {"code": create_authorization_code(request.user, data)}
     else:
         query = {"error": "access_denied"}
     query["state"] = data["state"]
-    return _no_referrer(HttpResponseRedirect(f"{data['redirect_uri']}?{urlencode(query)}"))
+    return _no_referrer(
+        HttpResponseRedirect(f"{data['redirect_uri']}?{urlencode(query)}")
+    )
 
 
 @require_GET
@@ -205,7 +222,11 @@ class RevokeTokenView(APIView):
         _require_enabled()
         if not isinstance(request.auth, ApiToken):
             return Response(
-                {"error": _("Send the API token to revoke in the Authorization header.")},
+                {
+                    "error": _(
+                        "Send the API token to revoke in the Authorization header."
+                    )
+                },
                 status=status.HTTP_401_UNAUTHORIZED,
             )
         request.auth.delete()

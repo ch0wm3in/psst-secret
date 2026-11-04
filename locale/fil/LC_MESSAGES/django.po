@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psst-secret\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-04 21:21+0000\n"
+"POT-Creation-Date: 2026-11-04 22:15+0000\n"
 "PO-Revision-Date: 2026-10-09 08:07+0000\n"
 "Last-Translator: \n"
 "Language-Team: Filipino\n"
@@ -42,15 +42,20 @@ msgstr "Tungkol"
 msgid "Statistics"
 msgstr "Estadistika"
 
-#: templates/base/layout.html:56
+#: templates/base/layout.html:56 templates/whispers/api_tokens.html:4
+#: templates/whispers/api_tokens.html:9
+msgid "API tokens"
+msgstr "Mga API token"
+
+#: templates/base/layout.html:63
 msgid "Sign out"
 msgstr "Mag-sign out"
 
-#: templates/base/layout.html:75
+#: templates/base/layout.html:82
 msgid "Psst! Don't tell anyone."
 msgstr "Psst! Huwag mong sabihin kahit kanino."
 
-#: templates/base/layout.html:80
+#: templates/base/layout.html:87
 msgid "GitHub repository"
 msgstr "Repository sa GitHub"
 
@@ -122,9 +127,9 @@ msgstr "Paano ito gumagana"
 msgid ""
 "%(brand_name)s ensures that <strong class=\"text-white\">your whispers never "
 "exist in plaintext on our server</strong>. All encryption and decryption "
-"happens entirely in your browser using the <a href=\"https://"
-"developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API\" class=\"text-"
-"brand-400 underline hover:text-brand-300\" target=\"_blank\" rel=\"noopener "
+"happens entirely in your browser using the <a href=\"https://developer."
+"mozilla.org/en-US/docs/Web/API/Web_Crypto_API\" class=\"text-brand-400 "
+"underline hover:text-brand-300\" target=\"_blank\" rel=\"noopener "
 "noreferrer\">Web Crypto API</a>."
 msgstr ""
 "Tinitiyak ng %(brand_name)s na <strong class=\"text-white\">hindi kailanman "
@@ -345,14 +350,14 @@ msgstr ""
 "Iniimbak ang susi para sa pag-decrypt pagkatapos ng <code class='bg-gray-900 "
 "px-1.5 py-0.5 rounded text-brand-300'>#</code> sa URL, sa tinatawag na "
 "fragment. Inilalaan ng espesipikasyon ng URI (<a href='https://www.rfc-"
-"editor.org/rfc/rfc3986#section-3.5' class='text-brand-400 underline "
-"hover:text-brand-300' target='_blank' rel='noopener noreferrer'>RFC 3986 "
-"§3.5</a>) ang fragment para iproseso ng browser, at hindi ito isinasama sa "
-"request ayon sa espesipikasyon ng HTTP (<a href='https://www.rfc-editor.org/"
-"rfc/rfc9110#section-7.1' class='text-brand-400 underline hover:text-"
-"brand-300' target='_blank' rel='noopener noreferrer'>RFC 9110 §7.1</a>) — "
-"kaya <strong class='text-white'>hindi kailanman ipinapadala ang fragment ng "
-"URL sa server</strong>. Ibig sabihin nito:"
+"editor.org/rfc/rfc3986#section-3.5' class='text-brand-400 underline hover:"
+"text-brand-300' target='_blank' rel='noopener noreferrer'>RFC 3986 §3.5</a>) "
+"ang fragment para iproseso ng browser, at hindi ito isinasama sa request "
+"ayon sa espesipikasyon ng HTTP (<a href='https://www.rfc-editor.org/rfc/"
+"rfc9110#section-7.1' class='text-brand-400 underline hover:text-brand-300' "
+"target='_blank' rel='noopener noreferrer'>RFC 9110 §7.1</a>) — kaya <strong "
+"class='text-white'>hindi kailanman ipinapadala ang fragment ng URL sa "
+"server</strong>. Ibig sabihin nito:"
 
 #: templates/whispers/about.html:87
 msgid "The server never receives the decryption key"
@@ -681,6 +686,41 @@ msgstr "Redis (sa memory)"
 msgid "Create a whisper"
 msgstr "Lumikha ng whisper"
 
+#: templates/whispers/api_tokens.html:10
+msgid ""
+"Programs such as the command-line tool get a token when you approve their "
+"sign-in. Revoke any token you do not recognize."
+msgstr ""
+"Nakakakuha ng token ang mga program tulad ng command-line tool kapag "
+"inaprubahan mo ang kanilang pag-sign in. Bawiin ang anumang token na hindi "
+"mo nakikilala."
+
+#: templates/whispers/api_tokens.html:18
+msgid "Unnamed client"
+msgstr "Walang pangalang client"
+
+#: templates/whispers/api_tokens.html:21
+#, python-format
+msgid "Created %(created)s · Expires %(expires)s"
+msgstr "Ginawa noong %(created)s · Mag-e-expire sa %(expires)s"
+
+#: templates/whispers/api_tokens.html:25
+#, python-format
+msgid "Last used %(used)s"
+msgstr "Huling ginamit noong %(used)s"
+
+#: templates/whispers/api_tokens.html:27
+msgid "Never used"
+msgstr "Hindi pa nagagamit"
+
+#: templates/whispers/api_tokens.html:35
+msgid "Revoke"
+msgstr "Bawiin"
+
+#: templates/whispers/api_tokens.html:42
+msgid "You have no active API tokens."
+msgstr "Wala kang aktibong API token."
+
 #: templates/whispers/burned.html:4
 msgid "Whisper Burned"
 msgstr "Nabura ang whisper"
@@ -700,6 +740,98 @@ msgstr ""
 #: templates/whispers/burned.html:12 templates/whispers/expired.html:12
 msgid "Create a new whisper"
 msgstr "Lumikha ng bagong whisper"
+
+#: templates/whispers/cli_authorize.html:4
+#: templates/whispers/cli_authorize.html:10
+msgid "Approve sign-in"
+msgstr "Aprubahan ang pag-sign in"
+
+#: templates/whispers/cli_authorize.html:13
+#, python-format
+msgid ""
+"<strong class=\"text-white\" data-client-name>%(client)s</strong> wants to "
+"use %(brand_name)s as you."
+msgstr ""
+"Gustong gamitin ng <strong class=\"text-white\" data-client-name>%(client)s</"
+"strong> ang %(brand_name)s bilang ikaw."
+
+#: templates/whispers/cli_authorize.html:15
+#, python-format
+msgid "An unnamed client wants to use %(brand_name)s as you."
+msgstr ""
+"Gustong gamitin ng isang walang pangalang client ang %(brand_name)s bilang "
+"ikaw."
+
+#: templates/whispers/cli_authorize.html:22
+msgid "Signed in as"
+msgstr "Naka-sign in bilang"
+
+#: templates/whispers/cli_authorize.html:26
+msgid "It will be allowed to"
+msgstr "Papayagan itong"
+
+#: templates/whispers/cli_authorize.html:34
+msgid "Sign-in returns to"
+msgstr "Babalik ang pag-sign in sa"
+
+#: templates/whispers/cli_authorize.html:36
+msgid "(a program on this device)"
+msgstr "(isang program sa device na ito)"
+
+#: templates/whispers/cli_authorize.html:38
+msgid "A code shown on the next page, which you paste into the program"
+msgstr "Isang code na ipapakita sa susunod na page, na ipe-paste mo sa program"
+
+#: templates/whispers/cli_authorize.html:45
+msgid ""
+"Only approve if you just started this sign-in yourself, for example with "
+"“psst login”. The client name is chosen by the program and is not verified."
+msgstr ""
+"Aprubahan lang kung ikaw mismo ang kasisimula ng pag-sign in na ito, "
+"halimbawa gamit ang “psst login”. Ang program ang pumipili ng pangalan ng "
+"client at hindi ito na-verify."
+
+#: templates/whispers/cli_authorize.html:55
+msgid "Deny"
+msgstr "Tanggihan"
+
+#: templates/whispers/cli_authorize.html:59
+msgid "Approve"
+msgstr "Aprubahan"
+
+#: templates/whispers/cli_code.html:4 templates/whispers/cli_code.html:9
+#: templates/whispers/cli_code.html:11
+msgid "Sign-in code"
+msgstr "Code sa pag-sign in"
+
+#: templates/whispers/cli_code.html:10
+msgid ""
+"Paste this code into the program that started the sign-in. It works once and "
+"expires in 5 minutes."
+msgstr ""
+"I-paste ang code na ito sa program na nagsimula ng pag-sign in. Isang beses "
+"lang itong gagana at mag-e-expire sa loob ng 5 minuto."
+
+#: templates/whispers/cli_code.html:13
+#, python-format
+msgid ""
+"Check that the program shows the state <code class=\"text-"
+"gray-300\">%(state)s</code>."
+msgstr ""
+"Tiyaking ipinapakita ng program ang state na <code class=\"text-"
+"gray-300\">%(state)s</code>."
+
+#: templates/whispers/cli_code.html:14
+msgid "Never share this code with anyone."
+msgstr "Huwag kailanman ibahagi ang code na ito kaninuman."
+
+#: templates/whispers/cli_error.html:4 templates/whispers/cli_error.html:9
+msgid "Sign-in not completed"
+msgstr "Hindi natapos ang pag-sign in"
+
+#: templates/whispers/cli_error.html:11
+msgid "Return to the program and start the sign-in again."
+msgstr "Bumalik sa program at simulan muli ang pag-sign in."
 
 #: templates/whispers/confirm.html:4
 msgid "Reveal Whisper"
@@ -751,7 +883,7 @@ msgstr ""
 "bagong link."
 
 #: templates/whispers/confirm.html:37 templates/whispers/forbidden.html:10
-#: whispers/views.py:531
+#: whispers/views.py:543
 msgid ""
 "The reveal authorization is missing or invalid. Use the complete view link."
 msgstr ""
@@ -1031,7 +1163,7 @@ msgstr ""
 "Kailangang naka-sign in ang taong magsusumite ng whisper sa kahilingang ito."
 
 #: templates/whispers/create.html:233 templates/whispers/receive_access.html:8
-#: whispers/views.py:798
+#: whispers/views.py:821
 msgid "Restricted receive access is required."
 msgstr "Kinakailangan ang limitadong access sa pagtanggap."
 
@@ -1347,7 +1479,7 @@ msgstr "Hindi pinapayagan ang pag-access"
 msgid "Access denied"
 msgstr "Hindi pinapayagan ang pag-access"
 
-#: templates/whispers/forbidden.html:10 whispers/views.py:488
+#: templates/whispers/forbidden.html:10 whispers/views.py:500
 msgid "You do not have access to this whisper."
 msgstr "Wala kang access sa whisper na ito."
 
@@ -1817,6 +1949,63 @@ msgid "Decryption failed. The link may be incomplete or corrupted."
 msgstr ""
 "Hindi nagtagumpay ang pag-decrypt. Maaaring hindi kumpleto o sira ang link."
 
+#: whispers/api_tokens.py:39
+msgid "Create whispers and submit to receive requests"
+msgstr "Gumawa ng mga whisper at magsumite sa mga receive request"
+
+#: whispers/api_tokens.py:40
+msgid "Reveal whispers"
+msgstr "Ipakita ang mga whisper"
+
+#: whispers/api_tokens.py:41
+msgid "Create receive requests and manage their reader access"
+msgstr ""
+"Gumawa ng mga receive request at pamahalaan ang access ng mga reader nito"
+
+#: whispers/api_tokens.py:91
+msgid ""
+"The redirect address must be a loopback address such as http://127.0.0.1:"
+"<port>/callback or http://[::1]:<port>/callback."
+msgstr ""
+"Dapat na loopback address ang redirect address, gaya ng http://127.0.0.1:"
+"<port>/callback o http://[::1]:<port>/callback."
+
+#: whispers/api_tokens.py:106
+msgid "Unsupported response type."
+msgstr "Hindi suportado ang uri ng response."
+
+#: whispers/api_tokens.py:112
+msgid "The client must use the S256 code challenge method."
+msgstr "Dapat gamitin ng client ang S256 na paraan ng code challenge."
+
+#: whispers/api_tokens.py:116
+msgid "The code challenge is missing or invalid."
+msgstr "Nawawala o hindi wasto ang code challenge."
+
+#: whispers/api_tokens.py:119
+msgid "The state parameter is missing or invalid."
+msgstr "Nawawala o hindi wasto ang state parameter."
+
+#: whispers/api_tokens.py:122
+msgid "The client name is invalid."
+msgstr "Hindi wasto ang pangalan ng client."
+
+#: whispers/api_tokens.py:125
+msgid "The client requested an unknown scope."
+msgstr "Humiling ang client ng hindi kilalang scope."
+
+#: whispers/api_tokens.py:163
+msgid "The authorization code is invalid or expired."
+msgstr "Hindi wasto o expired na ang authorization code."
+
+#: whispers/api_tokens.py:167
+msgid "The code verifier is missing or invalid."
+msgstr "Nawawala o hindi wasto ang code verifier."
+
+#: whispers/api_tokens.py:263
+msgid "This token does not have the required scope."
+msgstr "Walang kinakailangang scope ang token na ito."
+
 #: whispers/deployment.py:45
 msgid "username and password"
 msgstr "username at password"
@@ -1929,8 +2118,9 @@ msgstr ""
 msgid "Restricted receive access"
 msgstr "Limitadong access sa pagtanggap"
 
-#: whispers/deployment.py:172 whispers/deployment.py:241
-#: whispers/deployment.py:268 whispers/deployment.py:295
+#: whispers/deployment.py:172 whispers/deployment.py:233
+#: whispers/deployment.py:264 whispers/deployment.py:291
+#: whispers/deployment.py:318
 msgid "Off"
 msgstr "Naka-off"
 
@@ -1975,15 +2165,36 @@ msgstr ""
 "Maaaring limitahan ng mga gumawa ang mga receive request sa kanilang sarili "
 "at sa mga account na inaprubahan nila."
 
-#: whispers/deployment.py:226 whispers/deployment.py:240
-msgid "Email notifications"
-msgstr "Mga abiso sa email"
+#: whispers/deployment.py:219 whispers/deployment.py:232
+msgid "Command-line sign-in"
+msgstr "Pag-sign in mula sa command line"
 
-#: whispers/deployment.py:227
+#: whispers/deployment.py:220 whispers/deployment.py:250
 msgid "Available"
 msgstr "Available"
 
-#: whispers/deployment.py:230
+#: whispers/deployment.py:223
+msgid ""
+"Programs such as the command-line tool can sign in through this site after "
+"you approve them, and get a token that expires. You can revoke these tokens "
+"from your account menu."
+msgstr ""
+"Maaaring mag-sign in sa site na ito ang mga program tulad ng command-line "
+"tool pagkatapos mo silang aprubahan, at makakakuha sila ng token na nag-e-"
+"expire. Maaari mong bawiin ang mga token na ito mula sa menu ng iyong "
+"account."
+
+#: whispers/deployment.py:235
+msgid "Programs such as the command-line tool cannot sign in to this site."
+msgstr ""
+"Hindi makakapag-sign in sa site na ito ang mga program tulad ng command-line "
+"tool."
+
+#: whispers/deployment.py:249 whispers/deployment.py:263
+msgid "Email notifications"
+msgstr "Mga abiso sa email"
+
+#: whispers/deployment.py:253
 msgid ""
 "You can have an email sent when a whisper is created or submitted. The email "
 "never contains the decryption key."
@@ -1991,19 +2202,19 @@ msgstr ""
 "Maaari kang magpadala ng email kapag may whisper na ginawa o isinumite. "
 "Hindi kailanman naglalaman ang email ng decryption key."
 
-#: whispers/deployment.py:243
+#: whispers/deployment.py:266
 msgid "This site does not send email notifications."
 msgstr "Hindi nagpapadala ang site na ito ng mga abiso sa email."
 
-#: whispers/deployment.py:252 whispers/deployment.py:267
+#: whispers/deployment.py:275 whispers/deployment.py:290
 msgid "Usage statistics"
 msgstr "Estadistika ng paggamit"
 
-#: whispers/deployment.py:253 whispers/deployment.py:280
+#: whispers/deployment.py:276 whispers/deployment.py:303
 msgid "On"
 msgstr "Naka-on"
 
-#: whispers/deployment.py:256
+#: whispers/deployment.py:279
 msgid ""
 "Anonymous hourly counts of created and revealed whispers are kept for up to "
 "a year. No content, keys, identifiers, IP addresses, or accounts are "
@@ -2013,15 +2224,15 @@ msgstr ""
 "ginawa at ipinakitang whisper. Walang nilalaman, key, identifier, IP "
 "address, o account na itinatala."
 
-#: whispers/deployment.py:270
+#: whispers/deployment.py:293
 msgid "No usage statistics are collected."
 msgstr "Walang kinokolektang estadistika ng paggamit."
 
-#: whispers/deployment.py:279 whispers/deployment.py:294
+#: whispers/deployment.py:302 whispers/deployment.py:317
 msgid "Formatted text"
 msgstr "Naka-format na teksto"
 
-#: whispers/deployment.py:283
+#: whispers/deployment.py:306
 msgid ""
 "Whispers can use headings, lists, links, and code, written in a Markdown "
 "editor, or be written as plain text. Formatting stays inside the encrypted "
@@ -2031,28 +2242,28 @@ msgstr ""
 "isinulat sa isang Markdown editor, o isulat bilang payak na teksto. "
 "Nananatili ang pag-format sa loob ng naka-encrypt na whisper."
 
-#: whispers/deployment.py:297
+#: whispers/deployment.py:320
 msgid "Whispers are written and shown as plain text."
 msgstr "Isinusulat at ipinapakita ang mga whisper bilang payak na teksto."
 
-#: whispers/deployment.py:305
+#: whispers/deployment.py:328
 msgid "File size limit"
 msgstr "Limitasyon sa laki ng file"
 
-#: whispers/deployment.py:308
+#: whispers/deployment.py:331
 msgid "Maximum total size of the files attached to a single whisper."
 msgstr ""
 "Pinakamalaking kabuuang laki ng mga file na nakalakip sa iisang whisper."
 
-#: whispers/deployment.py:317 whispers/deployment.py:331
+#: whispers/deployment.py:340 whispers/deployment.py:354
 msgid "Encrypted storage"
 msgstr "Naka-encrypt na imbakan"
 
-#: whispers/deployment.py:318
+#: whispers/deployment.py:341
 msgid "Saved to disk"
 msgstr "Naka-save sa disk"
 
-#: whispers/deployment.py:321
+#: whispers/deployment.py:344
 msgid ""
 "Encrypted whispers are stored in Redis with persistence enabled, so they "
 "survive server restarts until they expire."
@@ -2060,16 +2271,24 @@ msgstr ""
 "Iniimbak ang mga naka-encrypt na whisper sa Redis na may persistence, kaya "
 "nananatili ang mga ito kahit mag-restart ang server hanggang sa mag-expire."
 
-#: whispers/deployment.py:332
+#: whispers/deployment.py:355
 msgid "Memory only"
 msgstr "Sa memory lamang"
 
-#: whispers/deployment.py:335
+#: whispers/deployment.py:358
 msgid ""
 "Encrypted whispers live only in memory and are lost if the server restarts."
 msgstr ""
 "Nasa memory lamang ang mga naka-encrypt na whisper at mawawala kapag nag-"
 "restart ang server."
+
+#: whispers/middleware.py:68
+msgid "Authentication required"
+msgstr "Kailangang mag-sign in"
+
+#: whispers/middleware.py:102
+msgid "The API token is invalid, expired or revoked."
+msgstr "Hindi wasto, expired, o binawi na ang API token."
 
 #: whispers/stats.py:92
 msgid "Monday"
@@ -2107,26 +2326,34 @@ msgstr "5 minuto"
 msgid "1 hour"
 msgstr "1 oras"
 
+#: whispers/token_views.py:130
+msgid "You denied access."
+msgstr "Tinanggihan mo ang access."
+
+#: whispers/token_views.py:227
+msgid "Send the API token to revoke in the Authorization header."
+msgstr "Ipadala sa Authorization header ang API token na babawiin."
+
 #: whispers/views.py:64
 msgid "Whisper storage is temporarily unavailable. Please try again later."
 msgstr ""
 "Pansamantalang hindi available ang storage ng whisper. Pakisubukang muli "
 "mamaya."
 
-#: whispers/views.py:183 whispers/views.py:714 whispers/views.py:813
+#: whispers/views.py:183 whispers/views.py:732 whispers/views.py:836
 msgid "Enter the verified primary email of each additional reader."
 msgstr ""
 "Ilagay ang beripikadong pangunahing email ng bawat karagdagang mambabasa."
 
-#: whispers/views.py:697
+#: whispers/views.py:715
 msgid "Receive reader restrictions are not enabled."
 msgstr "Hindi naka-enable ang mga limitasyon sa mambabasa sa pagtanggap."
 
-#: whispers/views.py:701
+#: whispers/views.py:719
 msgid "Sign in to manage reader access."
 msgstr "Mag-sign in upang pamahalaan ang access ng mambabasa."
 
-#: whispers/views.py:705 whispers/views.py:804
+#: whispers/views.py:723 whispers/views.py:827
 msgid "Enable restricted access before adding readers."
 msgstr "I-enable ang limitadong access bago magdagdag ng mga mambabasa."
 
