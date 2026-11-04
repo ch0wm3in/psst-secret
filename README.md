@@ -42,8 +42,8 @@ The app is served by [Granian](https://github.com/emmett-framework/granian) on p
 | [How it works](docs/how-it-works.md) | Encryption flows, storage, reveal tokens, expiry, and security model |
 | [Encryption format](docs/format.md) | Versioned format specification, test vectors, and compatibility policy |
 | [Configuration](docs/configuration.md) | Environment variables and optional features |
-| [API](docs/api.md) | JSON endpoints and error codes |
-| [Development](docs/development.md) | Local setup, frontend assets, translations, and tests |
+| [API](docs/api.md) | Versioned `/api/v1/` endpoints, OpenAPI schema, and error codes |
+| [Development](docs/development.md) | Local setup, frontend assets, translations, tests, and regenerating the schema and test vectors |
 | [Security policy](SECURITY.md) | Reporting vulnerabilities |
 
 ## License
