@@ -2,12 +2,13 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 
 from whispers import redis_store
+from whispers.api_tokens import delete_expired
 from whispers.models import Whisper
 from whispers.stats import prune_stats
 
 
 class Command(BaseCommand):
-    help = "Delete all expired whispers from the database and Redis."
+    help = "Delete expired whispers, API tokens and statistics."
 
     def handle(self, *args, **options):
         expired = Whisper.objects.filter(expires_at__lte=timezone.now())
@@ -18,6 +19,10 @@ class Command(BaseCommand):
 
         count, _ = expired.delete()
         stats_count = prune_stats()
+        token_count = delete_expired()
+        self.stdout.write(
+            self.style.SUCCESS(f"Deleted {token_count} expired API token(s).")
+        )
         self.stdout.write(
             self.style.SUCCESS(f"Deleted {stats_count} expired statistics bucket(s).")
         )

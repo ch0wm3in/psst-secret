@@ -1,0 +1,63 @@
+{% extends "base/layout.html" %}
+{% load i18n whispers_extras %}
+
+{% block title %}{{ brand_name }} — {% trans "Approve sign-in" %}{% endblock %}
+
+{% block content %}
+<div class="max-w-lg mx-auto space-y-6" data-cli-authorize>
+    <div class="text-center space-y-2">
+        <div>{% icon "key" class="size-10 text-brand-400" %}</div>
+        <h1 class="text-2xl font-bold text-white">{% trans "Approve sign-in" %}</h1>
+        <p class="text-gray-400">
+            {% if client_name %}
+            {% blocktrans with client=client_name %}<strong class="text-white" data-client-name>{{ client }}</strong> wants to use {{ brand_name }} as you.{% endblocktrans %}
+            {% else %}
+            {% blocktrans %}An unnamed client wants to use {{ brand_name }} as you.{% endblocktrans %}
+            {% endif %}
+        </p>
+    </div>
+
+    <div class="rounded-lg border border-gray-800 bg-gray-900 p-5 space-y-4 text-sm">
+        <div>
+            <p class="text-gray-400">{% trans "Signed in as" %}</p>
+            <p class="text-white">{{ user.get_full_name|default:user.username }}{% if user.email %} <span class="text-gray-400">({{ user.email }})</span>{% endif %}</p>
+        </div>
+        <div>
+            <p class="text-gray-400">{% trans "It will be allowed to" %}</p>
+            <ul class="mt-1 space-y-1 text-gray-200" data-scopes>
+                {% for scope, description in scopes %}
+                <li class="flex items-start gap-2">{% icon "check-circle" class="size-5 shrink-0 text-brand-400" %}<span>{{ description }} <code class="text-xs text-gray-500">{{ scope }}</code></span></li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div>
+            <p class="text-gray-400">{% trans "Sign-in returns to" %}</p>
+            {% if redirect_host %}
+            <p class="text-white"><code data-redirect-host>{{ redirect_host }}</code> <span class="text-gray-400">{% trans "(a program on this device)" %}</span></p>
+            {% else %}
+            <p class="text-white">{% trans "A code shown on the next page, which you paste into the program" %}</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="rounded-lg border border-yellow-800 bg-yellow-900/20 px-4 py-3 text-sm text-yellow-200 flex gap-2">
+        {% icon "exclamation-triangle" class="size-5 shrink-0" %}
+        <p>{% trans "Only approve if you just started this sign-in yourself, for example with “psst login”. The client name is chosen by the program and is not verified." %}</p>
+    </div>
+
+    <form method="post" class="flex gap-3">
+        {% csrf_token %}
+        {% for name, value in request_data.items %}{% if name != "scopes" and name != "manual" %}
+        <input type="hidden" name="{{ name }}" value="{{ value }}">
+        {% endif %}{% endfor %}
+        <button type="submit" name="action" value="deny"
+            class="flex-1 rounded-lg border border-gray-700 bg-gray-800 hover:bg-gray-700 px-4 py-3 text-sm font-medium text-gray-100 transition">
+            {% trans "Deny" %}
+        </button>
+        <button type="submit" name="action" value="approve"
+            class="flex-1 rounded-lg bg-brand-600 hover:bg-brand-500 px-4 py-3 text-sm font-medium text-white transition">
+            {% trans "Approve" %}
+        </button>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends "base/layout.html" %}
+{% load i18n whispers_extras %}
+
+{% block title %}{{ brand_name }} — {% trans "Sign-in not completed" %}{% endblock %}
+
+{% block content %}
+<div class="text-center py-16 space-y-4">
+    <div>{% icon "no-symbol" class="size-12 text-red-400" %}</div>
+    <h1 class="text-2xl font-bold text-white">{% trans "Sign-in not completed" %}</h1>
+    <p class="text-gray-400 max-w-md mx-auto" data-cli-error>{{ error }}</p>
+    <p class="text-sm text-gray-500 max-w-md mx-auto">{% trans "Return to the program and start the sign-in again." %}</p>
+</div>
+{% endblock %}

@@ -49,6 +49,13 @@
                             <p class="text-sm font-medium text-white truncate">{{ user.get_full_name|default:user.username }}</p>
                             <p class="text-xs text-gray-400 truncate">{{ user.email }}</p>
                         </div>
+                        {% settings_value "PSST_ENABLE_API_TOKENS" as api_tokens_enabled %}
+                        {% if api_tokens_enabled %}
+                        <a href="{% url 'whispers:api_tokens' %}"
+                            class="block px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition">
+                            {% trans "API tokens" %}
+                        </a>
+                        {% endif %}
                         <form method="post" action="{% url 'account_logout' %}">
                             {% csrf_token %}
                             <button type="submit"

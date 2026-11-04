@@ -4,6 +4,45 @@ info:
   version: 1.0.0
   description: End-to-end encrypted secret sharing. The server never sees your plaintext.
 paths:
+  /api/v1/cli/revoke:
+    post:
+      operationId: cli_revoke_create
+      description: Revoke the API token that authenticates this request (``psst logout``).
+      tags:
+      - cli
+      security:
+      - apiToken: []
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /api/v1/cli/token:
+    post:
+      operationId: cli_token_create
+      description: Exchange a single-use authorization code and its PKCE verifier
+        for an API token.
+      tags:
+      - cli
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenExchange'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenExchange'
+        required: true
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+          description: ''
   /api/v1/info:
     get:
       operationId: info_retrieve
@@ -11,6 +50,7 @@ paths:
       tags:
       - info
       security:
+      - apiToken: []
       - cookieAuth: []
       - basicAuth: []
       - {}
@@ -38,6 +78,7 @@ paths:
               $ref: '#/components/schemas/CreateWhisper'
         required: true
       security:
+      - apiToken: []
       - cookieAuth: []
       - basicAuth: []
       - {}
@@ -61,6 +102,7 @@ paths:
       tags:
       - whisper
       security:
+      - apiToken: []
       - cookieAuth: []
       - basicAuth: []
       - {}
@@ -88,6 +130,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedReceiveAccess'
       security:
+      - apiToken: []
       - cookieAuth: []
       - basicAuth: []
       - {}
@@ -120,6 +163,7 @@ paths:
             schema:
               $ref: '#/components/schemas/RevealWhisper'
       security:
+      - apiToken: []
       - cookieAuth: []
       - basicAuth: []
       - {}
@@ -147,6 +191,7 @@ paths:
               $ref: '#/components/schemas/CreateRequest'
         required: true
       security:
+      - apiToken: []
       - cookieAuth: []
       - basicAuth: []
       - {}
@@ -171,6 +216,7 @@ paths:
       tags:
       - whisper
       security:
+      - apiToken: []
       - cookieAuth: []
       - basicAuth: []
       - {}
@@ -203,6 +249,7 @@ paths:
               $ref: '#/components/schemas/SubmitWhisper'
         required: true
       security:
+      - apiToken: []
       - cookieAuth: []
       - basicAuth: []
       - {}
@@ -227,10 +274,36 @@ components:
           items:
             type: integer
           description: Format versions accepted for new whispers.
+        auth:
+          $ref: '#/components/schemas/ApiInfoAuth'
       required:
       - api_version
+      - auth
       - format_versions
       - server_version
+    ApiInfoAuth:
+      type: object
+      properties:
+        login_required:
+          type: boolean
+          description: Whether creating whispers through the API requires authentication.
+        loopback_pkce:
+          type: boolean
+          description: Whether API tokens can be obtained with the loopback + PKCE
+            sign-in.
+        manual_code:
+          type: boolean
+          description: Whether the copy-paste code fallback is available for the sign-in.
+        scopes:
+          type: array
+          items:
+            type: string
+          description: Scopes an API token can be granted.
+      required:
+      - login_required
+      - loopback_pkce
+      - manual_code
+      - scopes
     CreateRequest:
       type: object
       properties:
@@ -397,6 +470,11 @@ components:
         * `1d` - 1d
         * `1w` - 1w
         * `1M` - 1M
+    GrantTypeEnum:
+      enum:
+      - authorization_code
+      type: string
+      description: '* `authorization_code` - authorization_code'
     PatchedReceiveAccess:
       type: object
       properties:
@@ -513,12 +591,60 @@ components:
           type: boolean
       required:
       - success
+    TokenExchange:
+      type: object
+      properties:
+        grant_type:
+          allOf:
+          - $ref: '#/components/schemas/GrantTypeEnum'
+          default: authorization_code
+        code:
+          type: string
+          maxLength: 100
+        code_verifier:
+          type: string
+          description: PKCE code verifier (RFC 7636).
+          maxLength: 128
+        redirect_uri:
+          type: string
+          description: Exactly the redirect_uri sent to /cli/authorize.
+          maxLength: 255
+      required:
+      - code
+      - code_verifier
+      - redirect_uri
+    TokenResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+          description: API token, prefixed with psst_.
+        token_type:
+          type: string
+        expires_in:
+          type: integer
+          description: Seconds until the token expires.
+        expires_at:
+          type: string
+          format: date-time
+        scope:
+          type: string
+          description: Space-separated granted scopes.
+      required:
+      - access_token
+      - expires_at
+      - expires_in
+      - scope
+      - token_type
     VEnum:
       enum:
       - 1
       type: integer
       description: '* `1` - 1'
   securitySchemes:
+    apiToken:
+      type: http
+      scheme: bearer
     basicAuth:
       type: http
       scheme: basic

@@ -1948,7 +1948,7 @@ class DeploymentFeaturesTests(TestCase):
                 ):
                     response = client.post(path, {}, content_type="application/json")
                     self.assertEqual(
-                        response.status_code != 302, is_open, (extra, path)
+                        response.status_code not in (302, 401), is_open, (extra, path)
                     )
 
     def test_receive_access_states(self):

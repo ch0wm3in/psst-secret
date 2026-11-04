@@ -212,7 +212,30 @@ def _auth_features():
             ),
         )
 
-    return [sign_in, view, submit, access]
+    if getattr(settings, "PSST_ENABLE_API_TOKENS", False):
+        api_tokens = _feature(
+            "api_tokens",
+            "outline/key",
+            _("Command-line sign-in"),
+            _("Available"),
+            "on",
+            _(
+                "Programs such as the command-line tool can sign in through this site "
+                "after you approve them, and get a token that expires. You can revoke "
+                "these tokens from your account menu."
+            ),
+        )
+    else:
+        api_tokens = _feature(
+            "api_tokens",
+            "outline/key",
+            _("Command-line sign-in"),
+            _("Off"),
+            "off",
+            _("Programs such as the command-line tool cannot sign in to this site."),
+        )
+
+    return [sign_in, view, submit, access, api_tokens]
 
 
 def deployment_features():

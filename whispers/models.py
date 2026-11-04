@@ -117,3 +117,61 @@ class HourlyWhisperStats(models.Model):
     expiry_1d = models.PositiveBigIntegerField(default=0)
     expiry_1w = models.PositiveBigIntegerField(default=0)
     expiry_1M = models.PositiveBigIntegerField(default=0)
+
+
+class ApiToken(models.Model):
+    """API token for the CLI and browser extension. Only a SHA-256 hash of the token is stored."""
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="api_tokens"
+    )
+    token_hash = models.CharField(max_length=64, unique=True, editable=False)
+    client_name = models.CharField(max_length=64)
+    scopes = models.CharField(
+        max_length=200, help_text="Space-separated scopes granted to this token"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_used_at = models.DateTimeField(null=True, blank=True)
+    expires_at = models.DateTimeField()
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"API token {self.pk} ({self.client_name})"
+
+    @property
+    def scope_list(self):
+        return self.scopes.split()
+
+    @property
+    def is_expired(self):
+        return timezone.now() >= self.expires_at
+
+
+class ApiAuthorizationCode(models.Model):
+    """Short-lived, single-use code from the loopback + PKCE sign-in, stored hashed.
+
+    Used codes are kept until cleanup so a replayed code can revoke the token it issued.
+    """
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="api_authorization_codes",
+    )
+    code_hash = models.CharField(max_length=64, unique=True, editable=False)
+    client_name = models.CharField(max_length=64)
+    scopes = models.CharField(max_length=200)
+    code_challenge = models.CharField(max_length=43)
+    redirect_uri = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    used_at = models.DateTimeField(null=True, blank=True)
+    token = models.ForeignKey(
+        ApiToken,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="authorization_codes",
+    )
