@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psst-secret\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-02 13:01+0000\n"
+"POT-Creation-Date: 2026-11-04 21:21+0000\n"
 "PO-Revision-Date: 2026-10-09 08:07+0000\n"
 "Last-Translator: \n"
 "Language-Team: Filipino\n"
@@ -14,25 +14,25 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n % 10 == 4 || n % 10 == 6 || n % 10 == "
 "9);\n"
 
-#: static/js/crypto.js:111
+#: static/js/crypto.js:130
 msgid "Remove"
 msgstr "Alisin"
 
-#: static/js/crypto.js:120
+#: static/js/crypto.js:139
 #, javascript-format
 msgid "Total: %s / %s"
 msgstr "Kabuuan: %s / %s"
 
-#: static/js/crypto.js:125
+#: static/js/crypto.js:144
 #, javascript-format
 msgid "Skipped (would exceed %s total): %s"
 msgstr "Nilaktawan (lalampas sa %s na kabuuan): %s"
 
-#: static/js/crypto.js:330
+#: static/js/crypto.js:373
 msgid "Post-quantum crypto module failed to load."
 msgstr "Hindi na-load ang module ng post-quantum cryptography."
 
-#: static/js/crypto.js:371
+#: static/js/crypto.js:414
 msgid ""
 "The request key does not match the link. The link may be incomplete or "
 "tampered with."
@@ -40,80 +40,86 @@ msgstr ""
 "Hindi tumutugma ang susi ng kahilingan sa link. Maaaring hindi kumpleto o "
 "napakialaman ang link."
 
-#: static/js/crypto.js:453 static/js/crypto.js:704
+#: static/js/crypto.js:496 static/js/crypto.js:749
 msgid "Please enter some content or select a file to encrypt."
 msgstr "Maglagay ng nilalaman o pumili ng file na i-e-encrypt."
 
-#: static/js/crypto.js:459 static/js/crypto.js:710
+#: static/js/crypto.js:502 static/js/crypto.js:755
 #, javascript-format
 msgid "Selected files exceed the maximum total size of %s."
 msgstr "Lumampas ang mga napiling file sa pinakamalaking kabuuang laki na %s."
 
-#: static/js/crypto.js:465 static/js/crypto.js:716
+#: static/js/crypto.js:508 static/js/crypto.js:761
 msgid "Encrypting…"
 msgstr "Ine-encrypt…"
 
-#: static/js/crypto.js:478 static/js/crypto.js:600
+#: static/js/crypto.js:521 static/js/crypto.js:644
 msgid ""
 "Passphrase does not meet the strength requirements shown below the field."
 msgstr ""
 "Hindi natutugunan ng password ang mga kinakailangan sa tibay na nakalista sa "
 "ibaba ng field."
 
-#: static/js/crypto.js:524 static/js/crypto.js:647 static/js/crypto.js:749
+#: static/js/crypto.js:568 static/js/crypto.js:692 static/js/crypto.js:798
 #, javascript-format
 msgid "Server error (%s)"
 msgstr "Error sa server (%s)"
 
-#: static/js/crypto.js:542
+#: static/js/crypto.js:586
 msgid "This whisper will be destroyed after being viewed once."
 msgstr "Buburahin ang whisper na ito pagkatapos tingnan nang isang beses."
 
-#: static/js/crypto.js:544
+#: static/js/crypto.js:588
 #, javascript-format
 msgid "This whisper will be destroyed after %s views."
 msgstr "Buburahin ang whisper na ito pagkatapos ng %s pagtingin."
 
-#: static/js/crypto.js:553 static/js/crypto.js:679 static/js/crypto.js:757
+#: static/js/crypto.js:597 static/js/crypto.js:724 static/js/crypto.js:806
 #, javascript-format
 msgid "Error: %s"
 msgstr "Error: %s"
 
-#: static/js/crypto.js:557
+#: static/js/crypto.js:601
 msgid "Encrypt & Share"
 msgstr "I-encrypt at ibahagi"
 
-#: static/js/crypto.js:568
+#: static/js/crypto.js:612
 msgid "Copied!"
 msgstr "Nakopya na!"
 
-#: static/js/crypto.js:569
+#: static/js/crypto.js:613
 msgid "Copy"
 msgstr "Kopyahin"
 
-#: static/js/crypto.js:587
+#: static/js/crypto.js:631
 msgid "Creating…"
 msgstr "Lumilikha…"
 
-#: static/js/crypto.js:668
+#: static/js/crypto.js:713
 msgid "The whisper will be destroyed after you view it once."
 msgstr "Buburahin ang whisper pagkatapos mong tingnan nang isang beses."
 
-#: static/js/crypto.js:670
+#: static/js/crypto.js:715
 #, javascript-format
 msgid "The whisper will be destroyed after %s views."
 msgstr "Buburahin ang whisper pagkatapos ng %s pagtingin."
 
-#: static/js/crypto.js:683
+#: static/js/crypto.js:728
 msgid "Create Request"
 msgstr "Lumikha ng kahilingan"
 
-#: static/js/crypto.js:720
+#: static/js/crypto.js:766
+msgid "This link uses an unsupported format version. Ask for a new link."
+msgstr ""
+"Gumagamit ang link ng bersyon ng format na hindi suportado. Humingi ng "
+"bagong link."
+
+#: static/js/crypto.js:769
 msgid "No encryption key found in URL. The link may be incomplete."
 msgstr ""
 "Walang susi para sa pag-encrypt sa URL. Maaaring hindi kumpleto ang link."
 
-#: static/js/crypto.js:761
+#: static/js/crypto.js:810
 msgid "Encrypt & Submit"
 msgstr "I-encrypt at isumite"
 

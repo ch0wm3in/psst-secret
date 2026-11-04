@@ -53,7 +53,7 @@ Authentication uses [django-allauth](https://docs.allauth.org/) and is enabled w
 | `{PROVIDER}_SOCIAL_AUTH_CONFIG` | JSON configuration per provider, e.g. `GOOGLE_SOCIAL_AUTH_CONFIG`. | `{}` |
 | `PSST_FORCE_AUTH_VIEW` | Require sign-in to view every whisper, overriding the per-whisper option. | `False` |
 | `PSST_FORCE_AUTH_SUBMIT` | Require sign-in to submit to every receive request, overriding the per-whisper option. | `False` |
-| `LOGIN_REQUIRED_EXEMPT_URLS` | Comma-separated regexes for paths that bypass the login requirement (no leading `/`). | `login/,accounts/.*,i18n/.*,static/.*` |
+| `LOGIN_REQUIRED_EXEMPT_URLS` | Comma-separated regexes for paths that bypass the login requirement (no leading `/`). The view and submit pages and their `api/v1/` endpoints are added unless `PSST_FORCE_AUTH_VIEW` or `PSST_FORCE_AUTH_SUBMIT` is set. | `login/,accounts/.*,i18n/.*,jsi18n/,static/.*` |
 | `ACCOUNT_EMAIL_VERIFICATION` | allauth email verification: `mandatory`, `optional`, or `none`. | `none` |
 | `ACCOUNT_DEFAULT_HTTP_PROTOCOL` | Protocol allauth uses for absolute URLs in emails. | `https` (`http` in `DEBUG`) |
 

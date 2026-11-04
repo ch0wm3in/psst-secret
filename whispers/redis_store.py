@@ -47,10 +47,12 @@ def store_crypto(
     wrapped_key_iv="",
     encapsulated_key="",
     reveal_token_hash="",
+    v=0,
 ):
     """Store crypto fields in Redis with a TTL (seconds)."""
     payload = json.dumps(
         {
+            "v": v,
             "ciphertext": ciphertext,
             "iv": iv,
             "salt": salt,

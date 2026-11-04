@@ -197,14 +197,14 @@ def test_access_network_failure_preserves_edits(
     page.goto(view_url)
     page.locator("#access-emails").fill(reader.email)
     page.route(
-        "**/api/whisper/*/access",
+        "**/api/v1/whisper/*/access",
         lambda route: route.fulfill(status=503, body="Unavailable"),
     )
     page.get_by_role("button", name="Save access", exact=True).click()
     expect(page.locator("#access-status")).to_have_text("Could not update access.")
     expect(page.locator("#access-emails")).to_have_value(reader.email)
     expect(page.locator("#access-emails")).to_be_enabled()
-    page.unroute("**/api/whisper/*/access")
+    page.unroute("**/api/v1/whisper/*/access")
     page.get_by_role("button", name="Save access", exact=True).click()
     expect(page.locator("#access-status")).to_have_text("Access updated.")
 
@@ -212,7 +212,7 @@ def test_access_network_failure_preserves_edits(
 def test_authenticated_api_requires_csrf(page, app_url, verified_user, sign_in):
     sign_in(verified_user())
     response = page.request.post(
-        app_url + "/api/whisper",
+        app_url + "/api/v1/whisper",
         data={"ciphertext": "encrypted", "iv": "nonce", "expiry": "1d"},
     )
     assert response.status == 403

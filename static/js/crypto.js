@@ -10,7 +10,26 @@
  *   Files: { type: "files", files: [{ filename, mimetype, data: "<base64>" }, ...] }
  *   Legacy (single file, still decoded for backward compatibility):
  *          { type: "file", filename: "...", mimetype: "...", data: "<base64>" }
+ *
+ * docs/format.md is the normative specification of the format implemented here.
  */
+
+/** Format version written by this client. */
+const FORMAT_VERSION = 1;
+/** Version 0 is the unmarked legacy format, which is still read but never written. */
+const READABLE_FORMAT_VERSIONS = [0, 1];
+/** Fragment of legacy links that carry only a bare base64 key or fingerprint. */
+const LEGACY_FRAGMENT = /^[A-Za-z0-9+/]+={0,2}$/;
+
+/** Parse a `v` value from a fragment or payload. Missing means legacy version 0. */
+function parseFormatVersion(value) {
+    if (value === null || value === undefined) return 0;
+    return /^[0-9]+$/.test(String(value)) ? Number(value) : NaN;
+}
+
+function isReadableFormat(version) {
+    return READABLE_FORMAT_VERSIONS.includes(version);
+}
 
 // ---- Multi-file selection state (shared between create.html and submit.html) ----
 
@@ -215,27 +234,51 @@ async function generateKey() {
     return bufToBase64(raw);
 }
 
+function toHex(bytes) {
+    return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+}
+
+/** SHA-256 hex digest of the ASCII reveal token, as stored by the server. */
+async function revealTokenHash(token) {
+    return toHex(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(token))));
+}
+
 async function generateRevealAuthorization() {
-    const bytes = crypto.getRandomValues(new Uint8Array(32));
-    const hex = value => Array.from(value, b => b.toString(16).padStart(2, '0')).join('');
-    const token = hex(bytes);
-    const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(token));
-    return { token, tokenHash: hex(new Uint8Array(digest)) };
+    const token = toHex(crypto.getRandomValues(new Uint8Array(32)));
+    return { token, tokenHash: await revealTokenHash(token) };
 }
 
 function revealFragment(key, token) {
-    const params = new URLSearchParams({ reveal: token });
+    const params = new URLSearchParams({ v: FORMAT_VERSION, reveal: token });
     if (key) params.set('key', key);
     return '#' + params.toString();
 }
 
 function readRevealFragment(allowLegacy = false) {
     const raw = window.location.hash.substring(1);
-    if (allowLegacy && /^[A-Za-z0-9+/]+={0,2}$/.test(raw)) {
-        return { key: raw, token: '' };
+    if (allowLegacy && LEGACY_FRAGMENT.test(raw)) {
+        return { version: 0, key: raw, token: '' };
     }
     const params = new URLSearchParams(raw);
-    return { key: params.get('key') || '', token: params.get('reveal') || '' };
+    return {
+        version: parseFormatVersion(params.get('v')),
+        key: params.get('key') || '',
+        token: params.get('reveal') || '',
+    };
+}
+
+function submitFragment(fingerprint) {
+    return '#' + new URLSearchParams({ v: FORMAT_VERSION, fp: fingerprint }).toString();
+}
+
+/** Read a submit link fragment. Legacy links carry only the bare fingerprint. */
+function readSubmitFragment() {
+    const raw = window.location.hash.substring(1);
+    if (LEGACY_FRAGMENT.test(raw)) {
+        return { version: 0, fingerprint: raw };
+    }
+    const params = new URLSearchParams(raw);
+    return { version: parseFormatVersion(params.get('v')), fingerprint: params.get('fp') || '' };
 }
 
 /**
@@ -501,13 +544,14 @@ async function handleCreate() {
 
         // 3. Send only ciphertext to server
         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-        const response = await fetch('/api/whisper', {
+        const response = await fetch('/api/v1/whisper', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRFToken': csrfToken,
             },
             body: JSON.stringify({
+                v: FORMAT_VERSION,
                 ciphertext,
                 iv,
                 salt,
@@ -621,13 +665,14 @@ async function handleCreateRequest() {
                 : [],
         } : {};
         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-        const response = await fetch('/api/whisper/request', {
+        const response = await fetch('/api/v1/whisper/request', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRFToken': csrfToken,
             },
             body: JSON.stringify({
+                v: FORMAT_VERSION,
                 public_key: publicKeyB64,
                 reveal_token_hash: authorization.tokenHash,
                 salt,
@@ -652,7 +697,7 @@ async function handleCreateRequest() {
         const data = await response.json();
 
         // Submit link gets the public-key fingerprint; view link gets the key seed unless password-wrapped.
-        const submitUrl = data.submit_url + '#' + fingerprintB64;
+        const submitUrl = data.submit_url + submitFragment(fingerprintB64);
         const viewUrl = data.view_url + revealFragment(password ? '' : seedB64, authorization.token);
 
         document.getElementById('submit-url').value = submitUrl;
@@ -716,7 +761,11 @@ async function handleSubmit() {
     setButtonLabel(btn, gettext('Encrypting…'));
 
     try {
-        if (!keyB64) {
+        const fragment = readSubmitFragment();
+        if (!isReadableFormat(fragment.version)) {
+            throw new Error(gettext('This link uses an unsupported format version. Ask for a new link.'));
+        }
+        if (!fragment.fingerprint) {
             throw new Error(gettext('No encryption key found in URL. The link may be incomplete.'));
         }
 
@@ -732,17 +781,17 @@ async function handleSubmit() {
             });
         }
 
-        const sealed = await sealForRecipient(payload, requestData.public_key, keyB64);
+        const sealed = await sealForRecipient(payload, requestData.public_key, fragment.fingerprint);
 
         // Submit to server
         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-        const response = await fetch('/api/whisper/submit/' + requestData.submit_token, {
+        const response = await fetch('/api/v1/whisper/submit/' + requestData.submit_token, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRFToken': csrfToken,
             },
-            body: JSON.stringify(sealed),
+            body: JSON.stringify({ v: FORMAT_VERSION, ...sealed }),
         });
 
         if (!response.ok) {

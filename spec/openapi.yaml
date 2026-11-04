@@ -1,0 +1,528 @@
+openapi: 3.0.3
+info:
+  title: psst-secret API
+  version: 1.0.0
+  description: End-to-end encrypted secret sharing. The server never sees your plaintext.
+paths:
+  /api/v1/info:
+    get:
+      operationId: info_retrieve
+      description: Report the server version and the API and format versions it supports.
+      tags:
+      - info
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiInfo'
+          description: ''
+  /api/v1/whisper:
+    post:
+      operationId: whisper_create
+      description: |-
+        Create a new encrypted whisper.
+
+        Accepts client-side encrypted data and stores it. The server never
+        sees the plaintext or the encryption key.
+      tags:
+      - whisper
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWhisper'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateWhisperResponse'
+          description: ''
+  /api/v1/whisper/{whisper_id}/access:
+    get:
+      operationId: whisper_access_retrieve
+      parameters:
+      - in: path
+        name: whisper_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - whisper
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReceiveAccess'
+          description: ''
+    patch:
+      operationId: whisper_access_partial_update
+      parameters:
+      - in: path
+        name: whisper_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - whisper
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedReceiveAccess'
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReceiveAccess'
+          description: ''
+  /api/v1/whisper/{whisper_id}/reveal:
+    post:
+      operationId: whisper_reveal_create
+      description: JSON-only reveal endpoint of the versioned API.
+      parameters:
+      - in: path
+        name: whisper_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - whisper
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RevealWhisper'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RevealWhisper'
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RevealWhisperResponse'
+          description: ''
+  /api/v1/whisper/request:
+    post:
+      operationId: whisper_request_create
+      description: |-
+        Create a receive-mode request.
+
+        The operator sets options (expiry, password, burn) and gets back
+        a submit URL (to share) and a view URL (to check later).
+      tags:
+      - whisper
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateRequestResponse'
+          description: ''
+  /api/v1/whisper/submit/{submit_token}:
+    get:
+      operationId: whisper_submit_retrieve
+      description: Return the request's public key for a sender to encrypt to.
+      parameters:
+      - in: path
+        name: submit_token
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - whisper
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubmitRequestKey'
+          description: ''
+    post:
+      operationId: whisper_submit_create
+      description: |-
+        Submit encrypted data for a receive-mode request.
+
+        Called by the third party who fills in the whisper.
+      parameters:
+      - in: path
+        name: submit_token
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - whisper
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitWhisper'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubmitWhisperResponse'
+          description: ''
+components:
+  schemas:
+    ApiInfo:
+      type: object
+      properties:
+        server_version:
+          type: string
+        api_version:
+          type: integer
+        format_versions:
+          type: array
+          items:
+            type: integer
+          description: Format versions accepted for new whispers.
+      required:
+      - api_version
+      - format_versions
+      - server_version
+    CreateRequest:
+      type: object
+      properties:
+        v:
+          allOf:
+          - $ref: '#/components/schemas/VEnum'
+          description: |-
+            Encryption format version (see docs/format.md). Omitted means legacy version 0.
+
+            * `1` - 1
+        creator_only:
+          type: boolean
+        allowed_reader_emails:
+          type: array
+          items:
+            type: string
+            format: email
+            maxLength: 254
+          maxItems: 20
+        reveal_token_hash:
+          type: string
+          description: SHA-256 hex digest of an independent random 256-bit reveal
+            token.
+          maxLength: 64
+          pattern: ^[0-9a-f]{64}$
+        public_key:
+          type: string
+          description: X-Wing (ML-KEM-768 + X25519) public key, base64.
+          maxLength: 2000
+        salt:
+          type: string
+          default: ''
+          maxLength: 50
+        wrapped_key:
+          type: string
+          default: ''
+          description: Request private key encrypted with a password-derived key.
+          maxLength: 500
+        wrapped_key_iv:
+          type: string
+          default: ''
+          maxLength: 50
+        max_views:
+          type: integer
+          maximum: 100
+          minimum: 0
+          default: 1
+          description: Reveals before self-destruction. 1 = burn after read; 0 = unlimited.
+        expiry:
+          allOf:
+          - $ref: '#/components/schemas/ExpiryEnum'
+          default: 1d
+        allowed_cidr:
+          type: string
+          default: ''
+        require_auth_view:
+          type: boolean
+          default: false
+        require_auth_submit:
+          type: boolean
+          default: false
+        notify_email:
+          oneOf:
+          - type: string
+            format: email
+            default: ''
+          - type: string
+            maxLength: 0
+      required:
+      - public_key
+      - reveal_token_hash
+    CreateRequestResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        submit_url:
+          type: string
+          format: uri
+        view_url:
+          type: string
+          format: uri
+      required:
+      - id
+      - submit_url
+      - view_url
+    CreateWhisper:
+      type: object
+      properties:
+        v:
+          allOf:
+          - $ref: '#/components/schemas/VEnum'
+          description: |-
+            Encryption format version (see docs/format.md). Omitted means legacy version 0.
+
+            * `1` - 1
+        reveal_token_hash:
+          type: string
+          description: SHA-256 hex digest of an independent random 256-bit reveal
+            token.
+          maxLength: 64
+          pattern: ^[0-9a-f]{64}$
+        ciphertext:
+          type: string
+          maxLength: 70000000
+        iv:
+          type: string
+          maxLength: 50
+        salt:
+          type: string
+          default: ''
+          maxLength: 50
+        max_views:
+          type: integer
+          maximum: 100
+          minimum: 0
+          default: 1
+          description: Reveals before self-destruction. 1 = burn after read; 0 = unlimited.
+        expiry:
+          allOf:
+          - $ref: '#/components/schemas/ExpiryEnum'
+          default: 1d
+        allowed_cidr:
+          type: string
+          default: ''
+        require_auth_view:
+          type: boolean
+          default: false
+        notify_email:
+          oneOf:
+          - type: string
+            format: email
+            default: ''
+          - type: string
+            maxLength: 0
+      required:
+      - ciphertext
+      - iv
+      - reveal_token_hash
+    CreateWhisperResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        url:
+          type: string
+          format: uri
+      required:
+      - id
+      - url
+    ExpiryEnum:
+      enum:
+      - 5m
+      - 1h
+      - 1d
+      - 1w
+      - 1M
+      type: string
+      description: |-
+        * `5m` - 5m
+        * `1h` - 1h
+        * `1d` - 1d
+        * `1w` - 1w
+        * `1M` - 1M
+    PatchedReceiveAccess:
+      type: object
+      properties:
+        creator_only:
+          type: boolean
+        allowed_reader_emails:
+          type: array
+          items:
+            type: string
+            format: email
+            maxLength: 254
+          maxItems: 20
+    ReceiveAccess:
+      type: object
+      properties:
+        creator_only:
+          type: boolean
+        allowed_reader_emails:
+          type: array
+          items:
+            type: string
+            format: email
+            maxLength: 254
+          maxItems: 20
+    RevealWhisper:
+      type: object
+      properties:
+        reveal_token:
+          description: Reveal token from the view link fragment, required for token-protected
+            whispers. Omit only for pre-token whispers. Never send the decryption
+            key.
+          oneOf:
+          - type: string
+            default: ''
+            maxLength: 64
+            pattern: ^[0-9a-f]{64}$
+          - type: string
+            maxLength: 0
+    RevealWhisperResponse:
+      type: object
+      properties:
+        v:
+          type: integer
+          description: Format version; 0 for legacy whispers.
+        ciphertext:
+          type: string
+        iv:
+          type: string
+        salt:
+          type: string
+        encapsulated_key:
+          type: string
+        wrapped_key:
+          type: string
+        wrapped_key_iv:
+          type: string
+        view_count:
+          type: integer
+        max_views:
+          type: integer
+        remaining_views:
+          type: integer
+      required:
+      - ciphertext
+      - encapsulated_key
+      - iv
+      - max_views
+      - remaining_views
+      - salt
+      - v
+      - view_count
+      - wrapped_key
+      - wrapped_key_iv
+    SubmitRequestKey:
+      type: object
+      properties:
+        public_key:
+          type: string
+          description: X-Wing public key, base64. Check it against the submit link
+            fingerprint.
+        v:
+          type: integer
+          description: Format version of the request.
+      required:
+      - public_key
+      - v
+    SubmitWhisper:
+      type: object
+      properties:
+        v:
+          allOf:
+          - $ref: '#/components/schemas/VEnum'
+          description: |-
+            Encryption format version (see docs/format.md). Omitted means legacy version 0.
+
+            * `1` - 1
+        ciphertext:
+          type: string
+          maxLength: 70000000
+        iv:
+          type: string
+          maxLength: 50
+        encapsulated_key:
+          type: string
+          maxLength: 2000
+      required:
+      - ciphertext
+      - encapsulated_key
+      - iv
+    SubmitWhisperResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+      required:
+      - success
+    VEnum:
+      enum:
+      - 1
+      type: integer
+      description: '* `1` - 1'
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid

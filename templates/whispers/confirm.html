@@ -33,6 +33,7 @@
 
 <script src="{% static 'js/crypto.min.js' %}"></script>
 {% trans "No decryption key found in URL. The link may be incomplete." as missing_key_error %}
+{% trans "This link uses an unsupported format version. Ask for a new link." as unsupported_format_error %}
 {% trans "The reveal authorization is missing or invalid. Use the complete view link." as reveal_authorization_error %}
 {% trans "Loading…" as loading_label %}
 <script>
@@ -41,6 +42,11 @@
         const fragment = readRevealFragment(legacy);
         const error = document.getElementById('reveal-error');
         const passwordProtected = {{ password_protected|yesno:"true,false" }};
+        if (!isReadableFormat(fragment.version)) {
+            error.textContent = '{{ unsupported_format_error|escapejs }}';
+            error.classList.remove('hidden');
+            return false;
+        }
         if (!passwordProtected && !fragment.key) {
             error.textContent = '{{ missing_key_error|escapejs }}';
             error.classList.remove('hidden');

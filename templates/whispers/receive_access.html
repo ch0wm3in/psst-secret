@@ -2,7 +2,7 @@
 {% if manage_receive_access %}
 <section class="border-t border-gray-800 pt-6 mt-6 max-w-md mx-auto space-y-3">
     <h2 class="text-lg font-semibold text-white">{% trans "Reader access" %}</h2>
-    <form id="receive-access-form" data-url="{% url 'whispers:api_receive_access' whisper.id %}" class="space-y-3">
+    <form id="receive-access-form" data-url="{% url 'whispers:api_v1_receive_access' whisper.id %}" class="space-y-3">
         {% csrf_token %}
         <label class="flex items-center gap-2 select-none">
             <input type="checkbox" id="access-creator-only" data-forced="{{ force_receive_access|yesno:'true,false' }}" {% if receive_access.creator_only or force_receive_access %}checked{% endif %} {% if force_receive_access %}disabled title="{% trans 'Restricted receive access is required.' %}"{% endif %}

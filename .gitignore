@@ -185,3 +185,5 @@ redis-data/
 
 # theme static
 theme/static/
+
+.vscode/

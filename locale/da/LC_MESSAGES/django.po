@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-02 13:24+0000\n"
+"POT-Creation-Date: 2026-11-04 21:21+0000\n"
 "PO-Revision-Date: 2026-04-17 15:26+0000\n"
 "Last-Translator: \n"
 "Language-Team: Danish\n"
@@ -125,16 +125,16 @@ msgstr "Sådan virker det"
 msgid ""
 "%(brand_name)s ensures that <strong class=\"text-white\">your whispers never "
 "exist in plaintext on our server</strong>. All encryption and decryption "
-"happens entirely in your browser using the <a href=\"https://developer."
-"mozilla.org/en-US/docs/Web/API/Web_Crypto_API\" class=\"text-brand-400 "
-"underline hover:text-brand-300\" target=\"_blank\" rel=\"noopener "
+"happens entirely in your browser using the <a href=\"https://"
+"developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API\" class=\"text-"
+"brand-400 underline hover:text-brand-300\" target=\"_blank\" rel=\"noopener "
 "noreferrer\">Web Crypto API</a>."
 msgstr ""
 "%(brand_name)s sikrer, at <strong class=\"text-white\">dine whispers aldrig "
 "findes i klartekst på vores server</strong>. Al kryptering og dekryptering "
-"foregår udelukkende i din browser ved hjælp af <a href=\"https://developer."
-"mozilla.org/en-US/docs/Web/API/Web_Crypto_API\" class=\"text-brand-400 "
-"underline hover:text-brand-300\" target=\"_blank\" rel=\"noopener "
+"foregår udelukkende i din browser ved hjælp af <a href=\"https://"
+"developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API\" class=\"text-"
+"brand-400 underline hover:text-brand-300\" target=\"_blank\" rel=\"noopener "
 "noreferrer\">Web Crypto API</a>."
 
 #: templates/whispers/about.html:28
@@ -714,20 +714,24 @@ msgstr "Klik forneden for at dekryptere og se denne whisper"
 msgid "Reveal whisper"
 msgstr "Vis whisper"
 
-#: templates/whispers/confirm.html:35 templates/whispers/view.html:321
+#: templates/whispers/confirm.html:35 templates/whispers/view.html:327
 msgid "No decryption key found in URL. The link may be incomplete."
 msgstr ""
 "Ingen dekrypteringsnøgle fundet i URL'en. Linket kan være ufuldstændigt."
 
-#: templates/whispers/confirm.html:36 templates/whispers/forbidden.html:10
-#: whispers/views.py:499
+#: templates/whispers/confirm.html:36 templates/whispers/view.html:317
+msgid "This link uses an unsupported format version. Ask for a new link."
+msgstr "Linket bruger en formatversion, der ikke understøttes. Bed om et nyt link."
+
+#: templates/whispers/confirm.html:37 templates/whispers/forbidden.html:10
+#: whispers/views.py:531
 msgid ""
 "The reveal authorization is missing or invalid. Use the complete view link."
 msgstr ""
 "Tilladelsen til at afsløre mangler eller er ugyldig. Brug det fulde "
 "visningslink."
 
-#: templates/whispers/confirm.html:37
+#: templates/whispers/confirm.html:38
 msgid "Loading…"
 msgstr "Indlæser…"
 
@@ -735,7 +739,7 @@ msgstr "Indlæser…"
 msgid "New Whisper"
 msgstr "Ny whisper"
 
-#: templates/whispers/create.html:9 whispers/tests/browser/test_pages.py:192
+#: templates/whispers/create.html:9 whispers/tests/browser/test_pages.py:193
 msgid "Share a whisper"
 msgstr "Del en whisper"
 
@@ -998,7 +1002,7 @@ msgid "The person submitting a whisper to this request must be signed in."
 msgstr "Personen der sender en whisper skal være logget ind."
 
 #: templates/whispers/create.html:233 templates/whispers/receive_access.html:8
-#: whispers/views.py:757
+#: whispers/views.py:798
 msgid "Restricted receive access is required."
 msgstr "Begrænset læseadgang i modtagertilstand er påkrævet."
 
@@ -1310,7 +1314,7 @@ msgstr "Adgang nægtet"
 msgid "Access denied"
 msgstr "Adgang nægtet"
 
-#: templates/whispers/forbidden.html:10 whispers/views.py:456
+#: templates/whispers/forbidden.html:10 whispers/views.py:488
 msgid "You do not have access to this whisper."
 msgstr "Du har ikke adgang til denne whisper."
 
@@ -1768,7 +1772,7 @@ msgstr ""
 "Ingen krypterede data tilgængelige. Whisperen er muligvis allerede blevet "
 "vist."
 
-#: templates/whispers/view.html:330
+#: templates/whispers/view.html:336
 msgid "Decryption failed. The link may be incomplete or corrupted."
 msgstr ""
 "Dekryptering mislykkedes. Linket kan være ufuldstændigt eller beskadiget."
@@ -2054,23 +2058,23 @@ msgstr "5 minutter"
 msgid "1 hour"
 msgstr "1 time"
 
-#: whispers/views.py:61
+#: whispers/views.py:64
 msgid "Whisper storage is temporarily unavailable. Please try again later."
 msgstr "Whisper-lageret er midlertidigt utilgængeligt. Prøv igen senere."
 
-#: whispers/views.py:169 whispers/views.py:674 whispers/views.py:772
+#: whispers/views.py:183 whispers/views.py:714 whispers/views.py:813
 msgid "Enter the verified primary email of each additional reader."
 msgstr "Angiv hver ekstra læsers bekræftede primære e-mailadresse."
 
-#: whispers/views.py:657
+#: whispers/views.py:697
 msgid "Receive reader restrictions are not enabled."
 msgstr "Begrænset læseadgang i modtagertilstand er ikke aktiveret."
 
-#: whispers/views.py:661
+#: whispers/views.py:701
 msgid "Sign in to manage reader access."
 msgstr "Log ind for at administrere læseadgang."
 
-#: whispers/views.py:665 whispers/views.py:763
+#: whispers/views.py:705 whispers/views.py:804
 msgid "Enable restricted access before adding readers."
 msgstr "Aktivér begrænset adgang, før du tilføjer læsere."
 

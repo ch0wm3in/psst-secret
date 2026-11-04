@@ -26,13 +26,13 @@ accurately.
    and encrypts it locally.
 2. Only the ciphertext and encryption parameters are uploaded, together with the
    SHA-256 hash of an independent random [reveal token](#reveal-tokens).
-3. The link fragment contains the token and key: `#reveal=TOKEN&key=KEY`.
+3. The link fragment contains the token and key: `#v=1&reveal=TOKEN&key=KEY`.
 4. The recipient's browser sends only the token to reveal the ciphertext, then decrypts
    it with the key from the fragment.
 
 With a password, the key is derived from it with PBKDF2 (600,000 iterations,
-SHA-256) and the fragment contains only `reveal=TOKEN`. Share the password separately.
-The server stores only the random salt.
+SHA-256) and the fragment contains only the format version and `reveal=TOKEN`. Share
+the password separately. The server stores only the random salt.
 
 Send mode is purely symmetric. Grover's algorithm at most reduces AES-256 to 128-bit
 security, and Shor's algorithm does not apply.
@@ -59,7 +59,8 @@ who record traffic today to decrypt later.
 Key material lives in the URL fragment (the part after `#`), which browsers never
 send to the server ([RFC 3986 §3.5](https://www.rfc-editor.org/rfc/rfc3986#section-3.5),
 [RFC 9110 §7.1](https://www.rfc-editor.org/rfc/rfc9110#section-7.1)), so it never
-appears in server or proxy request logs.
+appears in server or proxy request logs. The [encryption format](format.md) specifies
+every algorithm, parameter, and fragment exactly.
 
 ### Reveal tokens
 

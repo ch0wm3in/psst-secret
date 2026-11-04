@@ -22,13 +22,14 @@ from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
 from rest_framework.views import APIView
 from rest_framework.views import exception_handler as drf_exception_handler
 
-from whispers.constants import EXPIRY_DELTAS
+from whispers.constants import API_VERSION, EXPIRY_DELTAS, SUPPORTED_FORMAT_VERSIONS
 
 from . import redis_store
 from .deployment import deployment_features
 from .email import send_whisper_created_email, send_whisper_submitted_email
 from .models import Whisper
 from .serializers import (
+    ApiInfoSerializer,
     CreateRequestResponseSerializer,
     CreateRequestSerializer,
     CreateWhisperResponseSerializer,
@@ -36,6 +37,7 @@ from .serializers import (
     ReceiveAccessSerializer,
     RevealWhisperResponseSerializer,
     RevealWhisperSerializer,
+    SubmitRequestKeySerializer,
     SubmitWhisperResponseSerializer,
     SubmitWhisperSerializer,
 )
@@ -304,6 +306,22 @@ def stats(request):
     )
 
 
+class ApiInfoView(APIView):
+    """Report the server version and the API and format versions it supports."""
+
+    permission_classes = [AllowAny]
+
+    @extend_schema(responses={200: ApiInfoSerializer})
+    def get(self, request):
+        return Response(
+            {
+                "server_version": settings.APP_VERSION,
+                "api_version": API_VERSION,
+                "format_versions": list(SUPPORTED_FORMAT_VERSIONS),
+            }
+        )
+
+
 class CreateWhisperView(APIView):
     """
     Create a new encrypted whisper.
@@ -357,6 +375,7 @@ class CreateWhisperView(APIView):
                     iv=d["iv"],
                     salt=d["salt"],
                     reveal_token_hash=d["reveal_token_hash"],
+                    v=d.get("v", 0),
                 )
         except redis.RedisError as exc:
             return _storage_unavailable(exc, whisper_id)
@@ -394,6 +413,7 @@ class RevealWhisperView(APIView):
     permission_classes = [AllowAny]
     parser_classes = [JSONParser, FormParser]
     throttle_classes = [WhisperViewThrottle]
+    allow_render = True
 
     @extend_schema(exclude=True)
     def get(self, request, whisper_id):
@@ -456,7 +476,7 @@ class RevealWhisperView(APIView):
     )
     def post(self, request, whisper_id):
         whisper = get_object_or_404(Whisper, id=whisper_id)
-        should_render = bool(request.GET.get("render"))
+        should_render = self.allow_render and bool(request.GET.get("render"))
 
         if not _receive_reader_allowed(request.user, whisper):
             if not request.user.is_authenticated:
@@ -546,6 +566,7 @@ class RevealWhisperView(APIView):
         remaining = max(whisper.max_views - count, 0) if whisper.max_views > 0 else 0
 
         paste_data = {
+            "v": crypto.get("v", 0),
             "ciphertext": crypto["ciphertext"],
             "iv": crypto["iv"],
             "salt": crypto["salt"],
@@ -574,6 +595,13 @@ class RevealWhisperView(APIView):
             )
 
         return Response(paste_data)
+
+
+class RevealWhisperAPIView(RevealWhisperView):
+    """JSON-only reveal endpoint of the versioned API."""
+
+    http_method_names = ["post", "options"]
+    allow_render = False
 
 
 @require_GET
@@ -719,6 +747,7 @@ class CreateRequestView(APIView):
                     wrapped_key=d["wrapped_key"],
                     wrapped_key_iv=d["wrapped_key_iv"],
                     reveal_token_hash=d["reveal_token_hash"],
+                    v=d.get("v", 0),
                 )
         except redis.RedisError as exc:
             return _storage_unavailable(exc, whisper_id)
@@ -807,44 +836,83 @@ class SubmitWhisperView(APIView):
     throttle_classes = [WhisperCreateThrottle]
     serializer_class = SubmitWhisperSerializer
 
-    @extend_schema(
-        request=SubmitWhisperSerializer,
-        responses={200: SubmitWhisperResponseSerializer},
-    )
-    def post(self, request, submit_token):
+    def _open_request(self, request, submit_token):
+        """Return ``(whisper, crypto, error_response)`` for a receive request."""
         whisper = get_object_or_404(Whisper, submit_token=submit_token, mode="receive")
 
         if whisper.is_expired:
             redis_store.delete_crypto(whisper.id)
             whisper.delete()
-            return Response(
-                {"error": "This request has expired"}, status=status.HTTP_410_GONE
+            return (
+                None,
+                None,
+                Response(
+                    {"error": "This request has expired"}, status=status.HTTP_410_GONE
+                ),
             )
 
         # Authentication check for submitting
         if _requires_auth_submit(whisper) and not request.user.is_authenticated:
-            return Response(
-                {"error": "Authentication required"},
-                status=status.HTTP_403_FORBIDDEN,
+            return (
+                None,
+                None,
+                Response(
+                    {"error": "Authentication required"},
+                    status=status.HTTP_403_FORBIDDEN,
+                ),
             )
 
         if not check_ip_allowed(request, whisper):
-            return Response(
-                {"error": "Access denied from your IP address"},
-                status=status.HTTP_403_FORBIDDEN,
+            return (
+                None,
+                None,
+                Response(
+                    {"error": "Access denied from your IP address"},
+                    status=status.HTTP_403_FORBIDDEN,
+                ),
             )
 
         crypto = redis_store.get_crypto(whisper.id)
         if crypto is None:
             whisper.delete()
-            return Response(
-                {"error": "This request has expired"}, status=status.HTTP_410_GONE
+            return (
+                None,
+                None,
+                Response(
+                    {"error": "This request has expired"}, status=status.HTTP_410_GONE
+                ),
             )
 
         if crypto.get("ciphertext"):
-            return Response(
-                {"error": "Already submitted"}, status=status.HTTP_409_CONFLICT
+            return (
+                None,
+                None,
+                Response(
+                    {"error": "Already submitted"}, status=status.HTTP_409_CONFLICT
+                ),
             )
+        return whisper, crypto, None
+
+    @extend_schema(
+        description="Return the request's public key for a sender to encrypt to.",
+        responses={200: SubmitRequestKeySerializer},
+    )
+    def get(self, request, submit_token):
+        _whisper, crypto, error = self._open_request(request, submit_token)
+        if error:
+            return error
+        return Response(
+            {"public_key": crypto.get("public_key", ""), "v": crypto.get("v", 0)}
+        )
+
+    @extend_schema(
+        request=SubmitWhisperSerializer,
+        responses={200: SubmitWhisperResponseSerializer},
+    )
+    def post(self, request, submit_token):
+        whisper, _crypto, error = self._open_request(request, submit_token)
+        if error:
+            return error
 
         from .serializers import SubmitWhisperSerializer
 
@@ -861,6 +929,7 @@ class SubmitWhisperView(APIView):
             ciphertext=d["ciphertext"],
             iv=d["iv"],
             encapsulated_key=d["encapsulated_key"],
+            v=d.get("v", 0),
         )
 
         if result == "submitted":

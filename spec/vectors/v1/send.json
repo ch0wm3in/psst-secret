@@ -1,0 +1,36 @@
+{
+  "format_version": 1,
+  "mode": "send",
+  "cases": [
+    {
+      "name": "text",
+      "key": "wDBqzMt8+lAOxVIeB5bL6FLBKEl+Tj4KFY01ZOeZVb4=",
+      "iv": "OhPnmwAo2BmSnlNE",
+      "plaintext": "{\"type\":\"text\",\"content\":\"Hello, whisper!\"}",
+      "ciphertext": "CLuLa72D/L4p1qsdkKgfWodiYSICriWucmP0cv/TrxexIGenvoqcckVdFyODmXE9MGRLNQZAw7vBmcA=",
+      "reveal_token": "ea08e29fe009bce1f1f759c1fd37f071802e8fff28d201e9180709e53c8afda8",
+      "reveal_token_hash": "c1f8a158b75bcb289e882ddf265a3e429cbbf4825b33329996301a21f12d4b8f",
+      "fragment": "v=1&reveal=ea08e29fe009bce1f1f759c1fd37f071802e8fff28d201e9180709e53c8afda8&key=wDBqzMt8%2BlAOxVIeB5bL6FLBKEl%2BTj4KFY01ZOeZVb4%3D"
+    },
+    {
+      "name": "unicode",
+      "key": "XoWp5ICrkccPtz3u5LgyriaKwTQnrbpZkjT7zZ3a+WY=",
+      "iv": "FMWFsJuoLszjh2iT",
+      "plaintext": "{\"type\":\"text\",\"content\":\"Æble, čaj, 🔐\\nsecond line\",\"format\":\"markdown\"}",
+      "ciphertext": "NazWd0LlFUGTomVHhMHrc1q5jyLf2/Cp8HeSe61gI0xBnkJGeoAr9YBpHI0HGDa3nM7ep4u+Y6NxhPbkpn4OFdmIlzPqTMtNTTf+5NMjZEitW3PYnU6h5e1BQ9Hs6Q==",
+      "reveal_token": "da29dd063fda2b323ed0f66165999a786e0bd26c44c1d210aeaac6944d7ebc56",
+      "reveal_token_hash": "481311f52e382fb5864d76651cbf49ea14c8eb1f1c6aef5e8e7bcb416e5e4efe",
+      "fragment": "v=1&reveal=da29dd063fda2b323ed0f66165999a786e0bd26c44c1d210aeaac6944d7ebc56&key=XoWp5ICrkccPtz3u5LgyriaKwTQnrbpZkjT7zZ3a%2BWY%3D"
+    },
+    {
+      "name": "files",
+      "key": "wNi9mOlcVTFVu94wFlEcYU3mk/4VsytEnXynHiZvURc=",
+      "iv": "cleXkze2R2VSILQ3",
+      "plaintext": "{\"type\":\"files\",\"files\":[{\"filename\":\"note.txt\",\"mimetype\":\"text/plain\",\"data\":\"ZmlsZSBib2R5Cg==\"}]}",
+      "ciphertext": "3vgNbeW6bGQauRNbHxVSbtAKTCqo34ZHlhHr0R+zNrkfYyMRTr7zFRHDoHQX4kJhiydZrzVFQ06WrLkx9+Kxnsx0F0RRyYJOKxx4QqRLFiTpVmqxZdGrDbouSuc3jm5PeYtcDb9kueWe8yPSCC2571y7/oc=",
+      "reveal_token": "07f4b5edc82f084fd47b943af55cd5eb0d58a3ea103fb688f0eef2d5dffaec02",
+      "reveal_token_hash": "9da394af58cf8adeba492d6119959ca65764dfbbd6dfa49b74403dbac1996f7a",
+      "fragment": "v=1&reveal=07f4b5edc82f084fd47b943af55cd5eb0d58a3ea103fb688f0eef2d5dffaec02&key=wNi9mOlcVTFVu94wFlEcYU3mk%2F4VsytEnXynHiZvURc%3D"
+    }
+  ]
+}

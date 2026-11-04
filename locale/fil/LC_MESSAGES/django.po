@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psst-secret\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-02 13:24+0000\n"
+"POT-Creation-Date: 2026-11-04 21:21+0000\n"
 "PO-Revision-Date: 2026-10-09 08:07+0000\n"
 "Last-Translator: \n"
 "Language-Team: Filipino\n"
@@ -122,9 +122,9 @@ msgstr "Paano ito gumagana"
 msgid ""
 "%(brand_name)s ensures that <strong class=\"text-white\">your whispers never "
 "exist in plaintext on our server</strong>. All encryption and decryption "
-"happens entirely in your browser using the <a href=\"https://developer."
-"mozilla.org/en-US/docs/Web/API/Web_Crypto_API\" class=\"text-brand-400 "
-"underline hover:text-brand-300\" target=\"_blank\" rel=\"noopener "
+"happens entirely in your browser using the <a href=\"https://"
+"developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API\" class=\"text-"
+"brand-400 underline hover:text-brand-300\" target=\"_blank\" rel=\"noopener "
 "noreferrer\">Web Crypto API</a>."
 msgstr ""
 "Tinitiyak ng %(brand_name)s na <strong class=\"text-white\">hindi kailanman "
@@ -345,14 +345,14 @@ msgstr ""
 "Iniimbak ang susi para sa pag-decrypt pagkatapos ng <code class='bg-gray-900 "
 "px-1.5 py-0.5 rounded text-brand-300'>#</code> sa URL, sa tinatawag na "
 "fragment. Inilalaan ng espesipikasyon ng URI (<a href='https://www.rfc-"
-"editor.org/rfc/rfc3986#section-3.5' class='text-brand-400 underline hover:"
-"text-brand-300' target='_blank' rel='noopener noreferrer'>RFC 3986 §3.5</a>) "
-"ang fragment para iproseso ng browser, at hindi ito isinasama sa request "
-"ayon sa espesipikasyon ng HTTP (<a href='https://www.rfc-editor.org/rfc/"
-"rfc9110#section-7.1' class='text-brand-400 underline hover:text-brand-300' "
-"target='_blank' rel='noopener noreferrer'>RFC 9110 §7.1</a>) — kaya <strong "
-"class='text-white'>hindi kailanman ipinapadala ang fragment ng URL sa "
-"server</strong>. Ibig sabihin nito:"
+"editor.org/rfc/rfc3986#section-3.5' class='text-brand-400 underline "
+"hover:text-brand-300' target='_blank' rel='noopener noreferrer'>RFC 3986 "
+"§3.5</a>) ang fragment para iproseso ng browser, at hindi ito isinasama sa "
+"request ayon sa espesipikasyon ng HTTP (<a href='https://www.rfc-editor.org/"
+"rfc/rfc9110#section-7.1' class='text-brand-400 underline hover:text-"
+"brand-300' target='_blank' rel='noopener noreferrer'>RFC 9110 §7.1</a>) — "
+"kaya <strong class='text-white'>hindi kailanman ipinapadala ang fragment ng "
+"URL sa server</strong>. Ibig sabihin nito:"
 
 #: templates/whispers/about.html:87
 msgid "The server never receives the decryption key"
@@ -739,20 +739,26 @@ msgstr "Pindutin sa ibaba upang i-decrypt at tingnan ang whisper na ito."
 msgid "Reveal whisper"
 msgstr "Ipakita ang whisper"
 
-#: templates/whispers/confirm.html:35 templates/whispers/view.html:321
+#: templates/whispers/confirm.html:35 templates/whispers/view.html:327
 msgid "No decryption key found in URL. The link may be incomplete."
 msgstr ""
 "Walang susi para sa pag-decrypt sa URL. Maaaring hindi kumpleto ang link."
 
-#: templates/whispers/confirm.html:36 templates/whispers/forbidden.html:10
-#: whispers/views.py:499
+#: templates/whispers/confirm.html:36 templates/whispers/view.html:317
+msgid "This link uses an unsupported format version. Ask for a new link."
+msgstr ""
+"Gumagamit ang link ng bersyon ng format na hindi suportado. Humingi ng "
+"bagong link."
+
+#: templates/whispers/confirm.html:37 templates/whispers/forbidden.html:10
+#: whispers/views.py:531
 msgid ""
 "The reveal authorization is missing or invalid. Use the complete view link."
 msgstr ""
 "Nawawala o hindi wasto ang awtorisasyon sa pagbubunyag. Gamitin ang "
 "kumpletong link sa pagtingin."
 
-#: templates/whispers/confirm.html:37
+#: templates/whispers/confirm.html:38
 msgid "Loading…"
 msgstr "Naglo-load…"
 
@@ -760,7 +766,7 @@ msgstr "Naglo-load…"
 msgid "New Whisper"
 msgstr "Bagong whisper"
 
-#: templates/whispers/create.html:9 whispers/tests/browser/test_pages.py:192
+#: templates/whispers/create.html:9 whispers/tests/browser/test_pages.py:193
 msgid "Share a whisper"
 msgstr "Magbahagi ng whisper"
 
@@ -1025,7 +1031,7 @@ msgstr ""
 "Kailangang naka-sign in ang taong magsusumite ng whisper sa kahilingang ito."
 
 #: templates/whispers/create.html:233 templates/whispers/receive_access.html:8
-#: whispers/views.py:757
+#: whispers/views.py:798
 msgid "Restricted receive access is required."
 msgstr "Kinakailangan ang limitadong access sa pagtanggap."
 
@@ -1341,7 +1347,7 @@ msgstr "Hindi pinapayagan ang pag-access"
 msgid "Access denied"
 msgstr "Hindi pinapayagan ang pag-access"
 
-#: templates/whispers/forbidden.html:10 whispers/views.py:456
+#: templates/whispers/forbidden.html:10 whispers/views.py:488
 msgid "You do not have access to this whisper."
 msgstr "Wala kang access sa whisper na ito."
 
@@ -1806,7 +1812,7 @@ msgid "No encrypted data available. The psst may have already been viewed."
 msgstr ""
 "Walang naka-encrypt na datos na makukuha. Maaaring natingnan na ang whisper."
 
-#: templates/whispers/view.html:330
+#: templates/whispers/view.html:336
 msgid "Decryption failed. The link may be incomplete or corrupted."
 msgstr ""
 "Hindi nagtagumpay ang pag-decrypt. Maaaring hindi kumpleto o sira ang link."
@@ -2101,24 +2107,26 @@ msgstr "5 minuto"
 msgid "1 hour"
 msgstr "1 oras"
 
-#: whispers/views.py:61
+#: whispers/views.py:64
 msgid "Whisper storage is temporarily unavailable. Please try again later."
-msgstr "Pansamantalang hindi available ang storage ng whisper. Pakisubukang muli mamaya."
+msgstr ""
+"Pansamantalang hindi available ang storage ng whisper. Pakisubukang muli "
+"mamaya."
 
-#: whispers/views.py:169 whispers/views.py:674 whispers/views.py:772
+#: whispers/views.py:183 whispers/views.py:714 whispers/views.py:813
 msgid "Enter the verified primary email of each additional reader."
 msgstr ""
 "Ilagay ang beripikadong pangunahing email ng bawat karagdagang mambabasa."
 
-#: whispers/views.py:657
+#: whispers/views.py:697
 msgid "Receive reader restrictions are not enabled."
 msgstr "Hindi naka-enable ang mga limitasyon sa mambabasa sa pagtanggap."
 
-#: whispers/views.py:661
+#: whispers/views.py:701
 msgid "Sign in to manage reader access."
 msgstr "Mag-sign in upang pamahalaan ang access ng mambabasa."
 
-#: whispers/views.py:665 whispers/views.py:763
+#: whispers/views.py:705 whispers/views.py:804
 msgid "Enable restricted access before adding readers."
 msgstr "I-enable ang limitadong access bago magdagdag ng mga mambabasa."
 

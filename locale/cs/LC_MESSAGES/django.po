@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psst-secret\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-02 13:24+0000\n"
+"POT-Creation-Date: 2026-11-04 21:21+0000\n"
 "PO-Revision-Date: 2026-10-09 07:02+0000\n"
 "Last-Translator: \n"
 "Language-Team: Czech\n"
@@ -120,9 +120,9 @@ msgstr "Jak to funguje"
 msgid ""
 "%(brand_name)s ensures that <strong class=\"text-white\">your whispers never "
 "exist in plaintext on our server</strong>. All encryption and decryption "
-"happens entirely in your browser using the <a href=\"https://developer."
-"mozilla.org/en-US/docs/Web/API/Web_Crypto_API\" class=\"text-brand-400 "
-"underline hover:text-brand-300\" target=\"_blank\" rel=\"noopener "
+"happens entirely in your browser using the <a href=\"https://"
+"developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API\" class=\"text-"
+"brand-400 underline hover:text-brand-300\" target=\"_blank\" rel=\"noopener "
 "noreferrer\">Web Crypto API</a>."
 msgstr ""
 "%(brand_name)s zajišťuje, že <strong class=\"text-white\">vaše whispery na "
@@ -712,19 +712,23 @@ msgstr "Kliknutím níže tento whisper dešifrujete a zobrazíte."
 msgid "Reveal whisper"
 msgstr "Zobrazit whisper"
 
-#: templates/whispers/confirm.html:35 templates/whispers/view.html:321
+#: templates/whispers/confirm.html:35 templates/whispers/view.html:327
 msgid "No decryption key found in URL. The link may be incomplete."
 msgstr "V URL nebyl nalezen dešifrovací klíč. Odkaz může být neúplný."
 
-#: templates/whispers/confirm.html:36 templates/whispers/forbidden.html:10
-#: whispers/views.py:499
+#: templates/whispers/confirm.html:36 templates/whispers/view.html:317
+msgid "This link uses an unsupported format version. Ask for a new link."
+msgstr "Odkaz používá nepodporovanou verzi formátu. Požádejte o nový odkaz."
+
+#: templates/whispers/confirm.html:37 templates/whispers/forbidden.html:10
+#: whispers/views.py:531
 msgid ""
 "The reveal authorization is missing or invalid. Use the complete view link."
 msgstr ""
 "Oprávnění k odhalení chybí nebo je neplatné. Použijte úplný odkaz pro "
 "zobrazení."
 
-#: templates/whispers/confirm.html:37
+#: templates/whispers/confirm.html:38
 msgid "Loading…"
 msgstr "Načítání…"
 
@@ -732,7 +736,7 @@ msgstr "Načítání…"
 msgid "New Whisper"
 msgstr "Nový whisper"
 
-#: templates/whispers/create.html:9 whispers/tests/browser/test_pages.py:192
+#: templates/whispers/create.html:9 whispers/tests/browser/test_pages.py:193
 msgid "Share a whisper"
 msgstr "Sdílet whisper"
 
@@ -995,7 +999,7 @@ msgid "The person submitting a whisper to this request must be signed in."
 msgstr "Osoba odesílající whisper v rámci této žádosti musí být přihlášena."
 
 #: templates/whispers/create.html:233 templates/whispers/receive_access.html:8
-#: whispers/views.py:757
+#: whispers/views.py:798
 msgid "Restricted receive access is required."
 msgstr "Omezený přístup v režimu přijímání je vyžadován."
 
@@ -1304,7 +1308,7 @@ msgstr "Přístup odepřen"
 msgid "Access denied"
 msgstr "Přístup odepřen"
 
-#: templates/whispers/forbidden.html:10 whispers/views.py:456
+#: templates/whispers/forbidden.html:10 whispers/views.py:488
 msgid "You do not have access to this whisper."
 msgstr "K tomuto whisperu nemáte přístup."
 
@@ -1757,7 +1761,7 @@ msgid "No encrypted data available. The psst may have already been viewed."
 msgstr ""
 "Nejsou k dispozici žádná zašifrovaná data. Whisper již mohl být zobrazen."
 
-#: templates/whispers/view.html:330
+#: templates/whispers/view.html:336
 msgid "Decryption failed. The link may be incomplete or corrupted."
 msgstr "Dešifrování selhalo. Odkaz může být neúplný nebo poškozený."
 
@@ -2040,23 +2044,23 @@ msgstr "5 minut"
 msgid "1 hour"
 msgstr "1 hodina"
 
-#: whispers/views.py:61
+#: whispers/views.py:64
 msgid "Whisper storage is temporarily unavailable. Please try again later."
 msgstr "Úložiště whisperů je dočasně nedostupné. Zkuste to prosím později."
 
-#: whispers/views.py:169 whispers/views.py:674 whispers/views.py:772
+#: whispers/views.py:183 whispers/views.py:714 whispers/views.py:813
 msgid "Enter the verified primary email of each additional reader."
 msgstr "Zadejte ověřenou hlavní e-mailovou adresu každého dalšího čtenáře."
 
-#: whispers/views.py:657
+#: whispers/views.py:697
 msgid "Receive reader restrictions are not enabled."
 msgstr "Omezení čtenářů v režimu přijímání nejsou povolena."
 
-#: whispers/views.py:661
+#: whispers/views.py:701
 msgid "Sign in to manage reader access."
 msgstr "Pro správu přístupu čtenářů se přihlaste."
 
-#: whispers/views.py:665 whispers/views.py:763
+#: whispers/views.py:705 whispers/views.py:804
 msgid "Enable restricted access before adding readers."
 msgstr "Před přidáním čtenářů zapněte omezený přístup."
 
