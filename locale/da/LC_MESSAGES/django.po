@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-04 21:21+0000\n"
+"POT-Creation-Date: 2026-11-04 22:15+0000\n"
 "PO-Revision-Date: 2026-04-17 15:26+0000\n"
 "Last-Translator: \n"
 "Language-Team: Danish\n"
@@ -45,15 +45,20 @@ msgstr "Om"
 msgid "Statistics"
 msgstr "Statistik"
 
-#: templates/base/layout.html:56
+#: templates/base/layout.html:56 templates/whispers/api_tokens.html:4
+#: templates/whispers/api_tokens.html:9
+msgid "API tokens"
+msgstr "API-tokens"
+
+#: templates/base/layout.html:63
 msgid "Sign out"
 msgstr "Log ud"
 
-#: templates/base/layout.html:75
+#: templates/base/layout.html:82
 msgid "Psst! Don't tell anyone."
 msgstr "Psst! Fortæl det ikke til nogen."
 
-#: templates/base/layout.html:80
+#: templates/base/layout.html:87
 msgid "GitHub repository"
 msgstr "GitHub-repository"
 
@@ -125,16 +130,16 @@ msgstr "Sådan virker det"
 msgid ""
 "%(brand_name)s ensures that <strong class=\"text-white\">your whispers never "
 "exist in plaintext on our server</strong>. All encryption and decryption "
-"happens entirely in your browser using the <a href=\"https://"
-"developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API\" class=\"text-"
-"brand-400 underline hover:text-brand-300\" target=\"_blank\" rel=\"noopener "
+"happens entirely in your browser using the <a href=\"https://developer."
+"mozilla.org/en-US/docs/Web/API/Web_Crypto_API\" class=\"text-brand-400 "
+"underline hover:text-brand-300\" target=\"_blank\" rel=\"noopener "
 "noreferrer\">Web Crypto API</a>."
 msgstr ""
 "%(brand_name)s sikrer, at <strong class=\"text-white\">dine whispers aldrig "
 "findes i klartekst på vores server</strong>. Al kryptering og dekryptering "
-"foregår udelukkende i din browser ved hjælp af <a href=\"https://"
-"developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API\" class=\"text-"
-"brand-400 underline hover:text-brand-300\" target=\"_blank\" rel=\"noopener "
+"foregår udelukkende i din browser ved hjælp af <a href=\"https://developer."
+"mozilla.org/en-US/docs/Web/API/Web_Crypto_API\" class=\"text-brand-400 "
+"underline hover:text-brand-300\" target=\"_blank\" rel=\"noopener "
 "noreferrer\">Web Crypto API</a>."
 
 #: templates/whispers/about.html:28
@@ -658,6 +663,40 @@ msgstr "Redis (i hukommelse)"
 msgid "Create a whisper"
 msgstr "Opret en whisper"
 
+#: templates/whispers/api_tokens.html:10
+msgid ""
+"Programs such as the command-line tool get a token when you approve their "
+"sign-in. Revoke any token you do not recognize."
+msgstr ""
+"Programmer som kommandolinjeværktøjet får et token, når du godkender deres "
+"login. Tilbagekald alle tokens, du ikke genkender."
+
+#: templates/whispers/api_tokens.html:18
+msgid "Unnamed client"
+msgstr "Unavngiven klient"
+
+#: templates/whispers/api_tokens.html:21
+#, python-format
+msgid "Created %(created)s · Expires %(expires)s"
+msgstr "Oprettet %(created)s · Udløber %(expires)s"
+
+#: templates/whispers/api_tokens.html:25
+#, python-format
+msgid "Last used %(used)s"
+msgstr "Sidst brugt %(used)s"
+
+#: templates/whispers/api_tokens.html:27
+msgid "Never used"
+msgstr "Aldrig brugt"
+
+#: templates/whispers/api_tokens.html:35
+msgid "Revoke"
+msgstr "Tilbagekald"
+
+#: templates/whispers/api_tokens.html:42
+msgid "You have no active API tokens."
+msgstr "Du har ingen aktive API-tokens."
+
 #: templates/whispers/burned.html:4
 msgid "Whisper Burned"
 msgstr "Whisper brændt"
@@ -677,6 +716,95 @@ msgstr ""
 #: templates/whispers/burned.html:12 templates/whispers/expired.html:12
 msgid "Create a new whisper"
 msgstr "Opret en ny whisper"
+
+#: templates/whispers/cli_authorize.html:4
+#: templates/whispers/cli_authorize.html:10
+msgid "Approve sign-in"
+msgstr "Godkend login"
+
+#: templates/whispers/cli_authorize.html:13
+#, python-format
+msgid ""
+"<strong class=\"text-white\" data-client-name>%(client)s</strong> wants to "
+"use %(brand_name)s as you."
+msgstr ""
+"<strong class=\"text-white\" data-client-name>%(client)s</strong> vil bruge "
+"%(brand_name)s som dig."
+
+#: templates/whispers/cli_authorize.html:15
+#, python-format
+msgid "An unnamed client wants to use %(brand_name)s as you."
+msgstr "En unavngiven klient vil bruge %(brand_name)s som dig."
+
+#: templates/whispers/cli_authorize.html:22
+msgid "Signed in as"
+msgstr "Logget ind som"
+
+#: templates/whispers/cli_authorize.html:26
+msgid "It will be allowed to"
+msgstr "Den får lov til at"
+
+#: templates/whispers/cli_authorize.html:34
+msgid "Sign-in returns to"
+msgstr "Login vender tilbage til"
+
+#: templates/whispers/cli_authorize.html:36
+msgid "(a program on this device)"
+msgstr "(et program på denne enhed)"
+
+#: templates/whispers/cli_authorize.html:38
+msgid "A code shown on the next page, which you paste into the program"
+msgstr "En kode vist på næste side, som du indsætter i programmet"
+
+#: templates/whispers/cli_authorize.html:45
+msgid ""
+"Only approve if you just started this sign-in yourself, for example with "
+"“psst login”. The client name is chosen by the program and is not verified."
+msgstr ""
+"Godkend kun, hvis du selv lige har startet dette login, for eksempel med "
+"“psst login”. Klientnavnet vælges af programmet og er ikke bekræftet."
+
+#: templates/whispers/cli_authorize.html:55
+msgid "Deny"
+msgstr "Afvis"
+
+#: templates/whispers/cli_authorize.html:59
+msgid "Approve"
+msgstr "Godkend"
+
+#: templates/whispers/cli_code.html:4 templates/whispers/cli_code.html:9
+#: templates/whispers/cli_code.html:11
+msgid "Sign-in code"
+msgstr "Loginkode"
+
+#: templates/whispers/cli_code.html:10
+msgid ""
+"Paste this code into the program that started the sign-in. It works once and "
+"expires in 5 minutes."
+msgstr ""
+"Indsæt denne kode i programmet, der startede login. Den virker én gang og "
+"udløber om 5 minutter."
+
+#: templates/whispers/cli_code.html:13
+#, python-format
+msgid ""
+"Check that the program shows the state <code class=\"text-"
+"gray-300\">%(state)s</code>."
+msgstr ""
+"Kontrollér, at programmet viser tilstanden <code class=\"text-"
+"gray-300\">%(state)s</code>."
+
+#: templates/whispers/cli_code.html:14
+msgid "Never share this code with anyone."
+msgstr "Del aldrig denne kode med nogen."
+
+#: templates/whispers/cli_error.html:4 templates/whispers/cli_error.html:9
+msgid "Sign-in not completed"
+msgstr "Login blev ikke gennemført"
+
+#: templates/whispers/cli_error.html:11
+msgid "Return to the program and start the sign-in again."
+msgstr "Gå tilbage til programmet, og start login igen."
 
 #: templates/whispers/confirm.html:4
 msgid "Reveal Whisper"
@@ -721,10 +849,11 @@ msgstr ""
 
 #: templates/whispers/confirm.html:36 templates/whispers/view.html:317
 msgid "This link uses an unsupported format version. Ask for a new link."
-msgstr "Linket bruger en formatversion, der ikke understøttes. Bed om et nyt link."
+msgstr ""
+"Linket bruger en formatversion, der ikke understøttes. Bed om et nyt link."
 
 #: templates/whispers/confirm.html:37 templates/whispers/forbidden.html:10
-#: whispers/views.py:531
+#: whispers/views.py:543
 msgid ""
 "The reveal authorization is missing or invalid. Use the complete view link."
 msgstr ""
@@ -1002,7 +1131,7 @@ msgid "The person submitting a whisper to this request must be signed in."
 msgstr "Personen der sender en whisper skal være logget ind."
 
 #: templates/whispers/create.html:233 templates/whispers/receive_access.html:8
-#: whispers/views.py:798
+#: whispers/views.py:821
 msgid "Restricted receive access is required."
 msgstr "Begrænset læseadgang i modtagertilstand er påkrævet."
 
@@ -1314,7 +1443,7 @@ msgstr "Adgang nægtet"
 msgid "Access denied"
 msgstr "Adgang nægtet"
 
-#: templates/whispers/forbidden.html:10 whispers/views.py:488
+#: templates/whispers/forbidden.html:10 whispers/views.py:500
 msgid "You do not have access to this whisper."
 msgstr "Du har ikke adgang til denne whisper."
 
@@ -1777,6 +1906,62 @@ msgid "Decryption failed. The link may be incomplete or corrupted."
 msgstr ""
 "Dekryptering mislykkedes. Linket kan være ufuldstændigt eller beskadiget."
 
+#: whispers/api_tokens.py:39
+msgid "Create whispers and submit to receive requests"
+msgstr "Oprette whispers og indsende til modtageranmodninger"
+
+#: whispers/api_tokens.py:40
+msgid "Reveal whispers"
+msgstr "Vise whispers"
+
+#: whispers/api_tokens.py:41
+msgid "Create receive requests and manage their reader access"
+msgstr "Oprette modtageranmodninger og styre deres læseadgang"
+
+#: whispers/api_tokens.py:91
+msgid ""
+"The redirect address must be a loopback address such as http://127.0.0.1:"
+"<port>/callback or http://[::1]:<port>/callback."
+msgstr ""
+"Omdirigeringsadressen skal være en loopback-adresse som http://127.0.0.1:"
+"<port>/callback eller http://[::1]:<port>/callback."
+
+#: whispers/api_tokens.py:106
+msgid "Unsupported response type."
+msgstr "Svartypen understøttes ikke."
+
+#: whispers/api_tokens.py:112
+msgid "The client must use the S256 code challenge method."
+msgstr "Klienten skal bruge S256-metoden til code challenge."
+
+#: whispers/api_tokens.py:116
+msgid "The code challenge is missing or invalid."
+msgstr "Code challenge mangler eller er ugyldig."
+
+#: whispers/api_tokens.py:119
+msgid "The state parameter is missing or invalid."
+msgstr "State-parameteren mangler eller er ugyldig."
+
+#: whispers/api_tokens.py:122
+msgid "The client name is invalid."
+msgstr "Klientnavnet er ugyldigt."
+
+#: whispers/api_tokens.py:125
+msgid "The client requested an unknown scope."
+msgstr "Klienten anmodede om et ukendt scope."
+
+#: whispers/api_tokens.py:163
+msgid "The authorization code is invalid or expired."
+msgstr "Autorisationskoden er ugyldig eller udløbet."
+
+#: whispers/api_tokens.py:167
+msgid "The code verifier is missing or invalid."
+msgstr "Code verifier mangler eller er ugyldig."
+
+#: whispers/api_tokens.py:263
+msgid "This token does not have the required scope."
+msgstr "Dette token har ikke det krævede scope."
+
 #: whispers/deployment.py:45
 msgid "username and password"
 msgstr "brugernavn og adgangskode"
@@ -1884,8 +2069,9 @@ msgstr ""
 msgid "Restricted receive access"
 msgstr "Begrænset læseadgang i modtagertilstand"
 
-#: whispers/deployment.py:172 whispers/deployment.py:241
-#: whispers/deployment.py:268 whispers/deployment.py:295
+#: whispers/deployment.py:172 whispers/deployment.py:233
+#: whispers/deployment.py:264 whispers/deployment.py:291
+#: whispers/deployment.py:318
 msgid "Off"
 msgstr "Fra"
 
@@ -1927,15 +2113,34 @@ msgstr ""
 "Opretteren kan begrænse modtageranmodninger til sig selv og de konti, "
 "opretteren godkender."
 
-#: whispers/deployment.py:226 whispers/deployment.py:240
-msgid "Email notifications"
-msgstr "E-mailnotifikationer"
+#: whispers/deployment.py:219 whispers/deployment.py:232
+msgid "Command-line sign-in"
+msgstr "Login fra kommandolinjen"
 
-#: whispers/deployment.py:227
+#: whispers/deployment.py:220 whispers/deployment.py:250
 msgid "Available"
 msgstr "Tilgængelig"
 
-#: whispers/deployment.py:230
+#: whispers/deployment.py:223
+msgid ""
+"Programs such as the command-line tool can sign in through this site after "
+"you approve them, and get a token that expires. You can revoke these tokens "
+"from your account menu."
+msgstr ""
+"Programmer som kommandolinjeværktøjet kan logge ind via dette site, når du "
+"har godkendt dem, og får et token, der udløber. Du kan tilbagekalde disse "
+"tokens fra din kontomenu."
+
+#: whispers/deployment.py:235
+msgid "Programs such as the command-line tool cannot sign in to this site."
+msgstr ""
+"Programmer som kommandolinjeværktøjet kan ikke logge ind på dette site."
+
+#: whispers/deployment.py:249 whispers/deployment.py:263
+msgid "Email notifications"
+msgstr "E-mailnotifikationer"
+
+#: whispers/deployment.py:253
 msgid ""
 "You can have an email sent when a whisper is created or submitted. The email "
 "never contains the decryption key."
@@ -1943,19 +2148,19 @@ msgstr ""
 "Du kan få sendt en e-mail, når en whisper oprettes eller indsendes. E-mailen "
 "indeholder aldrig dekrypteringsnøglen."
 
-#: whispers/deployment.py:243
+#: whispers/deployment.py:266
 msgid "This site does not send email notifications."
 msgstr "Dette websted sender ikke e-mailnotifikationer."
 
-#: whispers/deployment.py:252 whispers/deployment.py:267
+#: whispers/deployment.py:275 whispers/deployment.py:290
 msgid "Usage statistics"
 msgstr "Brugsstatistik"
 
-#: whispers/deployment.py:253 whispers/deployment.py:280
+#: whispers/deployment.py:276 whispers/deployment.py:303
 msgid "On"
 msgstr "Til"
 
-#: whispers/deployment.py:256
+#: whispers/deployment.py:279
 msgid ""
 "Anonymous hourly counts of created and revealed whispers are kept for up to "
 "a year. No content, keys, identifiers, IP addresses, or accounts are "
@@ -1965,15 +2170,15 @@ msgstr ""
 "et år. Der registreres intet indhold og ingen nøgler, identifikatorer, IP-"
 "adresser eller konti."
 
-#: whispers/deployment.py:270
+#: whispers/deployment.py:293
 msgid "No usage statistics are collected."
 msgstr "Der indsamles ingen brugsstatistik."
 
-#: whispers/deployment.py:279 whispers/deployment.py:294
+#: whispers/deployment.py:302 whispers/deployment.py:317
 msgid "Formatted text"
 msgstr "Formateret tekst"
 
-#: whispers/deployment.py:283
+#: whispers/deployment.py:306
 msgid ""
 "Whispers can use headings, lists, links, and code, written in a Markdown "
 "editor, or be written as plain text. Formatting stays inside the encrypted "
@@ -1983,27 +2188,27 @@ msgstr ""
 "Markdown-editor, eller skrives som almindelig tekst. Formateringen forbliver "
 "inde i den krypterede whisper."
 
-#: whispers/deployment.py:297
+#: whispers/deployment.py:320
 msgid "Whispers are written and shown as plain text."
 msgstr "Whispers skrives og vises som almindelig tekst."
 
-#: whispers/deployment.py:305
+#: whispers/deployment.py:328
 msgid "File size limit"
 msgstr "Grænse for filstørrelse"
 
-#: whispers/deployment.py:308
+#: whispers/deployment.py:331
 msgid "Maximum total size of the files attached to a single whisper."
 msgstr "Den maksimale samlede størrelse af filer vedhæftet en enkelt whisper."
 
-#: whispers/deployment.py:317 whispers/deployment.py:331
+#: whispers/deployment.py:340 whispers/deployment.py:354
 msgid "Encrypted storage"
 msgstr "Krypteret lagring"
 
-#: whispers/deployment.py:318
+#: whispers/deployment.py:341
 msgid "Saved to disk"
 msgstr "Gemmes på disk"
 
-#: whispers/deployment.py:321
+#: whispers/deployment.py:344
 msgid ""
 "Encrypted whispers are stored in Redis with persistence enabled, so they "
 "survive server restarts until they expire."
@@ -2011,16 +2216,24 @@ msgstr ""
 "Krypterede whispers gemmes i Redis med vedvarende lagring, så de overlever "
 "genstart af serveren, indtil de udløber."
 
-#: whispers/deployment.py:332
+#: whispers/deployment.py:355
 msgid "Memory only"
 msgstr "Kun i hukommelsen"
 
-#: whispers/deployment.py:335
+#: whispers/deployment.py:358
 msgid ""
 "Encrypted whispers live only in memory and are lost if the server restarts."
 msgstr ""
 "Krypterede whispers findes kun i hukommelsen og går tabt, hvis serveren "
 "genstartes."
+
+#: whispers/middleware.py:68
+msgid "Authentication required"
+msgstr "Login påkrævet"
+
+#: whispers/middleware.py:102
+msgid "The API token is invalid, expired or revoked."
+msgstr "API-tokenet er ugyldigt, udløbet eller tilbagekaldt."
 
 #: whispers/stats.py:92
 msgid "Monday"
@@ -2058,23 +2271,31 @@ msgstr "5 minutter"
 msgid "1 hour"
 msgstr "1 time"
 
+#: whispers/token_views.py:130
+msgid "You denied access."
+msgstr "Du afviste adgang."
+
+#: whispers/token_views.py:227
+msgid "Send the API token to revoke in the Authorization header."
+msgstr "Send det API-token, der skal tilbagekaldes, i Authorization-headeren."
+
 #: whispers/views.py:64
 msgid "Whisper storage is temporarily unavailable. Please try again later."
 msgstr "Whisper-lageret er midlertidigt utilgængeligt. Prøv igen senere."
 
-#: whispers/views.py:183 whispers/views.py:714 whispers/views.py:813
+#: whispers/views.py:183 whispers/views.py:732 whispers/views.py:836
 msgid "Enter the verified primary email of each additional reader."
 msgstr "Angiv hver ekstra læsers bekræftede primære e-mailadresse."
 
-#: whispers/views.py:697
+#: whispers/views.py:715
 msgid "Receive reader restrictions are not enabled."
 msgstr "Begrænset læseadgang i modtagertilstand er ikke aktiveret."
 
-#: whispers/views.py:701
+#: whispers/views.py:719
 msgid "Sign in to manage reader access."
 msgstr "Log ind for at administrere læseadgang."
 
-#: whispers/views.py:705 whispers/views.py:804
+#: whispers/views.py:723 whispers/views.py:827
 msgid "Enable restricted access before adding readers."
 msgstr "Aktivér begrænset adgang, før du tilføjer læsere."
 

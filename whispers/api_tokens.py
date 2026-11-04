@@ -163,9 +163,7 @@ def exchange_code(code, code_verifier, redirect_uri):
     invalid = TokenExchangeError(_("The authorization code is invalid or expired."))
     if not isinstance(code, str) or not code.startswith(CODE_PREFIX):
         raise invalid
-    if not isinstance(code_verifier, str) or not _CODE_VERIFIER_RE.match(
-        code_verifier
-    ):
+    if not isinstance(code_verifier, str) or not _CODE_VERIFIER_RE.match(code_verifier):
         raise TokenExchangeError(_("The code verifier is missing or invalid."))
     if not isinstance(redirect_uri, str):
         raise invalid
@@ -191,9 +189,12 @@ def exchange_code(code, code_verifier, redirect_uri):
         elif (
             auth_code.expires_at > now
             and auth_code.user.is_active
-            and hmac.compare_digest(auth_code.redirect_uri.encode(), redirect_uri.encode())
             and hmac.compare_digest(
-                s256_challenge(code_verifier).encode(), auth_code.code_challenge.encode()
+                auth_code.redirect_uri.encode(), redirect_uri.encode()
+            )
+            and hmac.compare_digest(
+                s256_challenge(code_verifier).encode(),
+                auth_code.code_challenge.encode(),
             )
         ):
             raw_token = _random_secret(TOKEN_PREFIX)

@@ -162,7 +162,9 @@ class AuthorizeEndpointTests(ApiTokenTestCase):
         page = self.client.get(response.url)
         self.assertEqual(page.status_code, 200)
         response, verifier = self._authorize()
-        self.assertEqual(self._exchange(self._code(response), verifier).status_code, 200)
+        self.assertEqual(
+            self._exchange(self._code(response), verifier).status_code, 200
+        )
 
     def test_social_login_user_can_approve(self):
         # Social accounts sign in through allauth and have no usable password; the
@@ -179,7 +181,9 @@ class AuthorizeEndpointTests(ApiTokenTestCase):
         _verifier, challenge = _pkce()
         response = self.client.get(
             "/cli/authorize",
-            self._params(challenge, client_name="<b>Evil</b> CLI", scope="whisper:read"),
+            self._params(
+                challenge, client_name="<b>Evil</b> CLI", scope="whisper:read"
+            ),
         )
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "&lt;b&gt;Evil&lt;/b&gt; CLI")
@@ -265,9 +269,7 @@ class AuthorizeEndpointTests(ApiTokenTestCase):
         self.assertEqual(stored.user, self.user)
         self.assertEqual(stored.redirect_uri, _REDIRECT_URI)
         self.assertEqual(stored.scopes, "whisper:create whisper:read request:manage")
-        self.assertLessEqual(
-            stored.expires_at - timezone.now(), timedelta(seconds=60)
-        )
+        self.assertLessEqual(stored.expires_at - timezone.now(), timedelta(seconds=60))
 
     def test_denial_redirects_with_error_and_issues_no_code(self):
         self.client.force_login(self.user)
@@ -310,7 +312,9 @@ class TokenEndpointTests(ApiTokenTestCase):
         stored = ApiToken.objects.get()
         self.assertEqual(stored.token_hash, hash_secret(token))
         self.assertEqual(stored.client_name, "psst CLI")
-        self.assertNotIn(token, json.dumps(list(ApiToken.objects.values()), default=str))
+        self.assertNotIn(
+            token, json.dumps(list(ApiToken.objects.values()), default=str)
+        )
 
     def test_form_encoded_exchange_is_accepted(self):
         response, verifier = self._authorize()
@@ -364,7 +368,9 @@ class TokenEndpointTests(ApiTokenTestCase):
     def test_expired_code_is_rejected(self):
         response, verifier = self._authorize()
         ApiAuthorizationCode.objects.update(expires_at=timezone.now())
-        self.assertEqual(self._exchange(self._code(response), verifier).status_code, 400)
+        self.assertEqual(
+            self._exchange(self._code(response), verifier).status_code, 400
+        )
         self.assertFalse(ApiToken.objects.exists())
 
     def test_unknown_code_is_rejected(self):
@@ -375,7 +381,9 @@ class TokenEndpointTests(ApiTokenTestCase):
     def test_inactive_user_cannot_exchange(self):
         response, verifier = self._authorize()
         User.objects.filter(pk=self.user.pk).update(is_active=False)
-        self.assertEqual(self._exchange(self._code(response), verifier).status_code, 400)
+        self.assertEqual(
+            self._exchange(self._code(response), verifier).status_code, 400
+        )
 
     @override_settings(
         REST_FRAMEWORK={
@@ -405,7 +413,11 @@ class TokenAuthenticationTests(ApiTokenTestCase):
         response = client.post(
             "/api/v1/whisper",
             data=json.dumps(
-                {"ciphertext": "ct", "iv": "iv", "reveal_token_hash": _REVEAL_TOKEN_HASH}
+                {
+                    "ciphertext": "ct",
+                    "iv": "iv",
+                    "reveal_token_hash": _REVEAL_TOKEN_HASH,
+                }
             ),
             content_type="application/json",
         )
@@ -482,7 +494,9 @@ class TokenAuthenticationTests(ApiTokenTestCase):
             content_type="application/json",
         )
         self.assertEqual(response.status_code, 401)
-        response = self._api("post", reveal_path, token, {"reveal_token": _REVEAL_TOKEN})
+        response = self._api(
+            "post", reveal_path, token, {"reveal_token": _REVEAL_TOKEN}
+        )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["ciphertext"], "ct")
         response = self._api("get", f"/api/v1/whisper/submit/{uuid.uuid4()}", token)
@@ -528,7 +542,9 @@ class TokenRevocationTests(ApiTokenTestCase):
         self.assertEqual(response.status_code, 204)
         self.assertEqual(self._create_whisper(token).status_code, 401)
         self.assertEqual(self._create_whisper(other).status_code, 200)
-        self.assertEqual(self._api("post", "/api/v1/cli/revoke", token).status_code, 401)
+        self.assertEqual(
+            self._api("post", "/api/v1/cli/revoke", token).status_code, 401
+        )
 
     def test_logout_endpoint_without_token_is_rejected(self):
         self.assertEqual(Client().post("/api/v1/cli/revoke").status_code, 401)

@@ -19,6 +19,8 @@ default, ciphertext is kept only in Redis memory and never touches disk.
 - **Formatted text:** a Markdown editor with a plain-text toggle.
 - **Optional integrations:** SSO and local login (django-allauth), email notifications
   (SMTP or Azure Communication Services), and anonymous statistics.
+- **API tokens:** command-line and extension clients sign in through the browser with a
+  loopback redirect and PKCE, using any configured login method.
 - **White-labeling:** custom name, logo, favicon, and colors.
 - **Languages:** English, Danish, Czech, Swedish, and Filipino.
 

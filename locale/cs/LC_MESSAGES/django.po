@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psst-secret\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-04 21:21+0000\n"
+"POT-Creation-Date: 2026-11-04 22:15+0000\n"
 "PO-Revision-Date: 2026-10-09 07:02+0000\n"
 "Last-Translator: \n"
 "Language-Team: Czech\n"
@@ -41,15 +41,20 @@ msgstr "O projektu"
 msgid "Statistics"
 msgstr "Statistiky"
 
-#: templates/base/layout.html:56
+#: templates/base/layout.html:56 templates/whispers/api_tokens.html:4
+#: templates/whispers/api_tokens.html:9
+msgid "API tokens"
+msgstr "API tokeny"
+
+#: templates/base/layout.html:63
 msgid "Sign out"
 msgstr "Odhlásit se"
 
-#: templates/base/layout.html:75
+#: templates/base/layout.html:82
 msgid "Psst! Don't tell anyone."
 msgstr "Psst! Nikomu to neříkejte."
 
-#: templates/base/layout.html:80
+#: templates/base/layout.html:87
 msgid "GitHub repository"
 msgstr "Repozitář na GitHubu"
 
@@ -120,9 +125,9 @@ msgstr "Jak to funguje"
 msgid ""
 "%(brand_name)s ensures that <strong class=\"text-white\">your whispers never "
 "exist in plaintext on our server</strong>. All encryption and decryption "
-"happens entirely in your browser using the <a href=\"https://"
-"developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API\" class=\"text-"
-"brand-400 underline hover:text-brand-300\" target=\"_blank\" rel=\"noopener "
+"happens entirely in your browser using the <a href=\"https://developer."
+"mozilla.org/en-US/docs/Web/API/Web_Crypto_API\" class=\"text-brand-400 "
+"underline hover:text-brand-300\" target=\"_blank\" rel=\"noopener "
 "noreferrer\">Web Crypto API</a>."
 msgstr ""
 "%(brand_name)s zajišťuje, že <strong class=\"text-white\">vaše whispery na "
@@ -654,6 +659,40 @@ msgstr "Redis (v paměti)"
 msgid "Create a whisper"
 msgstr "Vytvořit whisper"
 
+#: templates/whispers/api_tokens.html:10
+msgid ""
+"Programs such as the command-line tool get a token when you approve their "
+"sign-in. Revoke any token you do not recognize."
+msgstr ""
+"Programy, jako je nástroj příkazového řádku, získají token, když schválíte "
+"jejich přihlášení. Odvolejte každý token, který nepoznáváte."
+
+#: templates/whispers/api_tokens.html:18
+msgid "Unnamed client"
+msgstr "Nepojmenovaný klient"
+
+#: templates/whispers/api_tokens.html:21
+#, python-format
+msgid "Created %(created)s · Expires %(expires)s"
+msgstr "Vytvořeno %(created)s · Vyprší %(expires)s"
+
+#: templates/whispers/api_tokens.html:25
+#, python-format
+msgid "Last used %(used)s"
+msgstr "Naposledy použito %(used)s"
+
+#: templates/whispers/api_tokens.html:27
+msgid "Never used"
+msgstr "Nikdy nepoužito"
+
+#: templates/whispers/api_tokens.html:35
+msgid "Revoke"
+msgstr "Odvolat"
+
+#: templates/whispers/api_tokens.html:42
+msgid "You have no active API tokens."
+msgstr "Nemáte žádné aktivní API tokeny."
+
 #: templates/whispers/burned.html:4
 msgid "Whisper Burned"
 msgstr "Whisper smazán"
@@ -673,6 +712,95 @@ msgstr ""
 #: templates/whispers/burned.html:12 templates/whispers/expired.html:12
 msgid "Create a new whisper"
 msgstr "Vytvořit nový whisper"
+
+#: templates/whispers/cli_authorize.html:4
+#: templates/whispers/cli_authorize.html:10
+msgid "Approve sign-in"
+msgstr "Schválit přihlášení"
+
+#: templates/whispers/cli_authorize.html:13
+#, python-format
+msgid ""
+"<strong class=\"text-white\" data-client-name>%(client)s</strong> wants to "
+"use %(brand_name)s as you."
+msgstr ""
+"<strong class=\"text-white\" data-client-name>%(client)s</strong> chce "
+"používat %(brand_name)s vaším jménem."
+
+#: templates/whispers/cli_authorize.html:15
+#, python-format
+msgid "An unnamed client wants to use %(brand_name)s as you."
+msgstr "Nepojmenovaný klient chce používat %(brand_name)s vaším jménem."
+
+#: templates/whispers/cli_authorize.html:22
+msgid "Signed in as"
+msgstr "Přihlášen jako"
+
+#: templates/whispers/cli_authorize.html:26
+msgid "It will be allowed to"
+msgstr "Bude mít povoleno"
+
+#: templates/whispers/cli_authorize.html:34
+msgid "Sign-in returns to"
+msgstr "Přihlášení se vrátí na"
+
+#: templates/whispers/cli_authorize.html:36
+msgid "(a program on this device)"
+msgstr "(program na tomto zařízení)"
+
+#: templates/whispers/cli_authorize.html:38
+msgid "A code shown on the next page, which you paste into the program"
+msgstr "Kód zobrazený na další stránce, který vložíte do programu"
+
+#: templates/whispers/cli_authorize.html:45
+msgid ""
+"Only approve if you just started this sign-in yourself, for example with "
+"“psst login”. The client name is chosen by the program and is not verified."
+msgstr ""
+"Schvalte jen tehdy, pokud jste toto přihlášení právě sami spustili, "
+"například příkazem “psst login”. Název klienta volí program a není ověřen."
+
+#: templates/whispers/cli_authorize.html:55
+msgid "Deny"
+msgstr "Zamítnout"
+
+#: templates/whispers/cli_authorize.html:59
+msgid "Approve"
+msgstr "Schválit"
+
+#: templates/whispers/cli_code.html:4 templates/whispers/cli_code.html:9
+#: templates/whispers/cli_code.html:11
+msgid "Sign-in code"
+msgstr "Přihlašovací kód"
+
+#: templates/whispers/cli_code.html:10
+msgid ""
+"Paste this code into the program that started the sign-in. It works once and "
+"expires in 5 minutes."
+msgstr ""
+"Vložte tento kód do programu, který přihlášení spustil. Funguje jednou a "
+"vyprší za 5 minut."
+
+#: templates/whispers/cli_code.html:13
+#, python-format
+msgid ""
+"Check that the program shows the state <code class=\"text-"
+"gray-300\">%(state)s</code>."
+msgstr ""
+"Ověřte, že program zobrazuje stav <code class=\"text-gray-300\">%(state)s</"
+"code>."
+
+#: templates/whispers/cli_code.html:14
+msgid "Never share this code with anyone."
+msgstr "Tento kód nikdy nikomu nesdělujte."
+
+#: templates/whispers/cli_error.html:4 templates/whispers/cli_error.html:9
+msgid "Sign-in not completed"
+msgstr "Přihlášení nebylo dokončeno"
+
+#: templates/whispers/cli_error.html:11
+msgid "Return to the program and start the sign-in again."
+msgstr "Vraťte se do programu a spusťte přihlášení znovu."
 
 #: templates/whispers/confirm.html:4
 msgid "Reveal Whisper"
@@ -721,7 +849,7 @@ msgid "This link uses an unsupported format version. Ask for a new link."
 msgstr "Odkaz používá nepodporovanou verzi formátu. Požádejte o nový odkaz."
 
 #: templates/whispers/confirm.html:37 templates/whispers/forbidden.html:10
-#: whispers/views.py:531
+#: whispers/views.py:543
 msgid ""
 "The reveal authorization is missing or invalid. Use the complete view link."
 msgstr ""
@@ -999,7 +1127,7 @@ msgid "The person submitting a whisper to this request must be signed in."
 msgstr "Osoba odesílající whisper v rámci této žádosti musí být přihlášena."
 
 #: templates/whispers/create.html:233 templates/whispers/receive_access.html:8
-#: whispers/views.py:798
+#: whispers/views.py:821
 msgid "Restricted receive access is required."
 msgstr "Omezený přístup v režimu přijímání je vyžadován."
 
@@ -1308,7 +1436,7 @@ msgstr "Přístup odepřen"
 msgid "Access denied"
 msgstr "Přístup odepřen"
 
-#: templates/whispers/forbidden.html:10 whispers/views.py:488
+#: templates/whispers/forbidden.html:10 whispers/views.py:500
 msgid "You do not have access to this whisper."
 msgstr "K tomuto whisperu nemáte přístup."
 
@@ -1765,6 +1893,62 @@ msgstr ""
 msgid "Decryption failed. The link may be incomplete or corrupted."
 msgstr "Dešifrování selhalo. Odkaz může být neúplný nebo poškozený."
 
+#: whispers/api_tokens.py:39
+msgid "Create whispers and submit to receive requests"
+msgstr "Vytvářet whispery a odesílat do žádostí o přijetí"
+
+#: whispers/api_tokens.py:40
+msgid "Reveal whispers"
+msgstr "Zobrazovat whispery"
+
+#: whispers/api_tokens.py:41
+msgid "Create receive requests and manage their reader access"
+msgstr "Vytvářet žádosti o přijetí a spravovat přístup jejich čtenářů"
+
+#: whispers/api_tokens.py:91
+msgid ""
+"The redirect address must be a loopback address such as http://127.0.0.1:"
+"<port>/callback or http://[::1]:<port>/callback."
+msgstr ""
+"Adresa přesměrování musí být adresa loopback, například http://127.0.0.1:"
+"<port>/callback nebo http://[::1]:<port>/callback."
+
+#: whispers/api_tokens.py:106
+msgid "Unsupported response type."
+msgstr "Nepodporovaný typ odpovědi."
+
+#: whispers/api_tokens.py:112
+msgid "The client must use the S256 code challenge method."
+msgstr "Klient musí použít metodu code challenge S256."
+
+#: whispers/api_tokens.py:116
+msgid "The code challenge is missing or invalid."
+msgstr "Code challenge chybí nebo je neplatná."
+
+#: whispers/api_tokens.py:119
+msgid "The state parameter is missing or invalid."
+msgstr "Parametr state chybí nebo je neplatný."
+
+#: whispers/api_tokens.py:122
+msgid "The client name is invalid."
+msgstr "Název klienta je neplatný."
+
+#: whispers/api_tokens.py:125
+msgid "The client requested an unknown scope."
+msgstr "Klient požádal o neznámý scope."
+
+#: whispers/api_tokens.py:163
+msgid "The authorization code is invalid or expired."
+msgstr "Autorizační kód je neplatný nebo vypršel."
+
+#: whispers/api_tokens.py:167
+msgid "The code verifier is missing or invalid."
+msgstr "Code verifier chybí nebo je neplatný."
+
+#: whispers/api_tokens.py:263
+msgid "This token does not have the required scope."
+msgstr "Tento token nemá požadovaný scope."
+
 #: whispers/deployment.py:45
 msgid "username and password"
 msgstr "uživatelské jméno a heslo"
@@ -1873,8 +2057,9 @@ msgstr ""
 msgid "Restricted receive access"
 msgstr "Omezený přístup v režimu přijímání"
 
-#: whispers/deployment.py:172 whispers/deployment.py:241
-#: whispers/deployment.py:268 whispers/deployment.py:295
+#: whispers/deployment.py:172 whispers/deployment.py:233
+#: whispers/deployment.py:264 whispers/deployment.py:291
+#: whispers/deployment.py:318
 msgid "Off"
 msgstr "Vypnuto"
 
@@ -1914,15 +2099,35 @@ msgid ""
 "approve."
 msgstr "Autoři mohou omezit žádosti o přijetí na sebe a účty, které schválí."
 
-#: whispers/deployment.py:226 whispers/deployment.py:240
-msgid "Email notifications"
-msgstr "E-mailová upozornění"
+#: whispers/deployment.py:219 whispers/deployment.py:232
+msgid "Command-line sign-in"
+msgstr "Přihlášení z příkazového řádku"
 
-#: whispers/deployment.py:227
+#: whispers/deployment.py:220 whispers/deployment.py:250
 msgid "Available"
 msgstr "K dispozici"
 
-#: whispers/deployment.py:230
+#: whispers/deployment.py:223
+msgid ""
+"Programs such as the command-line tool can sign in through this site after "
+"you approve them, and get a token that expires. You can revoke these tokens "
+"from your account menu."
+msgstr ""
+"Programy, jako je nástroj příkazového řádku, se mohou po vašem schválení "
+"přihlásit přes tento web a získat token s omezenou platností. Tyto tokeny "
+"můžete odvolat v nabídce účtu."
+
+#: whispers/deployment.py:235
+msgid "Programs such as the command-line tool cannot sign in to this site."
+msgstr ""
+"Programy, jako je nástroj příkazového řádku, se na tento web nemohou "
+"přihlásit."
+
+#: whispers/deployment.py:249 whispers/deployment.py:263
+msgid "Email notifications"
+msgstr "E-mailová upozornění"
+
+#: whispers/deployment.py:253
 msgid ""
 "You can have an email sent when a whisper is created or submitted. The email "
 "never contains the decryption key."
@@ -1930,19 +2135,19 @@ msgstr ""
 "Můžete si nechat poslat e-mail, když je whisper vytvořen nebo odeslán. E-"
 "mail nikdy neobsahuje dešifrovací klíč."
 
-#: whispers/deployment.py:243
+#: whispers/deployment.py:266
 msgid "This site does not send email notifications."
 msgstr "Tento web neodesílá e-mailová upozornění."
 
-#: whispers/deployment.py:252 whispers/deployment.py:267
+#: whispers/deployment.py:275 whispers/deployment.py:290
 msgid "Usage statistics"
 msgstr "Statistiky používání"
 
-#: whispers/deployment.py:253 whispers/deployment.py:280
+#: whispers/deployment.py:276 whispers/deployment.py:303
 msgid "On"
 msgstr "Zapnuto"
 
-#: whispers/deployment.py:256
+#: whispers/deployment.py:279
 msgid ""
 "Anonymous hourly counts of created and revealed whispers are kept for up to "
 "a year. No content, keys, identifiers, IP addresses, or accounts are "
@@ -1952,15 +2157,15 @@ msgstr ""
 "jeden rok. Nezaznamenává se žádný obsah, klíče, identifikátory, IP adresy "
 "ani účty."
 
-#: whispers/deployment.py:270
+#: whispers/deployment.py:293
 msgid "No usage statistics are collected."
 msgstr "Neshromažďují se žádné statistiky používání."
 
-#: whispers/deployment.py:279 whispers/deployment.py:294
+#: whispers/deployment.py:302 whispers/deployment.py:317
 msgid "Formatted text"
 msgstr "Formátovaný text"
 
-#: whispers/deployment.py:283
+#: whispers/deployment.py:306
 msgid ""
 "Whispers can use headings, lists, links, and code, written in a Markdown "
 "editor, or be written as plain text. Formatting stays inside the encrypted "
@@ -1970,27 +2175,27 @@ msgstr ""
 "Markdown, nebo mohou být napsány jako prostý text. Formátování zůstává "
 "uvnitř šifrovaného whisperu."
 
-#: whispers/deployment.py:297
+#: whispers/deployment.py:320
 msgid "Whispers are written and shown as plain text."
 msgstr "Whispery se píší a zobrazují jako prostý text."
 
-#: whispers/deployment.py:305
+#: whispers/deployment.py:328
 msgid "File size limit"
 msgstr "Limit velikosti souborů"
 
-#: whispers/deployment.py:308
+#: whispers/deployment.py:331
 msgid "Maximum total size of the files attached to a single whisper."
 msgstr "Maximální celková velikost souborů připojených k jednomu whisperu."
 
-#: whispers/deployment.py:317 whispers/deployment.py:331
+#: whispers/deployment.py:340 whispers/deployment.py:354
 msgid "Encrypted storage"
 msgstr "Šifrované úložiště"
 
-#: whispers/deployment.py:318
+#: whispers/deployment.py:341
 msgid "Saved to disk"
 msgstr "Ukládáno na disk"
 
-#: whispers/deployment.py:321
+#: whispers/deployment.py:344
 msgid ""
 "Encrypted whispers are stored in Redis with persistence enabled, so they "
 "survive server restarts until they expire."
@@ -1998,15 +2203,23 @@ msgstr ""
 "Šifrované whispery jsou uloženy v Redisu s povolenou perzistencí, takže "
 "přežijí restart serveru, dokud nevyprší."
 
-#: whispers/deployment.py:332
+#: whispers/deployment.py:355
 msgid "Memory only"
 msgstr "Pouze v paměti"
 
-#: whispers/deployment.py:335
+#: whispers/deployment.py:358
 msgid ""
 "Encrypted whispers live only in memory and are lost if the server restarts."
 msgstr ""
 "Šifrované whispery existují pouze v paměti a při restartu serveru se ztratí."
+
+#: whispers/middleware.py:68
+msgid "Authentication required"
+msgstr "Vyžaduje se přihlášení"
+
+#: whispers/middleware.py:102
+msgid "The API token is invalid, expired or revoked."
+msgstr "API token je neplatný, vypršel nebo byl odvolán."
 
 #: whispers/stats.py:92
 msgid "Monday"
@@ -2044,23 +2257,31 @@ msgstr "5 minut"
 msgid "1 hour"
 msgstr "1 hodina"
 
+#: whispers/token_views.py:130
+msgid "You denied access."
+msgstr "Odepřeli jste přístup."
+
+#: whispers/token_views.py:227
+msgid "Send the API token to revoke in the Authorization header."
+msgstr "Pošlete API token, který chcete odvolat, v hlavičce Authorization."
+
 #: whispers/views.py:64
 msgid "Whisper storage is temporarily unavailable. Please try again later."
 msgstr "Úložiště whisperů je dočasně nedostupné. Zkuste to prosím později."
 
-#: whispers/views.py:183 whispers/views.py:714 whispers/views.py:813
+#: whispers/views.py:183 whispers/views.py:732 whispers/views.py:836
 msgid "Enter the verified primary email of each additional reader."
 msgstr "Zadejte ověřenou hlavní e-mailovou adresu každého dalšího čtenáře."
 
-#: whispers/views.py:697
+#: whispers/views.py:715
 msgid "Receive reader restrictions are not enabled."
 msgstr "Omezení čtenářů v režimu přijímání nejsou povolena."
 
-#: whispers/views.py:701
+#: whispers/views.py:719
 msgid "Sign in to manage reader access."
 msgstr "Pro správu přístupu čtenářů se přihlaste."
 
-#: whispers/views.py:705 whispers/views.py:804
+#: whispers/views.py:723 whispers/views.py:827
 msgid "Enable restricted access before adding readers."
 msgstr "Před přidáním čtenářů zapněte omezený přístup."
 
