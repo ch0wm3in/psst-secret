@@ -378,12 +378,10 @@ if ENABLE_AUTH:
             r"submit/.*"
         )  # allow unauthenticated submits if not forcing auth
         LOGIN_REQUIRED_EXEMPT_URLS.append(r"api/whisper/submit/.*")
-        LOGIN_REQUIRED_EXEMPT_URLS.append(r"api/v1/whisper/submit/.*")
     if not PSST_FORCE_AUTH_VIEW:
         LOGIN_REQUIRED_EXEMPT_URLS.append(
             r"whisper/.*"
         )  # allow unauthenticated views if not forcing auth
-        LOGIN_REQUIRED_EXEMPT_URLS.append(r"api/v1/whisper/[0-9a-f-]+/reveal$")
     # social account providers can be added as needed
     SOCIAL_AUTH_PROVIDERS = env.list("SOCIAL_AUTH_PROVIDERS", default=[])
     if SOCIAL_AUTH_PROVIDERS:

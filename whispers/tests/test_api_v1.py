@@ -182,6 +182,11 @@ class ApiV1Tests(TestCase):
         self.assertEqual(response.status_code, 410)
         self.assertIsNone(redis_store.get_crypto(whisper.id))
 
+    def test_submit_page_exposes_request_version(self):
+        whisper = self._create_request(v=1)
+        response = self.client.get(f"/submit/{whisper.submit_token}")
+        self.assertEqual(response.context["request_data"]["v"], 1)
+
     def test_view_id_cannot_fetch_submit_key(self):
         whisper = self._create_request()
         response = self.client.get(f"/api/v1/whisper/submit/{whisper.id}")

@@ -641,6 +641,7 @@ def submit_whisper(request, submit_token):
             "request_data": {
                 "submit_token": str(whisper.submit_token),
                 "public_key": crypto.get("public_key", ""),
+                "v": crypto.get("v", 0),
             },
         },
     )

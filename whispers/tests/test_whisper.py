@@ -1835,9 +1835,7 @@ _DEFAULT_EXEMPT_URLS = [
     r"static/.*",
     r"submit/.*",
     r"api/whisper/submit/.*",
-    r"api/v1/whisper/submit/.*",
     r"whisper/.*",
-    r"api/v1/whisper/[0-9a-f-]+/reveal$",
 ]
 
 
@@ -1911,20 +1909,29 @@ class DeploymentFeaturesTests(TestCase):
 
         cases = [
             ([r"$"], ("Required", "on"), False, False),
-            ([r"$", r"api/v1/whisper$"], ("Partly required", "neutral"), True, False),
-            (
-                [r"$", r"api/v1/whisper/request$"],
-                ("Partly required", "neutral"),
-                False,
-                True,
-            ),
-            (
-                [r"$", r"api/v1/whisper$", r"api/v1/whisper/request$"],
-                ("Optional", "neutral"),
-                True,
-                True,
-            ),
         ]
+        # Existing unversioned patterns must keep covering the /api/v1/ endpoints.
+        for prefix in ("api/", "api/v1/"):
+            cases += [
+                (
+                    [r"$", prefix + "whisper$"],
+                    ("Partly required", "neutral"),
+                    True,
+                    False,
+                ),
+                (
+                    [r"$", prefix + "whisper/request$"],
+                    ("Partly required", "neutral"),
+                    False,
+                    True,
+                ),
+                (
+                    [r"$", prefix + "whisper$", prefix + "whisper/request$"],
+                    ("Optional", "neutral"),
+                    True,
+                    True,
+                ),
+            ]
         for extra, expected, send_open, request_open in cases:
             with override_settings(
                 LOGIN_REQUIRED_EXEMPT_URLS=[*_DEFAULT_EXEMPT_URLS, *extra]
@@ -1932,8 +1939,11 @@ class DeploymentFeaturesTests(TestCase):
                 self.assertEqual(self._status("sign_in"), expected, extra)
                 cache.clear()
                 client = Client()
+                versioned_only = any("api/v1/" in pattern for pattern in extra)
                 for path, is_open in (
+                    ("/api/whisper", send_open and not versioned_only),
                     ("/api/v1/whisper", send_open),
+                    ("/api/whisper/request", request_open and not versioned_only),
                     ("/api/v1/whisper/request", request_open),
                 ):
                     response = client.post(path, {}, content_type="application/json")
