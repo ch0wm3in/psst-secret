@@ -199,7 +199,7 @@ class TokenExchangeView(APIView):
                 d["code"], d["code_verifier"], d["redirect_uri"]
             )
         except TokenExchangeError as exc:
-            return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": exc.message}, status=status.HTTP_400_BAD_REQUEST)
         return Response(
             {
                 "access_token": raw_token,

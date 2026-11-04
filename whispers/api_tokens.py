@@ -152,7 +152,9 @@ def create_authorization_code(user, request_data):
 
 
 class TokenExchangeError(ValueError):
-    pass
+    def __init__(self, message):
+        super().__init__(message)
+        self.message = message
 
 
 def exchange_code(code, code_verifier, redirect_uri):
