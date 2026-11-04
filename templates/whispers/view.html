@@ -308,10 +308,16 @@
     if (!pasteData) {
         showError("{% trans "No encrypted data available. The psst may have already been viewed." %}");
     } else {
-        const keyB64 = readRevealFragment({{ legacy_reveal|yesno:"true,false" }}).key;
+        const fragment = readRevealFragment({{ legacy_reveal|yesno:"true,false" }});
+        const keyB64 = fragment.key;
         const isPasswordProtected = !!pasteData.salt;
 
         (async () => {
+            if (!isReadableFormat(fragment.version) || !isReadableFormat(parseFormatVersion(pasteData.v))) {
+                showError("{% trans "This link uses an unsupported format version. Ask for a new link." %}");
+                return;
+            }
+
             if (isPasswordProtected) {
                 document.getElementById("password-prompt").classList.remove("hidden");
                 return;

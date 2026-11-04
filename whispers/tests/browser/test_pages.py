@@ -357,7 +357,7 @@ def test_legacy_text_envelopes(page, app_url, payload):
         const key = await generateKey();
         const authorization = await generateRevealAuthorization();
         const encrypted = await encryptContent(plaintext, key);
-        const response = await fetch('/api/whisper', {
+        const response = await fetch('/api/v1/whisper', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({

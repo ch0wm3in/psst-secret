@@ -1835,7 +1835,9 @@ _DEFAULT_EXEMPT_URLS = [
     r"static/.*",
     r"submit/.*",
     r"api/whisper/submit/.*",
+    r"api/v1/whisper/submit/.*",
     r"whisper/.*",
+    r"api/v1/whisper/[0-9a-f-]+/reveal$",
 ]
 
 
@@ -1909,15 +1911,15 @@ class DeploymentFeaturesTests(TestCase):
 
         cases = [
             ([r"$"], ("Required", "on"), False, False),
-            ([r"$", r"api/whisper$"], ("Partly required", "neutral"), True, False),
+            ([r"$", r"api/v1/whisper$"], ("Partly required", "neutral"), True, False),
             (
-                [r"$", r"api/whisper/request$"],
+                [r"$", r"api/v1/whisper/request$"],
                 ("Partly required", "neutral"),
                 False,
                 True,
             ),
             (
-                [r"$", r"api/whisper$", r"api/whisper/request$"],
+                [r"$", r"api/v1/whisper$", r"api/v1/whisper/request$"],
                 ("Optional", "neutral"),
                 True,
                 True,
@@ -1931,8 +1933,8 @@ class DeploymentFeaturesTests(TestCase):
                 cache.clear()
                 client = Client()
                 for path, is_open in (
-                    ("/api/whisper", send_open),
-                    ("/api/whisper/request", request_open),
+                    ("/api/v1/whisper", send_open),
+                    ("/api/v1/whisper/request", request_open),
                 ):
                     response = client.post(path, {}, content_type="application/json")
                     self.assertEqual(

@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psst-secret\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-02 13:24+0000\n"
+"POT-Creation-Date: 2026-11-04 21:21+0000\n"
 "PO-Revision-Date: 2026-10-09 07:50+0000\n"
 "Last-Translator: \n"
 "Language-Team: Swedish\n"
@@ -121,9 +121,9 @@ msgstr "Så fungerar det"
 msgid ""
 "%(brand_name)s ensures that <strong class=\"text-white\">your whispers never "
 "exist in plaintext on our server</strong>. All encryption and decryption "
-"happens entirely in your browser using the <a href=\"https://developer."
-"mozilla.org/en-US/docs/Web/API/Web_Crypto_API\" class=\"text-brand-400 "
-"underline hover:text-brand-300\" target=\"_blank\" rel=\"noopener "
+"happens entirely in your browser using the <a href=\"https://"
+"developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API\" class=\"text-"
+"brand-400 underline hover:text-brand-300\" target=\"_blank\" rel=\"noopener "
 "noreferrer\">Web Crypto API</a>."
 msgstr ""
 "%(brand_name)s säkerställer att <strong class=\"text-white\">dina whispers "
@@ -717,20 +717,24 @@ msgstr "Klicka nedan för att dekryptera och visa denna whisper."
 msgid "Reveal whisper"
 msgstr "Visa whisper"
 
-#: templates/whispers/confirm.html:35 templates/whispers/view.html:321
+#: templates/whispers/confirm.html:35 templates/whispers/view.html:327
 msgid "No decryption key found in URL. The link may be incomplete."
 msgstr ""
 "Ingen dekrypteringsnyckel hittades i URL:en. Länken kan vara ofullständig."
 
-#: templates/whispers/confirm.html:36 templates/whispers/forbidden.html:10
-#: whispers/views.py:499
+#: templates/whispers/confirm.html:36 templates/whispers/view.html:317
+msgid "This link uses an unsupported format version. Ask for a new link."
+msgstr "Länken använder en formatversion som inte stöds. Be om en ny länk."
+
+#: templates/whispers/confirm.html:37 templates/whispers/forbidden.html:10
+#: whispers/views.py:531
 msgid ""
 "The reveal authorization is missing or invalid. Use the complete view link."
 msgstr ""
 "Behörigheten att avslöja saknas eller är ogiltig. Använd den fullständiga "
 "visningslänken."
 
-#: templates/whispers/confirm.html:37
+#: templates/whispers/confirm.html:38
 msgid "Loading…"
 msgstr "Laddar…"
 
@@ -738,7 +742,7 @@ msgstr "Laddar…"
 msgid "New Whisper"
 msgstr "Ny whisper"
 
-#: templates/whispers/create.html:9 whispers/tests/browser/test_pages.py:192
+#: templates/whispers/create.html:9 whispers/tests/browser/test_pages.py:193
 msgid "Share a whisper"
 msgstr "Dela en whisper"
 
@@ -1002,7 +1006,7 @@ msgstr ""
 "Den som skickar in en whisper till denna förfrågan måste vara inloggad."
 
 #: templates/whispers/create.html:233 templates/whispers/receive_access.html:8
-#: whispers/views.py:757
+#: whispers/views.py:798
 msgid "Restricted receive access is required."
 msgstr "Begränsad läsåtkomst för mottagning krävs."
 
@@ -1313,7 +1317,7 @@ msgstr "Åtkomst nekad"
 msgid "Access denied"
 msgstr "Åtkomst nekad"
 
-#: templates/whispers/forbidden.html:10 whispers/views.py:456
+#: templates/whispers/forbidden.html:10 whispers/views.py:488
 msgid "You do not have access to this whisper."
 msgstr "Du har inte åtkomst till denna whisper."
 
@@ -1769,7 +1773,7 @@ msgstr "Fel lösenord. Försök igen."
 msgid "No encrypted data available. The psst may have already been viewed."
 msgstr "Inga krypterade data finns tillgängliga. Whispern kan redan ha visats."
 
-#: templates/whispers/view.html:330
+#: templates/whispers/view.html:336
 msgid "Decryption failed. The link may be incomplete or corrupted."
 msgstr ""
 "Dekrypteringen misslyckades. Länken kan vara ofullständig eller skadad."
@@ -2056,23 +2060,24 @@ msgstr "5 minuter"
 msgid "1 hour"
 msgstr "1 timme"
 
-#: whispers/views.py:61
+#: whispers/views.py:64
 msgid "Whisper storage is temporarily unavailable. Please try again later."
-msgstr "Lagringen för whispers är tillfälligt otillgänglig. Försök igen senare."
+msgstr ""
+"Lagringen för whispers är tillfälligt otillgänglig. Försök igen senare."
 
-#: whispers/views.py:169 whispers/views.py:674 whispers/views.py:772
+#: whispers/views.py:183 whispers/views.py:714 whispers/views.py:813
 msgid "Enter the verified primary email of each additional reader."
 msgstr "Ange varje ytterligare läsares verifierade primära e-postadress."
 
-#: whispers/views.py:657
+#: whispers/views.py:697
 msgid "Receive reader restrictions are not enabled."
 msgstr "Läsarbegränsningar för mottagning är inte aktiverade."
 
-#: whispers/views.py:661
+#: whispers/views.py:701
 msgid "Sign in to manage reader access."
 msgstr "Logga in för att hantera läsåtkomst."
 
-#: whispers/views.py:665 whispers/views.py:763
+#: whispers/views.py:705 whispers/views.py:804
 msgid "Enable restricted access before adding readers."
 msgstr "Aktivera begränsad åtkomst innan du lägger till läsare."
 

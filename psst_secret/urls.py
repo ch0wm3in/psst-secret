@@ -15,6 +15,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
+from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path
 from django.views.i18n import JavaScriptCatalog
@@ -26,7 +27,13 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("i18n/", include("django.conf.urls.i18n")),
     path("jsi18n/", JavaScriptCatalog.as_view(), name="javascript-catalog"),
-    path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
+    path(
+        "api/schema/",
+        SpectacularAPIView.as_view(
+            custom_settings={"TITLE": f"{settings.PSST_BRAND_NAME} API"}
+        ),
+        name="schema",
+    ),
     path(
         "api/docs/",
         SpectacularSwaggerView.as_view(url_name="schema"),

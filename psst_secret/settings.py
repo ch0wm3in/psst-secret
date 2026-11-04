@@ -278,12 +278,14 @@ REST_FRAMEWORK = {
     },
 }
 
-# drf-spectacular — OpenAPI schema generation
+# drf-spectacular — OpenAPI schema generation. The committed spec/openapi.yaml must match;
+# the served schema uses the brand name as its title (see psst_secret/urls.py).
 SPECTACULAR_SETTINGS = {
-    "TITLE": f"{PSST_BRAND_NAME} API",
+    "TITLE": "psst-secret API",
     "DESCRIPTION": "End-to-end encrypted secret sharing. The server never sees your plaintext.",  # noqa: E501
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
+    "PREPROCESSING_HOOKS": ["whispers.schema.versioned_endpoints_only"],
 }
 
 LOGGING = {
@@ -376,10 +378,12 @@ if ENABLE_AUTH:
             r"submit/.*"
         )  # allow unauthenticated submits if not forcing auth
         LOGIN_REQUIRED_EXEMPT_URLS.append(r"api/whisper/submit/.*")
+        LOGIN_REQUIRED_EXEMPT_URLS.append(r"api/v1/whisper/submit/.*")
     if not PSST_FORCE_AUTH_VIEW:
         LOGIN_REQUIRED_EXEMPT_URLS.append(
             r"whisper/.*"
         )  # allow unauthenticated views if not forcing auth
+        LOGIN_REQUIRED_EXEMPT_URLS.append(r"api/v1/whisper/[0-9a-f-]+/reveal$")
     # social account providers can be added as needed
     SOCIAL_AUTH_PROVIDERS = env.list("SOCIAL_AUTH_PROVIDERS", default=[])
     if SOCIAL_AUTH_PROVIDERS:

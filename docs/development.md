@@ -78,6 +78,7 @@ whispers/                Main app
 ├── templatetags/        Template tags (icon, settings_value, to_json, …)
 └── tests/               Django and Playwright tests
 static/js/               Client-side cryptography, secret generator, and helpers
+spec/                    OpenAPI schema and encryption format test vectors
 templates/               Django templates (Tailwind CSS)
 locale/                  Danish, Czech, Swedish, and Filipino translations
 docs/                    Documentation
@@ -147,3 +148,20 @@ pytest whispers/tests/browser --browser-tests -n 4 --browser chromium --browser 
 
 CI runs the Django tests and the Chromium and WebKit browser tests as separate parallel
 jobs.
+
+## Format specification and API schema
+
+The [encryption format](format.md) and the `/api/v1/` endpoints are a contract with
+third-party clients, so follow the [compatibility policy](format.md#compatibility-policy)
+when changing them.
+
+- **OpenAPI schema.** After changing API views or serializers, regenerate
+  `spec/openapi.yaml`. The Django tests fail when it is out of date.
+- **Test vectors.** `spec/vectors/v1/` is generated from fixed inputs. Regenerate it
+  only when adding cases; existing outputs must not change within a format version.
+  `whispers/tests/browser/test_format.py` checks `crypto.js` against the vectors.
+
+```bash
+python manage.py spectacular --file spec/openapi.yaml
+node spec/vectors/generate.mjs               # needs npm ci --prefix theme/static_src
+```

@@ -685,13 +685,13 @@ def test_creation_server_errors_allow_retry(page, app_url, status, kind):
     if kind == "receive":
         page.locator("#tab-receive").click()
         endpoint, button, result = (
-            "**/api/whisper/request",
+            "**/api/v1/whisper/request",
             "#request-btn",
             "#receive-result",
         )
     else:
         page.locator("#whisper").fill("Retry after failure")
-        endpoint, button, result = "**/api/whisper", "#encrypt-btn", "#result"
+        endpoint, button, result = "**/api/v1/whisper", "#encrypt-btn", "#result"
     page.route(
         endpoint,
         lambda route: route.fulfill(
@@ -713,13 +713,13 @@ def test_submit_server_error_allows_retry(page, create_whisper):
     page.goto(submit_url)
     page.locator("#whisper").fill("Retry submission")
     page.route(
-        "**/api/whisper/submit/*",
+        "**/api/v1/whisper/submit/*",
         lambda route: route.fulfill(status=503, body="Unavailable"),
     )
     page.locator("#submit-btn").click()
     expect(page.locator("#error")).to_contain_text("503")
     expect(page.locator("#submit-btn")).to_be_enabled()
-    page.unroute("**/api/whisper/submit/*")
+    page.unroute("**/api/v1/whisper/submit/*")
     page.locator("#submit-btn").click()
     expect(page.locator("#submit-success")).to_be_visible()
 
@@ -744,10 +744,10 @@ def test_network_failure_restores_creation_controls(page, app_url, kind):
     page.goto(app_url)
     if kind == "receive":
         page.locator("#tab-receive").click()
-        endpoint, button = "**/api/whisper/request", "#request-btn"
+        endpoint, button = "**/api/v1/whisper/request", "#request-btn"
     else:
         page.locator("#whisper").fill("Network error must not lose content")
-        endpoint, button = "**/api/whisper", "#encrypt-btn"
+        endpoint, button = "**/api/v1/whisper", "#encrypt-btn"
     page.route(endpoint, lambda route: route.abort())
     page.locator(button).click()
     expect(page.locator("#error")).to_be_visible()
@@ -783,7 +783,7 @@ def test_duplicate_submit_api_cannot_replace_ciphertext(page, create_whisper):
     ciphertext = stored["ciphertext"]
     response = page.request.post(
         urlsplit(submit_url)
-        ._replace(path="/api/whisper" + urlsplit(submit_url).path, fragment="")
+        ._replace(path="/api/v1/whisper" + urlsplit(submit_url).path, fragment="")
         .geturl(),
         data={
             "ciphertext": "replacement",

@@ -14,6 +14,29 @@ urlpatterns = [
         name="view",
     ),
     path("submit/<uuid:submit_token>", views.submit_whisper, name="submit"),
+    path("api/v1/info", views.ApiInfoView.as_view(), name="api_v1_info"),
+    path("api/v1/whisper", views.CreateWhisperView.as_view(), name="api_v1_create"),
+    path(
+        "api/v1/whisper/request",
+        views.CreateRequestView.as_view(),
+        name="api_v1_create_request",
+    ),
+    path(
+        "api/v1/whisper/<uuid:whisper_id>/reveal",
+        views.RevealWhisperAPIView.as_view(),
+        name="api_v1_reveal",
+    ),
+    path(
+        "api/v1/whisper/<uuid:whisper_id>/access",
+        views.ReceiveAccessView.as_view(),
+        name="api_v1_receive_access",
+    ),
+    path(
+        "api/v1/whisper/submit/<uuid:submit_token>",
+        views.SubmitWhisperView.as_view(),
+        name="api_v1_submit",
+    ),
+    # Deprecated unversioned aliases of the v1 endpoints; see docs/api.md.
     path("api/whisper", views.CreateWhisperView.as_view(), name="api_create"),
     path(
         "api/whisper/request",

@@ -66,8 +66,8 @@ def _auth_features():
 
     # Creating needs both the page and the matching API endpoint to be reachable.
     page_required = _login_required_for("")
-    send_required = page_required or _login_required_for("api/whisper")
-    request_required = page_required or _login_required_for("api/whisper/request")
+    send_required = page_required or _login_required_for("api/v1/whisper")
+    request_required = page_required or _login_required_for("api/v1/whisper/request")
     if send_required and request_required:
         sign_in = _feature(
             "sign_in",

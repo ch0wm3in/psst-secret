@@ -2,7 +2,7 @@ import ipaddress
 
 from rest_framework import serializers
 
-from .constants import EXPIRY_DELTAS
+from .constants import EXPIRY_DELTAS, SUPPORTED_FORMAT_VERSIONS
 
 
 class CIDRField(serializers.CharField):
@@ -18,6 +18,14 @@ class CIDRField(serializers.CharField):
         return value
 
 
+class VersionedPayloadSerializer(serializers.Serializer):
+    v = serializers.ChoiceField(
+        choices=SUPPORTED_FORMAT_VERSIONS,
+        required=False,
+        help_text="Encryption format version (see docs/format.md). Omitted means legacy version 0.",
+    )
+
+
 class RevealProtectedSerializer(serializers.Serializer):
     reveal_token_hash = serializers.RegexField(
         regex=r"\A[0-9a-f]{64}\Z",
@@ -27,7 +35,7 @@ class RevealProtectedSerializer(serializers.Serializer):
     )
 
 
-class CreateWhisperSerializer(RevealProtectedSerializer):
+class CreateWhisperSerializer(VersionedPayloadSerializer, RevealProtectedSerializer):
     ciphertext = serializers.CharField(max_length=70_000_000)
     iv = serializers.CharField(max_length=50)
     salt = serializers.CharField(max_length=50, default="", allow_blank=True)
@@ -59,7 +67,9 @@ class ReceiveAccessSerializer(serializers.Serializer):
     )
 
 
-class CreateRequestSerializer(ReceiveAccessSerializer, RevealProtectedSerializer):
+class CreateRequestSerializer(
+    VersionedPayloadSerializer, ReceiveAccessSerializer, RevealProtectedSerializer
+):
     public_key = serializers.CharField(
         max_length=2000,
         help_text="X-Wing (ML-KEM-768 + X25519) public key, base64.",
@@ -101,13 +111,30 @@ class CreateRequestResponseSerializer(serializers.Serializer):
     view_url = serializers.URLField()
 
 
-class SubmitWhisperSerializer(serializers.Serializer):
+class SubmitWhisperSerializer(VersionedPayloadSerializer):
     ciphertext = serializers.CharField(max_length=70_000_000)
     iv = serializers.CharField(max_length=50)
     encapsulated_key = serializers.CharField(max_length=2000)
 
 
+class SubmitRequestKeySerializer(serializers.Serializer):
+    public_key = serializers.CharField(
+        help_text="X-Wing public key, base64. Check it against the submit link fingerprint."
+    )
+    v = serializers.IntegerField(help_text="Format version of the request.")
+
+
+class ApiInfoSerializer(serializers.Serializer):
+    server_version = serializers.CharField()
+    api_version = serializers.IntegerField()
+    format_versions = serializers.ListField(
+        child=serializers.IntegerField(),
+        help_text="Format versions accepted for new whispers.",
+    )
+
+
 class RevealWhisperResponseSerializer(serializers.Serializer):
+    v = serializers.IntegerField(help_text="Format version; 0 for legacy whispers.")
     ciphertext = serializers.CharField()
     iv = serializers.CharField()
     salt = serializers.CharField()
