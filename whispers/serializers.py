@@ -124,6 +124,21 @@ class SubmitRequestKeySerializer(serializers.Serializer):
     v = serializers.IntegerField(help_text="Format version of the request.")
 
 
+class ApiInfoAuthSerializer(serializers.Serializer):
+    login_required = serializers.BooleanField(
+        help_text="Whether creating whispers through the API requires authentication."
+    )
+    loopback_pkce = serializers.BooleanField(
+        help_text="Whether API tokens can be obtained with the loopback + PKCE sign-in."
+    )
+    manual_code = serializers.BooleanField(
+        help_text="Whether the copy-paste code fallback is available for the sign-in."
+    )
+    scopes = serializers.ListField(
+        child=serializers.CharField(), help_text="Scopes an API token can be granted."
+    )
+
+
 class ApiInfoSerializer(serializers.Serializer):
     server_version = serializers.CharField()
     api_version = serializers.IntegerField()
@@ -131,6 +146,28 @@ class ApiInfoSerializer(serializers.Serializer):
         child=serializers.IntegerField(),
         help_text="Format versions accepted for new whispers.",
     )
+    auth = ApiInfoAuthSerializer()
+
+
+class TokenExchangeSerializer(serializers.Serializer):
+    grant_type = serializers.ChoiceField(
+        choices=["authorization_code"], default="authorization_code"
+    )
+    code = serializers.CharField(max_length=100)
+    code_verifier = serializers.CharField(
+        max_length=128, help_text="PKCE code verifier (RFC 7636)."
+    )
+    redirect_uri = serializers.CharField(
+        max_length=255, help_text="Exactly the redirect_uri sent to /cli/authorize."
+    )
+
+
+class TokenResponseSerializer(serializers.Serializer):
+    access_token = serializers.CharField(help_text="API token, prefixed with psst_.")
+    token_type = serializers.CharField()
+    expires_in = serializers.IntegerField(help_text="Seconds until the token expires.")
+    expires_at = serializers.DateTimeField()
+    scope = serializers.CharField(help_text="Space-separated granted scopes.")
 
 
 class RevealWhisperResponseSerializer(serializers.Serializer):

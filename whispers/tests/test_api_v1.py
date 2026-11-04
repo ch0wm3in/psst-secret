@@ -83,7 +83,17 @@ class ApiV1Tests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
             response.json(),
-            {"server_version": "v9.8.7", "api_version": 1, "format_versions": [1]},
+            {
+                "server_version": "v9.8.7",
+                "api_version": 1,
+                "format_versions": [1],
+                "auth": {
+                    "login_required": False,
+                    "loopback_pkce": False,
+                    "manual_code": False,
+                    "scopes": [],
+                },
+            },
         )
 
     def test_format_version_is_stored_and_returned_on_reveal(self):
@@ -207,11 +217,14 @@ class ApiV1LoginRequiredTests(TestCase):
             ("post", f"/api/v1/whisper/{missing}/reveal", True),
             ("get", f"/api/v1/whisper/submit/{missing}", True),
             ("post", f"/api/v1/whisper/submit/{missing}", True),
-            ("get", "/api/v1/info", False),
+            ("get", "/api/v1/info", True),
+            ("post", "/api/v1/cli/token", True),
             ("post", "/api/v1/whisper", False),
             ("post", "/api/v1/whisper/request", False),
             ("get", f"/api/v1/whisper/{missing}/access", False),
         ):
             with self.subTest(method=method, path=path):
                 response = getattr(self.client, method)(path)
-                self.assertEqual(response.status_code == 302, not exempt)
+                # API clients get a JSON 401 instead of a redirect to the login page.
+                self.assertEqual(response.status_code == 401, not exempt)
+                self.assertNotEqual(response.status_code, 302)

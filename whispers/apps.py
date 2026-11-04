@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 
 def _cleanup_loop():
-    """Background loop that purges expired whispers and prunes stats(if enabled) every 60s."""
+    """Background loop that purges expired whispers and API tokens and prunes stats every 60s."""
     from django.utils import timezone
 
     # Wait for DB to be ready
@@ -25,6 +25,12 @@ def _cleanup_loop():
             expired.delete()
         except Exception as e:
             logger.exception("Error cleaning up expired whispers: %s", e)
+        try:
+            from whispers.api_tokens import delete_expired
+
+            delete_expired()
+        except Exception as e:
+            logger.exception("Error deleting expired API tokens: %s", e)
         try:
             from whispers.stats import prune_stats
 

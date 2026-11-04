@@ -1,0 +1,45 @@
+{% extends "base/layout.html" %}
+{% load i18n whispers_extras %}
+
+{% block title %}{{ brand_name }} — {% trans "API tokens" %}{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="space-y-2">
+        <h1 class="text-2xl font-bold text-white">{% trans "API tokens" %}</h1>
+        <p class="text-gray-400">{% trans "Programs such as the command-line tool get a token when you approve their sign-in. Revoke any token you do not recognize." %}</p>
+    </div>
+
+    {% if tokens %}
+    <ul class="space-y-3" data-api-tokens>
+        {% for item in tokens %}
+        <li class="rounded-lg border border-gray-800 bg-gray-900 p-4 flex flex-wrap items-start justify-between gap-4" data-api-token>
+            <div class="space-y-1 text-sm">
+                <p class="font-medium text-white">{{ item.token.client_name|default:_("Unnamed client") }}</p>
+                <p class="text-gray-400">{% for scope in item.scopes %}<code class="text-xs text-gray-300">{{ scope }}</code>{% if not forloop.last %} {% endif %}{% endfor %}</p>
+                <p class="text-xs text-gray-500">
+                    {% blocktrans with created=item.token.created_at|date:"N j, Y g:i A e" expires=item.token.expires_at|date:"N j, Y g:i A e" %}Created {{ created }} · Expires {{ expires }}{% endblocktrans %}
+                </p>
+                <p class="text-xs text-gray-500">
+                    {% if item.token.last_used_at %}
+                    {% blocktrans with used=item.token.last_used_at|date:"N j, Y g:i A e" %}Last used {{ used }}{% endblocktrans %}
+                    {% else %}
+                    {% trans "Never used" %}
+                    {% endif %}
+                </p>
+            </div>
+            <form method="post" action="{% url 'whispers:api_token_revoke' item.token.pk %}">
+                {% csrf_token %}
+                <button type="submit"
+                    class="rounded-lg border border-red-800 bg-red-900/30 hover:bg-red-900/60 px-3 py-2 text-sm text-red-200 transition">
+                    {% trans "Revoke" %}
+                </button>
+            </form>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p class="text-gray-500" data-no-api-tokens>{% trans "You have no active API tokens." %}</p>
+    {% endif %}
+</div>
+{% endblock %}

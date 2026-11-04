@@ -212,6 +212,14 @@ PSST_ENABLE_RECEIVE_ACCESS = env.bool("PSST_ENABLE_RECEIVE_ACCESS", default=Fals
 PSST_RECEIVE_ACCESS_DEFAULT = env.bool("PSST_RECEIVE_ACCESS_DEFAULT", default=False)
 PSST_FORCE_RECEIVE_ACCESS = env.bool("PSST_FORCE_RECEIVE_ACCESS", default=False)
 
+# API tokens for the CLI and browser extension, issued through a loopback + PKCE sign-in.
+# Requires ENABLE_AUTH. See docs/api.md#api-tokens.
+PSST_ENABLE_API_TOKENS = env.bool("PSST_ENABLE_API_TOKENS", default=False)
+PSST_API_TOKEN_TTL = env.int("PSST_API_TOKEN_TTL", default=7 * 24 * 60 * 60)
+PSST_ENABLE_API_TOKEN_MANUAL_CODE = env.bool(
+    "PSST_ENABLE_API_TOKEN_MANUAL_CODE", default=False
+)
+
 # Markdown WYSIWYG editor for whisper content (rendered client-side only); users can switch to plain text
 PSST_ENABLE_RICH_TEXT = env.bool("PSST_ENABLE_RICH_TEXT", default=True)
 
@@ -265,8 +273,15 @@ REST_FRAMEWORK = {
     "NUM_PROXIES": NUM_PROXIES,
     # Return 503 instead of 500 when Redis (storage or throttle cache) fails.
     "EXCEPTION_HANDLER": "whispers.views.api_exception_handler",
+    # API tokens are checked first so token requests skip session CSRF checks.
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "whispers.api_tokens.BearerTokenAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
+        "rest_framework.authentication.BasicAuthentication",
+    ],
     "DEFAULT_THROTTLE_CLASSES": [
         "rest_framework.throttling.AnonRateThrottle",
+        "whispers.api_tokens.ApiTokenUserThrottle",
     ],
     "DEFAULT_THROTTLE_RATES": {
         "anon": env.str("API_THROTTLE_RATE_ANON", default="60/minute"),
@@ -275,6 +290,10 @@ REST_FRAMEWORK = {
         "receive_access": env.str(
             "API_THROTTLE_RATE_RECEIVE_ACCESS", default="10/minute"
         ),
+        "api_token_exchange": env.str(
+            "API_THROTTLE_RATE_TOKEN_EXCHANGE", default="10/minute"
+        ),
+        "api_token_user": env.str("API_THROTTLE_RATE_TOKEN_USER", default="120/minute"),
     },
 }
 
@@ -357,6 +376,8 @@ if ENABLE_AUTH:
         "django.template.context_processors.request"
     )
     MIDDLEWARE.append("allauth.account.middleware.AccountMiddleware")
+    # Must run before LoginRequiredMiddleware so it sees the token user.
+    MIDDLEWARE.append("whispers.middleware.ApiTokenMiddleware")
     MIDDLEWARE.append("whispers.middleware.LoginRequiredMiddleware")
 
     LOGIN_URL = "/login/"
