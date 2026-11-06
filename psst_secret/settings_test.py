@@ -25,6 +25,7 @@ PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
 PSST_ENABLE_RECEIVE_ACCESS = False
 PSST_RECEIVE_ACCESS_DEFAULT = False
 PSST_FORCE_RECEIVE_ACCESS = False
+PSST_ENABLE_RECEIVE_HISTORY = False
 
 # Keep tests independent of white-label and deployment values in a developer's .env.
 PSST_BRAND_NAME = "psst-secret"

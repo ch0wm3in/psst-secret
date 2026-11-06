@@ -7,7 +7,7 @@ from django.utils.translation import gettext as _
 
 # Versioned endpoints are exempt whenever the unversioned path serving the same view is.
 _V1_ALIASES = (
-    (re.compile(r"api/v1/whisper/([0-9a-f-]+)/reveal$"), r"whisper/\1"),
+    (re.compile(r"api/v1/whisper/([0-9a-f-]+)/(?:reveal|status)$"), r"whisper/\1"),
     (re.compile(r"api/v1/(whisper(?:/.*)?)$"), r"api/\1"),
 )
 

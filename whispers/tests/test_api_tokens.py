@@ -532,6 +532,21 @@ class TokenAuthenticationTests(ApiTokenTestCase):
         )
         self.assertEqual(response.status_code, 200)
 
+    @override_settings(PSST_ENABLE_RECEIVE_HISTORY=True)
+    def test_status_endpoint_requires_read_scope(self):
+        whisper_id = self._api(
+            "post",
+            "/api/v1/whisper/request",
+            self._token(),
+            {"public_key": "pk", "reveal_token_hash": _REVEAL_TOKEN_HASH},
+        ).json()["id"]
+        path = f"/api/v1/whisper/{whisper_id}/status"
+        response = self._api("get", path, self._token(scope="whisper:create"))
+        self.assertEqual(response.status_code, 403)
+        response = self._api("get", path, self._token(scope="whisper:read"))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["status"], "pending")
+
     @override_settings(
         PSST_FORCE_AUTH_VIEW=True,
         PSST_FORCE_AUTH_SUBMIT=True,

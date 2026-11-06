@@ -703,6 +703,22 @@ async function handleCreateRequest() {
         document.getElementById('submit-url').value = submitUrl;
         document.getElementById('view-url').value = viewUrl;
 
+        // Opt-in local history; the label stays in this browser and is never sent.
+        const history = window.PsstReceiveHistory;
+        const savedNotice = document.getElementById('receive-history-saved');
+        if (history && history.isEnabled() && savedNotice) {
+            const saved = history.add({
+                id: data.id,
+                viewUrl,
+                submitUrl,
+                label: (document.getElementById('receive-label') || {}).value || '',
+                expiresAt: data.expires_at,
+                maxViews,
+                passwordProtected: !!password,
+            });
+            savedNotice.classList.toggle('hidden', !saved);
+        }
+
         if (password) {
             document.getElementById('receive-password-notice').classList.remove('hidden');
         }
