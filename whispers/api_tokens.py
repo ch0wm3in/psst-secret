@@ -14,6 +14,7 @@ from datetime import timedelta
 
 from django.conf import settings
 from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from rest_framework.authentication import BaseAuthentication
@@ -170,8 +171,11 @@ def exchange_code(code, code_verifier, redirect_uri):
     invalid = TokenExchangeError(_("The authorization code is invalid or expired."))
     if not isinstance(code, str) or not code.startswith(CODE_PREFIX):
         raise invalid
-    if not isinstance(code_verifier, str) or not _CODE_VERIFIER_RE.match(code_verifier):
-        raise TokenExchangeError(_("The code verifier is missing or invalid."))
+    # A malformed verifier must still consume the code (or revoke on replay), so it
+    # is only rejected after the transaction.
+    verifier_ok = isinstance(code_verifier, str) and bool(
+        _CODE_VERIFIER_RE.match(code_verifier)
+    )
     if not isinstance(redirect_uri, str):
         raise invalid
 
@@ -194,7 +198,8 @@ def exchange_code(code, code_verifier, redirect_uri):
             if auth_code.token_id is not None:
                 ApiToken.objects.filter(pk=auth_code.token_id).delete()
         elif (
-            auth_code.expires_at > now
+            verifier_ok
+            and auth_code.expires_at > now
             and auth_code.user.is_active
             and hmac.compare_digest(
                 auth_code.redirect_uri.encode(), redirect_uri.encode()
@@ -215,6 +220,8 @@ def exchange_code(code, code_verifier, redirect_uri):
             auth_code.token = token
             auth_code.save(update_fields=["token"])
     if token is None:
+        if not verifier_ok:
+            raise TokenExchangeError(_("The code verifier is missing or invalid."))
         raise invalid
     return token, raw_token
 
@@ -231,9 +238,15 @@ def authenticate_token(raw_token):
     if token is None or token.is_expired or not token.user.is_active:
         return None
     now = timezone.now()
-    if token.last_used_at is None or now - token.last_used_at >= LAST_USED_RESOLUTION:
-        ApiToken.objects.filter(pk=token.pk).update(last_used_at=now)
-        token.last_used_at = now
+    stale = now - LAST_USED_RESOLUTION
+    if token.last_used_at is None or token.last_used_at <= stale:
+        # The condition is repeated in the UPDATE so concurrent requests write once.
+        if (
+            ApiToken.objects.filter(pk=token.pk)
+            .filter(Q(last_used_at__isnull=True) | Q(last_used_at__lte=stale))
+            .update(last_used_at=now)
+        ):
+            token.last_used_at = now
     return token
 
 
