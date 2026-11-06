@@ -152,7 +152,7 @@ class ApiToken(models.Model):
 class ApiAuthorizationCode(models.Model):
     """Short-lived, single-use code from the loopback + PKCE sign-in, stored hashed.
 
-    Used codes are kept until cleanup so a replayed code can revoke the token it issued.
+    Used codes are kept while their token exists so a replayed code can revoke the token.
     """
 
     user = models.ForeignKey(

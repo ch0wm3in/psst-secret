@@ -45,7 +45,8 @@ class WhispersConfig(AppConfig):
     name = "whispers"
 
     def ready(self):
-        from whispers import checks  # noqa: F401
+        # schema registers the OpenAPI security scheme for API tokens.
+        from whispers import checks, schema  # noqa: F401
 
         t = threading.Thread(target=_cleanup_loop, daemon=True)
         t.start()
