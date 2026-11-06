@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psst-secret\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-04 21:21+0000\n"
+"POT-Creation-Date: 2026-11-06 14:52+0000\n"
 "PO-Revision-Date: 2026-10-09 08:07+0000\n"
 "Last-Translator: \n"
 "Language-Team: Filipino\n"
@@ -14,7 +14,7 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n % 10 == 4 || n % 10 == 6 || n % 10 == "
 "9);\n"
 
-#: static/js/crypto.js:130
+#: static/js/crypto.js:130 static/js/receive-history.js:559
 msgid "Remove"
 msgstr "Alisin"
 
@@ -40,16 +40,16 @@ msgstr ""
 "Hindi tumutugma ang susi ng kahilingan sa link. Maaaring hindi kumpleto o "
 "napakialaman ang link."
 
-#: static/js/crypto.js:496 static/js/crypto.js:749
+#: static/js/crypto.js:496 static/js/crypto.js:765
 msgid "Please enter some content or select a file to encrypt."
 msgstr "Maglagay ng nilalaman o pumili ng file na i-e-encrypt."
 
-#: static/js/crypto.js:502 static/js/crypto.js:755
+#: static/js/crypto.js:502 static/js/crypto.js:771
 #, javascript-format
 msgid "Selected files exceed the maximum total size of %s."
 msgstr "Lumampas ang mga napiling file sa pinakamalaking kabuuang laki na %s."
 
-#: static/js/crypto.js:508 static/js/crypto.js:761
+#: static/js/crypto.js:508 static/js/crypto.js:777
 msgid "Encrypting…"
 msgstr "Ine-encrypt…"
 
@@ -60,7 +60,7 @@ msgstr ""
 "Hindi natutugunan ng password ang mga kinakailangan sa tibay na nakalista sa "
 "ibaba ng field."
 
-#: static/js/crypto.js:568 static/js/crypto.js:692 static/js/crypto.js:798
+#: static/js/crypto.js:568 static/js/crypto.js:692 static/js/crypto.js:814
 #, javascript-format
 msgid "Server error (%s)"
 msgstr "Error sa server (%s)"
@@ -74,7 +74,7 @@ msgstr "Buburahin ang whisper na ito pagkatapos tingnan nang isang beses."
 msgid "This whisper will be destroyed after %s views."
 msgstr "Buburahin ang whisper na ito pagkatapos ng %s pagtingin."
 
-#: static/js/crypto.js:597 static/js/crypto.js:724 static/js/crypto.js:806
+#: static/js/crypto.js:597 static/js/crypto.js:740 static/js/crypto.js:822
 #, javascript-format
 msgid "Error: %s"
 msgstr "Error: %s"
@@ -83,7 +83,7 @@ msgstr "Error: %s"
 msgid "Encrypt & Share"
 msgstr "I-encrypt at ibahagi"
 
-#: static/js/crypto.js:612
+#: static/js/crypto.js:612 static/js/receive-history.js:355
 msgid "Copied!"
 msgstr "Nakopya na!"
 
@@ -95,31 +95,31 @@ msgstr "Kopyahin"
 msgid "Creating…"
 msgstr "Lumilikha…"
 
-#: static/js/crypto.js:713
+#: static/js/crypto.js:729
 msgid "The whisper will be destroyed after you view it once."
 msgstr "Buburahin ang whisper pagkatapos mong tingnan nang isang beses."
 
-#: static/js/crypto.js:715
+#: static/js/crypto.js:731
 #, javascript-format
 msgid "The whisper will be destroyed after %s views."
 msgstr "Buburahin ang whisper pagkatapos ng %s pagtingin."
 
-#: static/js/crypto.js:728
+#: static/js/crypto.js:744
 msgid "Create Request"
 msgstr "Lumikha ng kahilingan"
 
-#: static/js/crypto.js:766
+#: static/js/crypto.js:782
 msgid "This link uses an unsupported format version. Ask for a new link."
 msgstr ""
 "Gumagamit ang link ng bersyon ng format na hindi suportado. Humingi ng "
 "bagong link."
 
-#: static/js/crypto.js:769
+#: static/js/crypto.js:785
 msgid "No encryption key found in URL. The link may be incomplete."
 msgstr ""
 "Walang susi para sa pag-encrypt sa URL. Maaaring hindi kumpleto ang link."
 
-#: static/js/crypto.js:810
+#: static/js/crypto.js:826
 msgid "Encrypt & Submit"
 msgstr "I-encrypt at isumite"
 
@@ -135,6 +135,118 @@ msgstr "Hindi ma-update ang access."
 #: static/js/receive-access.js:58
 msgid "Access updated."
 msgstr "Na-update ang access."
+
+#: static/js/receive-history.js:280
+msgid "Waiting for sender"
+msgstr "Naghihintay sa nagpadala"
+
+#: static/js/receive-history.js:281
+msgid "Ready to view"
+msgstr "Handa nang tingnan"
+
+#: static/js/receive-history.js:282
+msgid "Viewed"
+msgstr "Natingnan na"
+
+#: static/js/receive-history.js:283
+msgid "Expired"
+msgstr "Nag-expire na"
+
+#: static/js/receive-history.js:284
+msgid "Burned"
+msgstr "Nabura na"
+
+#: static/js/receive-history.js:324
+#, javascript-format
+msgid "Expires %s"
+msgstr "Mag-e-expire %s"
+
+#: static/js/receive-history.js:380
+#, javascript-format
+msgid ""
+"Also delete the %s saved receive request from this browser? Choose Cancel to "
+"keep it."
+msgid_plural ""
+"Also delete all %s saved receive requests from this browser? Choose Cancel "
+"to keep them."
+msgstr[0] ""
+"Burahin din sa browser na ito ang %s naka-save na kahilingan sa pagtanggap? "
+"Piliin ang Kanselahin para itago ito."
+msgstr[1] ""
+"Burahin din sa browser na ito ang lahat ng %s naka-save na kahilingan sa "
+"pagtanggap? Piliin ang Kanselahin para itago ang mga ito."
+
+#: static/js/receive-history.js:441 static/js/receive-history.js:525
+msgid "No label"
+msgstr "Walang label"
+
+#: static/js/receive-history.js:472
+msgid ""
+"Delete all saved receive requests from this browser? You will no longer be "
+"able to open them from here."
+msgstr ""
+"Burahin sa browser na ito ang lahat ng naka-save na kahilingan sa "
+"pagtanggap? Hindi mo na mabubuksan ang mga ito mula rito."
+
+#: static/js/receive-history.js:498
+msgid "Label"
+msgstr "Label"
+
+#: static/js/receive-history.js:499
+msgid "e.g. AWS credentials from Bob"
+msgstr "hal. AWS credentials mula kay Bob"
+
+#: static/js/receive-history.js:501
+msgid "Save"
+msgstr "I-save"
+
+#: static/js/receive-history.js:503
+msgid "Cancel"
+msgstr "Kanselahin"
+
+#: static/js/receive-history.js:531
+#, javascript-format
+msgid "Created %s"
+msgstr "Ginawa noong %s"
+
+#: static/js/receive-history.js:536
+#, javascript-format
+msgid "%s view remaining"
+msgid_plural "%s views remaining"
+msgstr[0] "%s pagtingin na lang ang natitira"
+msgstr[1] "%s pagtingin na lang ang natitira"
+
+#: static/js/receive-history.js:540
+msgid "Unlimited views"
+msgstr "Walang limitasyong pagtingin"
+
+#: static/js/receive-history.js:543
+msgid "Password-protected"
+msgstr "Protektado ng password"
+
+#: static/js/receive-history.js:551
+msgid "Submit link"
+msgstr "Link para sa pagsusumite"
+
+#: static/js/receive-history.js:552
+msgid "Copy submit link"
+msgstr "Kopyahin ang link para sa pagsusumite"
+
+#: static/js/receive-history.js:557
+msgid "View whisper"
+msgstr "Tingnan ang whisper"
+
+#: static/js/receive-history.js:558
+msgid "Edit label"
+msgstr "I-edit ang label"
+
+#: static/js/receive-history.js:582
+msgid "No saved receive requests in this browser."
+msgstr "Walang naka-save na kahilingan sa pagtanggap sa browser na ito."
+
+#: static/js/receive-history.js:583
+msgid "No receive requests match this filter."
+msgstr "Walang kahilingan sa pagtanggap na tumutugma sa filter na ito."
 
 #: static/js/rich-text.js:155
 msgid "Whisper content"

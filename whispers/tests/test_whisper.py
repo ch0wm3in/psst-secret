@@ -308,6 +308,7 @@ _TEST_REST_FRAMEWORK = {
         "anon": "10000/minute",
         "whisper_create": "10000/minute",
         "whisper_view": "10000/minute",
+        "whisper_status": "10000/minute",
         "receive_access": "10000/minute",
     },
 }
@@ -1775,6 +1776,28 @@ class PageRenderTests(TestCase):
         resp = self.client.get("/about")
         self.assertEqual(resp.status_code, 200)
 
+    def test_receive_history_is_off_by_default(self):
+        self.assertEqual(self.client.get("/receives").status_code, 404)
+        resp = self.client.get("/")
+        self.assertNotContains(resp, "receive-history.min.js")
+        self.assertNotContains(resp, "data-receive-history-toggle")
+        self.assertNotContains(resp, 'id="receive-drawer"')
+        self.assertNotContains(resp, 'id="receive-label"')
+
+    @override_settings(PSST_ENABLE_RECEIVE_HISTORY=True)
+    def test_receive_history_enabled_pages(self):
+        resp = self.client.get("/receives")
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'id="receive-history-page"')
+        self.assertContains(resp, "data-receive-history-toggle")
+        self.assertContains(resp, 'src="/static/js/receive-history.min.js"')
+        # The page itself replaces the drawer.
+        self.assertNotContains(resp, 'id="receive-drawer"')
+        resp = self.client.get("/")
+        self.assertContains(resp, 'id="receive-drawer"')
+        self.assertContains(resp, 'id="receive-label"')
+        self.assertContains(resp, "data-receive-history-toggle")
+
     def test_referrer_policy_same_origin(self):
         resp = self.client.get("/")
         self.assertEqual(resp["Referrer-Policy"], "same-origin")
@@ -1875,7 +1898,15 @@ class DeploymentFeaturesTests(TestCase):
         features = self._features()
         self.assertEqual(
             list(features),
-            ["sign_in", "email", "stats", "rich_text", "upload_limit", "storage"],
+            [
+                "sign_in",
+                "email",
+                "stats",
+                "rich_text",
+                "receive_history",
+                "upload_limit",
+                "storage",
+            ],
         )
         self.assertEqual(self._status("sign_in"), ("Not used", "off"))
 
@@ -1998,6 +2029,14 @@ class DeploymentFeaturesTests(TestCase):
         self.assertEqual(self._status("rich_text"), ("On", "on"))
         self.assertEqual(self._status("storage"), ("Saved to disk", "neutral"))
         self.assertEqual(self._status("upload_limit"), ("5.0 MB", "neutral"))
+
+    def test_receive_history_states(self):
+        self.assertEqual(self._status("receive_history"), ("Off", "off"))
+        with override_settings(PSST_ENABLE_RECEIVE_HISTORY=True):
+            self.assertEqual(self._status("receive_history"), ("Optional", "neutral"))
+            self.assertIn(
+                "browser profile", self._features()["receive_history"]["description"]
+            )
 
     def test_optional_features_disabled(self):
         self.assertEqual(self._status("email"), ("Off", "off"))

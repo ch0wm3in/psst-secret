@@ -1,0 +1,37 @@
+{% extends "base/layout.html" %}
+{% load i18n whispers_extras %}
+
+{% block title %}{{ brand_name }} — {% trans "Saved receive requests" %}{% endblock %}
+
+{% block content %}
+<div id="receive-history-page" class="space-y-6">
+    <div>
+        <h1 class="text-2xl font-bold text-white">{% icon "inbox-stack" %} {% trans "Saved receive requests" %}</h1>
+        <p class="mt-1 text-sm text-gray-400">{% trans "Receive requests saved in this browser. They are removed automatically when they expire or after their last allowed view." %}</p>
+    </div>
+
+    {% include "whispers/receive_history_toggle.html" %}
+
+    <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="flex gap-2" role="group" aria-label="{% trans 'Filter receive requests' %}">
+            <button type="button" data-receive-filter="all" aria-pressed="true"
+                class="px-4 py-1.5 rounded-lg text-sm font-medium bg-brand-600 text-white transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400">{% trans "All" %}</button>
+            <button type="button" data-receive-filter="pending" aria-pressed="false"
+                class="px-4 py-1.5 rounded-lg text-sm font-medium bg-gray-800 text-gray-400 hover:text-white transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400">{% trans "Pending" %}</button>
+            <button type="button" data-receive-filter="completed" aria-pressed="false"
+                class="px-4 py-1.5 rounded-lg text-sm font-medium bg-gray-800 text-gray-400 hover:text-white transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400">{% trans "Completed" %}</button>
+        </div>
+        <button type="button" id="receive-history-clear"
+            class="px-4 py-1.5 rounded-lg bg-gray-900 border border-red-800 text-red-300 hover:bg-red-900/40 text-sm font-medium transition disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500">
+            {% icon "trash" %} {% trans "Clear all" %}
+        </button>
+    </div>
+
+    <ul id="receive-history-list" class="space-y-3" aria-live="polite"></ul>
+    <p id="receive-history-empty" class="hidden rounded-lg bg-gray-800/50 border border-gray-700 p-6 text-center text-sm text-gray-400"></p>
+
+    <a href="{% url 'whispers:create' %}" class="inline-block text-sm text-brand-400 hover:text-brand-300 underline transition">
+        {% trans "← Back to home" %}
+    </a>
+</div>
+{% endblock %}

@@ -8,6 +8,7 @@ urlpatterns = [
     path("", views.create, name="create"),
     path("about", views.about, name="about"),
     path("stats", views.stats, name="stats"),
+    path("receives", views.receive_history, name="receives"),
     path(
         "whisper/<uuid:whisper_id>",
         views.RevealWhisperView.as_view(),
@@ -42,6 +43,11 @@ urlpatterns = [
         "api/v1/whisper/<uuid:whisper_id>/reveal",
         views.RevealWhisperAPIView.as_view(),
         name="api_v1_reveal",
+    ),
+    path(
+        "api/v1/whisper/<uuid:whisper_id>/status",
+        views.WhisperStatusView.as_view(),
+        name="api_v1_status",
     ),
     path(
         "api/v1/whisper/<uuid:whisper_id>/access",

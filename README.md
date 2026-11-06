@@ -15,6 +15,8 @@ default, ciphertext is kept only in Redis memory and never touches disk.
   after 5 minutes to 1 month.
 - **Access restrictions:** limit access by IP/CIDR, require sign-in, or restrict
   receive-mode reveals to approved accounts.
+- **Saved receive requests:** optionally keep your receive requests, with labels and
+  status, in your own browser instead of storing each view link yourself.
 - **Secret generator:** generate passwords or passphrases in the browser.
 - **Formatted text:** a Markdown editor with a plain-text toggle.
 - **Optional integrations:** SSO and local login (django-allauth), email notifications

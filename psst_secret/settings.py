@@ -220,6 +220,10 @@ PSST_ENABLE_API_TOKEN_MANUAL_CODE = env.bool(
     "PSST_ENABLE_API_TOKEN_MANUAL_CODE", default=False
 )
 
+# Lets users opt in to keeping their receive requests in their own browser's localStorage.
+# See docs/configuration.md#saved-receive-requests.
+PSST_ENABLE_RECEIVE_HISTORY = env.bool("PSST_ENABLE_RECEIVE_HISTORY", default=False)
+
 # Markdown WYSIWYG editor for whisper content (rendered client-side only); users can switch to plain text
 PSST_ENABLE_RICH_TEXT = env.bool("PSST_ENABLE_RICH_TEXT", default=True)
 
@@ -287,6 +291,7 @@ REST_FRAMEWORK = {
         "anon": env.str("API_THROTTLE_RATE_ANON", default="60/minute"),
         "whisper_create": env.str("API_THROTTLE_RATE_CREATE", default="20/minute"),
         "whisper_view": env.str("THROTTLE_RATE_VIEW", default="30/minute"),
+        "whisper_status": env.str("API_THROTTLE_RATE_STATUS", default="120/minute"),
         "receive_access": env.str(
             "API_THROTTLE_RATE_RECEIVE_ACCESS", default="10/minute"
         ),
