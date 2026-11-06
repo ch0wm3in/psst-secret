@@ -54,6 +54,30 @@ The submit link cannot find, read, or burn the submitted whisper. Hybrid key exc
 stays secure as long as either ML-KEM-768 or X25519 holds, including against attackers
 who record traffic today to decrypt later.
 
+### Saved receive requests
+
+When an operator enables [saved receive requests](configuration.md#saved-receive-requests),
+users can opt in to keeping their requests in the browser's `localStorage` instead of
+saving each view link themselves. This changes the threat model for that browser:
+
+- **Stored:** the complete view link, including the reveal token and, unless the request
+  has a password, the private key seed; the submit link; an optional label; and the
+  expiry, view limit, and status. With a password, the seed stays encrypted on the
+  server and the password is never stored.
+- **Not stored:** decrypted whispers, files, or passwords. Labels never leave the
+  browser.
+- **Risk:** anyone who can read the browser profile, such as another person using the
+  device, malware, or a script injected into this site, can open saved whispers that have
+  no password. Do not turn it on for shared or untrusted devices, and use a password for
+  sensitive requests.
+- **Cleanup:** entries are removed when they pass their expiry (checked locally), when
+  the [status endpoint](api.md#receive-request-status) reports them gone, and right after
+  the final allowed reveal. The browser checks the status on page loads, when it becomes
+  visible, and every 30 seconds while the list or drawer is open. Status checks never
+  consume a view.
+
+With the option off, which is the default, nothing is written to browser storage.
+
 ## Links and reveal tokens
 
 Key material lives in the URL fragment (the part after `#`), which browsers never

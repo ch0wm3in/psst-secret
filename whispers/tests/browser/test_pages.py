@@ -132,6 +132,7 @@ def test_about_page_lists_deployment_features(page, app_url):
         "email",
         "stats",
         "rich_text",
+        "receive_history",
         "upload_limit",
         "storage",
     ]
@@ -169,6 +170,7 @@ def test_about_page_reflects_enabled_deployment_features(page, app_url):
         "email",
         "stats",
         "rich_text",
+        "receive_history",
         "upload_limit",
         "storage",
     ]

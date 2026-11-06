@@ -109,6 +109,25 @@ class CreateRequestResponseSerializer(serializers.Serializer):
     id = serializers.UUIDField()
     submit_url = serializers.URLField()
     view_url = serializers.URLField()
+    expires_at = serializers.DateTimeField()
+
+
+class WhisperStatusSerializer(serializers.Serializer):
+    status = serializers.ChoiceField(
+        choices=["pending", "submitted"],
+        help_text="pending: nothing submitted yet; submitted: ready to reveal.",
+    )
+    expires_at = serializers.DateTimeField()
+    view_count = serializers.IntegerField()
+    max_views = serializers.IntegerField(help_text="0 = unlimited.")
+    remaining_views = serializers.IntegerField(help_text="0 when max_views is 0.")
+
+
+class WhisperGoneSerializer(serializers.Serializer):
+    status = serializers.ChoiceField(
+        choices=["gone"],
+        help_text="The request expired, was burned, or never existed.",
+    )
 
 
 class SubmitWhisperSerializer(VersionedPayloadSerializer):

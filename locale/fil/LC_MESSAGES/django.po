@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psst-secret\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-04 22:15+0000\n"
+"POT-Creation-Date: 2026-11-06 14:57+0000\n"
 "PO-Revision-Date: 2026-10-09 08:07+0000\n"
 "Last-Translator: \n"
 "Language-Team: Filipino\n"
@@ -883,7 +883,7 @@ msgstr ""
 "bagong link."
 
 #: templates/whispers/confirm.html:37 templates/whispers/forbidden.html:10
-#: whispers/views.py:543
+#: whispers/views.py:562
 msgid ""
 "The reveal authorization is missing or invalid. Use the complete view link."
 msgstr ""
@@ -898,7 +898,7 @@ msgstr "Naglo-load…"
 msgid "New Whisper"
 msgstr "Bagong whisper"
 
-#: templates/whispers/create.html:9 whispers/tests/browser/test_pages.py:193
+#: templates/whispers/create.html:9 whispers/tests/browser/test_pages.py:198
 msgid "Share a whisper"
 msgstr "Magbahagi ng whisper"
 
@@ -981,35 +981,57 @@ msgstr ""
 "strong> na ibabahagi sa nagpadala, at isang <strong>link para sa pagtingin</"
 "strong> upang makuha mo ang whisper kapag naisumite na ito."
 
-#: templates/whispers/create.html:91
+#: templates/whispers/create.html:93
+msgid "Label"
+msgstr "Label"
+
+#: templates/whispers/create.html:94 templates/whispers/create.html:165
+#: templates/whispers/create.html:212 templates/whispers/create.html:269
+#: templates/whispers/rich_editor.html:49
+msgid "optional"
+msgstr "opsiyonal"
+
+#: templates/whispers/create.html:98
+msgid "e.g. AWS credentials from Bob"
+msgstr "hal. AWS credentials mula kay Bob"
+
+#: templates/whispers/create.html:99
+msgid "Only stored in this browser to help you recognize the request."
+msgstr "Sa browser na ito lamang naka-imbak para makilala mo ang kahilingan."
+
+#: templates/whispers/create.html:100 templates/whispers/create.html:349
+msgid "Manage saved receive requests"
+msgstr "Pamahalaan ang mga naka-save na kahilingan sa pagtanggap"
+
+#: templates/whispers/create.html:109
 msgid "Expires after"
 msgstr "Mag-e-expire pagkalipas ng"
 
-#: templates/whispers/create.html:94
+#: templates/whispers/create.html:112
 msgid "5 Minutes"
 msgstr "5 minuto"
 
-#: templates/whispers/create.html:95
+#: templates/whispers/create.html:113
 msgid "1 Hour"
 msgstr "1 oras"
 
-#: templates/whispers/create.html:96
+#: templates/whispers/create.html:114
 msgid "1 Day"
 msgstr "1 araw"
 
-#: templates/whispers/create.html:97
+#: templates/whispers/create.html:115
 msgid "1 Week"
 msgstr "1 linggo"
 
-#: templates/whispers/create.html:98
+#: templates/whispers/create.html:116
 msgid "1 Month"
 msgstr "1 buwan"
 
-#: templates/whispers/create.html:105
+#: templates/whispers/create.html:123
 msgid "Destroy after"
 msgstr "Burahin pagkatapos ng"
 
-#: templates/whispers/create.html:109
+#: templates/whispers/create.html:127
 msgid ""
 "The whisper is permanently destroyed after this many successful reveals. "
 "Helps detect link leaks: an unexpected destruction means it was viewed more "
@@ -1020,73 +1042,68 @@ msgstr ""
 "ang hindi inaasahang pagkabura ay nangangahulugang natingnan ito nang mas "
 "maraming beses kaysa sa inaasahan mo."
 
-#: templates/whispers/create.html:116
+#: templates/whispers/create.html:134
 msgid "1 view (burn)"
 msgstr "1 pagtingin (burahin)"
 
-#: templates/whispers/create.html:117
+#: templates/whispers/create.html:135
 msgid "3 views"
 msgstr "3 pagtingin"
 
-#: templates/whispers/create.html:118
+#: templates/whispers/create.html:136
 msgid "5 views"
 msgstr "5 pagtingin"
 
-#: templates/whispers/create.html:119
+#: templates/whispers/create.html:137
 msgid "10 views"
 msgstr "10 pagtingin"
 
-#: templates/whispers/create.html:120
+#: templates/whispers/create.html:138
 msgid "Custom…"
 msgstr "Sariling bilang…"
 
-#: templates/whispers/create.html:121
+#: templates/whispers/create.html:139
 msgid "Unlimited (time-based only)"
 msgstr "Walang limitasyon (batay lamang sa oras)"
 
-#: templates/whispers/create.html:125
+#: templates/whispers/create.html:143
 msgid "Number of views (1–100)"
 msgstr "Bilang ng pagtingin (1–100)"
 
-#: templates/whispers/create.html:131
+#: templates/whispers/create.html:149
 msgid "Encrypt & Share"
 msgstr "I-encrypt at ibahagi"
 
-#: templates/whispers/create.html:134
+#: templates/whispers/create.html:152
 msgid "Create Request"
 msgstr "Lumikha ng kahilingan"
 
-#: templates/whispers/create.html:141
+#: templates/whispers/create.html:159
 msgid "Advanced Options"
 msgstr "Mga karagdagang opsiyon"
 
-#: templates/whispers/create.html:146 templates/whispers/create.html:355
+#: templates/whispers/create.html:164 templates/whispers/create.html:379
 #: templates/whispers/login.html:40
 msgid "Password"
 msgstr "Password"
 
-#: templates/whispers/create.html:147 templates/whispers/create.html:194
-#: templates/whispers/create.html:251 templates/whispers/rich_editor.html:49
-msgid "optional"
-msgstr "opsiyonal"
-
-#: templates/whispers/create.html:152
+#: templates/whispers/create.html:170
 msgid "Use own password"
 msgstr "Gumamit ng sariling password"
 
-#: templates/whispers/create.html:154
+#: templates/whispers/create.html:172
 msgid "Show password"
 msgstr "Ipakita ang password"
 
-#: templates/whispers/create.html:154
+#: templates/whispers/create.html:172
 msgid "Hide password"
 msgstr "Itago ang password"
 
-#: templates/whispers/create.html:160
+#: templates/whispers/create.html:178
 msgid "Generate"
 msgstr "Gumawa"
 
-#: templates/whispers/create.html:163
+#: templates/whispers/create.html:181
 msgid ""
 "Use your own password for encryption instead of the randomly generated one "
 "in the url fragment. The recipient will need this password in addition to "
@@ -1096,40 +1113,40 @@ msgstr ""
 "na susi sa fragment ng URL. Kakailanganin ng tatanggap ang password na ito "
 "bukod sa link upang i-decrypt ang whisper."
 
-#: templates/whispers/create.html:165
+#: templates/whispers/create.html:183
 msgid "Password requirements"
 msgstr "Mga kinakailangan para sa password"
 
-#: templates/whispers/create.html:169
+#: templates/whispers/create.html:187
 msgid "At least 14 characters"
 msgstr "Hindi bababa sa 14 na karakter"
 
-#: templates/whispers/create.html:173
+#: templates/whispers/create.html:191
 msgid "At least one uppercase letter (A–Z)"
 msgstr "Hindi bababa sa isang malaking titik (A–Z)"
 
-#: templates/whispers/create.html:177
+#: templates/whispers/create.html:195
 msgid "At least one lowercase letter (a–z)"
 msgstr "Hindi bababa sa isang maliit na titik (a–z)"
 
-#: templates/whispers/create.html:181
+#: templates/whispers/create.html:199
 msgid "At least one digit (0–9)"
 msgstr "Hindi bababa sa isang numero (0–9)"
 
-#: templates/whispers/create.html:185
+#: templates/whispers/create.html:203
 #, python-format
 msgid "At least one special character (e.g. !@#$%%&*)"
 msgstr "Hindi bababa sa isang espesyal na karakter (hal. !@#$%%&*)"
 
-#: templates/whispers/create.html:193
+#: templates/whispers/create.html:211
 msgid "Restrict by IP"
 msgstr "Limitahan ayon sa IP"
 
-#: templates/whispers/create.html:198
+#: templates/whispers/create.html:216
 msgid "e.g. 203.0.113.5 or 10.0.0.0/24"
 msgstr "hal. 203.0.113.5 o 10.0.0.0/24"
 
-#: templates/whispers/create.html:199
+#: templates/whispers/create.html:217
 msgid ""
 "Only this IP/CIDR will be able to <strong>view</strong> the whisper. A bare "
 "IP is treated as /32."
@@ -1137,7 +1154,7 @@ msgstr ""
 "Ang IP/CIDR na ito lamang ang maaaring <strong>tumingin</strong> sa whisper. "
 "Itinuturing na /32 ang isang IP na walang prefix."
 
-#: templates/whispers/create.html:200
+#: templates/whispers/create.html:218
 msgid ""
 "Only this IP/CIDR will be able to <strong>submit</strong> a whisper. A bare "
 "IP is treated as /32."
@@ -1145,50 +1162,50 @@ msgstr ""
 "Ang IP/CIDR na ito lamang ang maaaring <strong>magsumite</strong> ng "
 "whisper. Itinuturing na /32 ang isang IP na walang prefix."
 
-#: templates/whispers/create.html:207
+#: templates/whispers/create.html:225
 msgid "Require authentication to view"
 msgstr "Kailangan ang pag-sign in upang tumingin"
 
-#: templates/whispers/create.html:211
+#: templates/whispers/create.html:229
 msgid "The person viewing this whisper must be signed in."
 msgstr "Kailangang naka-sign in ang taong titingin sa whisper na ito."
 
-#: templates/whispers/create.html:219
+#: templates/whispers/create.html:237
 msgid "Require authentication to submit"
 msgstr "Kailangan ang pag-sign in upang magsumite"
 
-#: templates/whispers/create.html:223
+#: templates/whispers/create.html:241
 msgid "The person submitting a whisper to this request must be signed in."
 msgstr ""
 "Kailangang naka-sign in ang taong magsusumite ng whisper sa kahilingang ito."
 
-#: templates/whispers/create.html:233 templates/whispers/receive_access.html:8
-#: whispers/views.py:821
+#: templates/whispers/create.html:251 templates/whispers/receive_access.html:8
+#: whispers/views.py:905
 msgid "Restricted receive access is required."
 msgstr "Kinakailangan ang limitadong access sa pagtanggap."
 
-#: templates/whispers/create.html:236 templates/whispers/receive_access.html:10
+#: templates/whispers/create.html:254 templates/whispers/receive_access.html:10
 msgid "Only me and approved readers"
 msgstr "Ako lamang at mga aprubadong mambabasa"
 
-#: templates/whispers/create.html:239 templates/whispers/receive_access.html:13
+#: templates/whispers/create.html:257 templates/whispers/receive_access.html:13
 msgid "Additional readers (verified primary emails)"
 msgstr "Mga karagdagang mambabasa (beripikadong pangunahing email)"
 
-#: templates/whispers/create.html:242 templates/whispers/create.html:255
+#: templates/whispers/create.html:260 templates/whispers/create.html:273
 #: templates/whispers/receive_access.html:16
 msgid "recipient@example.com"
 msgstr "tatanggap@example.com"
 
-#: templates/whispers/create.html:249
+#: templates/whispers/create.html:267
 msgid "Notify recipient"
 msgstr "Abisuhan ang tatanggap"
 
-#: templates/whispers/create.html:250
+#: templates/whispers/create.html:268
 msgid "Notify me when submitted"
 msgstr "Abisuhan ako kapag naisumite na"
 
-#: templates/whispers/create.html:257
+#: templates/whispers/create.html:275
 msgid ""
 "The recipient will be emailed a notification that a whisper is waiting. "
 "<strong>The email will NOT contain the decryption key</strong> — you must "
@@ -1203,7 +1220,7 @@ msgstr ""
 "ang tatanggap kaysa kung direktang ipadadala ang link sa ibang paraan</"
 "strong>"
 
-#: templates/whispers/create.html:258
+#: templates/whispers/create.html:276
 msgid ""
 "You will be emailed when someone submits a whisper to your request. "
 "<strong>The email will NOT contain the decryption key</strong> — use the "
@@ -1214,11 +1231,11 @@ msgstr ""
 "gamitin ang link para sa pagtingin na itinago mo noong nilikha ang "
 "kahilingan."
 
-#: templates/whispers/create.html:268
+#: templates/whispers/create.html:286
 msgid "Whisper created!"
 msgstr "Nalikha na ang whisper!"
 
-#: templates/whispers/create.html:269
+#: templates/whispers/create.html:287
 msgid ""
 "Share this link. The decryption key is in the URL fragment and is "
 "<strong>never sent to the server</strong>."
@@ -1226,13 +1243,13 @@ msgstr ""
 "Ibahagi ang link na ito. Nasa fragment ng URL ang susi para sa pag-decrypt "
 "at <strong>hindi ito kailanman ipinapadala sa server</strong>."
 
-#: templates/whispers/create.html:275 templates/whispers/create.html:305
-#: templates/whispers/create.html:316 templates/whispers/create.html:635
+#: templates/whispers/create.html:293 templates/whispers/create.html:323
+#: templates/whispers/create.html:334 templates/whispers/create.html:661
 #: templates/whispers/view.html:44
 msgid "Copy"
 msgstr "Kopyahin"
 
-#: templates/whispers/create.html:279
+#: templates/whispers/create.html:297
 msgid ""
 "This whisper is password-protected. The recipient will need the password to "
 "decrypt it."
@@ -1240,19 +1257,19 @@ msgstr ""
 "Protektado ng password ang whisper na ito. Kakailanganin ng tatanggap ang "
 "password upang i-decrypt ito."
 
-#: templates/whispers/create.html:282
+#: templates/whispers/create.html:300
 msgid "This whisper will be destroyed after being viewed once."
 msgstr "Buburahin ang whisper na ito pagkatapos tingnan nang isang beses."
 
-#: templates/whispers/create.html:287 templates/whispers/create.html:331
+#: templates/whispers/create.html:305 templates/whispers/create.html:355
 msgid "Create another whisper"
 msgstr "Lumikha ng isa pang whisper"
 
-#: templates/whispers/create.html:294
+#: templates/whispers/create.html:312
 msgid "Request created!"
 msgstr "Nalikha na ang kahilingan!"
 
-#: templates/whispers/create.html:295
+#: templates/whispers/create.html:313
 msgid ""
 "Share the <strong>submit link</strong> with the person who should send you a "
 "whisper. Use the <strong>view link</strong> to retrieve it once they've "
@@ -1262,15 +1279,15 @@ msgstr ""
 "sa iyo ng whisper. Gamitin ang <strong>link para sa pagtingin</strong> upang "
 "makuha ito kapag naisumite na."
 
-#: templates/whispers/create.html:299
+#: templates/whispers/create.html:317
 msgid "Submit link — share this with the sender"
 msgstr "Link para sa pagsusumite — ibahagi ito sa nagpadala"
 
-#: templates/whispers/create.html:310
+#: templates/whispers/create.html:328
 msgid "View link — for you to retrieve the whisper"
 msgstr "Link para sa pagtingin — para makuha mo ang whisper"
 
-#: templates/whispers/create.html:323
+#: templates/whispers/create.html:341
 msgid ""
 "This request is password-protected. You will need the password to open the "
 "view link. Do not share it with the sender."
@@ -1278,15 +1295,19 @@ msgstr ""
 "Protektado ng password ang kahilingang ito. Kakailanganin mo ang password "
 "upang buksan ang link para sa pagtingin. Huwag itong ibahagi sa nagpadala."
 
-#: templates/whispers/create.html:326
+#: templates/whispers/create.html:344
 msgid "The whisper will be destroyed after you view it once."
 msgstr "Buburahin ang whisper pagkatapos mong tingnan nang isang beses."
 
-#: templates/whispers/create.html:345
+#: templates/whispers/create.html:348
+msgid "Saved in this browser."
+msgstr "Naka-save sa browser na ito."
+
+#: templates/whispers/create.html:369
 msgid "Secret generator"
 msgstr "Generator ng lihim"
 
-#: templates/whispers/create.html:346
+#: templates/whispers/create.html:370
 msgid ""
 "Generated in your browser with a cryptographically secure random number "
 "generator. Nothing is sent to the server until you encrypt your whisper."
@@ -1295,128 +1316,128 @@ msgstr ""
 "number generator. Walang ipinapadala sa server hangga't hindi mo ine-encrypt "
 "ang iyong whisper."
 
-#: templates/whispers/create.html:348 templates/whispers/rich_editor.html:37
+#: templates/whispers/create.html:372 templates/whispers/rich_editor.html:37
 msgid "Close"
 msgstr "Isara"
 
-#: templates/whispers/create.html:352
+#: templates/whispers/create.html:376
 msgid "Secret type"
 msgstr "Uri ng lihim"
 
-#: templates/whispers/create.html:359
+#: templates/whispers/create.html:383
 msgid "Passphrase"
 msgstr "Passphrase"
 
-#: templates/whispers/create.html:365
+#: templates/whispers/create.html:389
 msgid "Preview"
 msgstr "Preview"
 
-#: templates/whispers/create.html:367
+#: templates/whispers/create.html:391
 msgid "Regenerate"
 msgstr "Gumawa muli"
 
-#: templates/whispers/create.html:377 templates/whispers/create.html:380
+#: templates/whispers/create.html:401 templates/whispers/create.html:404
 msgid "Length"
 msgstr "Haba"
 
-#: templates/whispers/create.html:389
+#: templates/whispers/create.html:413
 msgid "Uppercase letters (A–Z)"
 msgstr "Malalaking titik (A–Z)"
 
-#: templates/whispers/create.html:392
+#: templates/whispers/create.html:416
 msgid "Minimum uppercase letters"
 msgstr "Pinakamababang bilang ng malalaking titik"
 
-#: templates/whispers/create.html:398
+#: templates/whispers/create.html:422
 msgid "Lowercase letters (a–z)"
 msgstr "Maliliit na titik (a–z)"
 
-#: templates/whispers/create.html:401
+#: templates/whispers/create.html:425
 msgid "Minimum lowercase letters"
 msgstr "Pinakamababang bilang ng maliliit na titik"
 
-#: templates/whispers/create.html:407
+#: templates/whispers/create.html:431
 msgid "Numbers (0–9)"
 msgstr "Mga numero (0–9)"
 
-#: templates/whispers/create.html:410
+#: templates/whispers/create.html:434
 msgid "Minimum numbers"
 msgstr "Pinakamababang bilang ng numero"
 
-#: templates/whispers/create.html:416
+#: templates/whispers/create.html:440
 msgid "Symbols (!#$&…)"
 msgstr "Mga simbolo (!#$&…)"
 
-#: templates/whispers/create.html:419
+#: templates/whispers/create.html:443
 msgid "Minimum symbols"
 msgstr "Pinakamababang bilang ng simbolo"
 
-#: templates/whispers/create.html:422
+#: templates/whispers/create.html:446
 msgid "Numbers on the right set the minimum count of each type."
 msgstr ""
 "Itinatakda ng mga numero sa kanan ang pinakamababang bilang ng bawat uri."
 
-#: templates/whispers/create.html:425
+#: templates/whispers/create.html:449
 msgid "Avoid ambiguous characters"
 msgstr "Iwasan ang mga karakter na madaling mapagkamalan"
 
-#: templates/whispers/create.html:433 templates/whispers/create.html:436
+#: templates/whispers/create.html:457 templates/whispers/create.html:460
 msgid "Number of words"
 msgstr "Bilang ng salita"
 
-#: templates/whispers/create.html:442
+#: templates/whispers/create.html:466
 msgid "Separator"
 msgstr "Panghiwalay"
 
-#: templates/whispers/create.html:445
+#: templates/whispers/create.html:469
 msgid "Hyphen"
 msgstr "Gitling"
 
-#: templates/whispers/create.html:446
+#: templates/whispers/create.html:470
 msgid "Space"
 msgstr "Espasyo"
 
-#: templates/whispers/create.html:447
+#: templates/whispers/create.html:471
 msgid "Period"
 msgstr "Tuldok"
 
-#: templates/whispers/create.html:448
+#: templates/whispers/create.html:472
 msgid "Underscore"
 msgstr "Underscore"
 
-#: templates/whispers/create.html:449
+#: templates/whispers/create.html:473
 msgid "Comma"
 msgstr "Kuwit"
 
-#: templates/whispers/create.html:450
+#: templates/whispers/create.html:474
 msgid "None"
 msgstr "Wala"
 
-#: templates/whispers/create.html:455
+#: templates/whispers/create.html:479
 msgid "Capitalize words"
 msgstr "Gawing malaking titik ang unang letra ng mga salita"
 
-#: templates/whispers/create.html:459
+#: templates/whispers/create.html:483
 msgid "Add a number to a random word"
 msgstr "Magdagdag ng numero sa isang random na salita"
 
-#: templates/whispers/create.html:463
+#: templates/whispers/create.html:487
 msgid "Symbols"
 msgstr "Mga simbolo"
 
-#: templates/whispers/create.html:468
+#: templates/whispers/create.html:492
 msgid "Symbol position"
 msgstr "Posisyon ng simbolo"
 
-#: templates/whispers/create.html:471
+#: templates/whispers/create.html:495
 msgid "Append to the end"
 msgstr "Idagdag sa dulo"
 
-#: templates/whispers/create.html:472
+#: templates/whispers/create.html:496
 msgid "Random positions"
 msgstr "Mga random na posisyon"
 
-#: templates/whispers/create.html:476
+#: templates/whispers/create.html:500
 msgid ""
 "Words are drawn from the <a href=\"https://www.eff.org/dice\" "
 "target=\"_blank\" rel=\"noopener noreferrer\" class=\"underline hover:text-"
@@ -1426,32 +1447,32 @@ msgstr ""
 "target=\"_blank\" rel=\"noopener noreferrer\" class=\"underline hover:text-"
 "gray-300\">malaking wordlist ng EFF</a> (7,776 na salitang English)."
 
-#: templates/whispers/create.html:482
+#: templates/whispers/create.html:506
 msgid "Reset to defaults"
 msgstr "Ibalik sa default"
 
-#: templates/whispers/create.html:487 templates/whispers/rich_editor.html:59
+#: templates/whispers/create.html:511 templates/whispers/rich_editor.html:59
 msgid "Cancel"
 msgstr "Kanselahin"
 
-#: templates/whispers/create.html:491
+#: templates/whispers/create.html:515
 msgid "Use this secret"
 msgstr "Gamitin ang lihim na ito"
 
-#: templates/whispers/create.html:507
+#: templates/whispers/create.html:531
 msgid "Leave blank to share without a password."
 msgstr "Iwanang blangko upang magbahagi nang walang password."
 
-#: templates/whispers/create.html:508
+#: templates/whispers/create.html:532
 msgid "Strong password — all requirements met."
 msgstr "Matibay na password — natugunan ang lahat ng kinakailangan."
 
-#: templates/whispers/create.html:509
+#: templates/whispers/create.html:533
 #, python-brace-format
 msgid "{count} of 5 requirements still missing."
 msgstr "May {count} sa 5 kinakailangan na hindi pa natutugunan."
 
-#: templates/whispers/create.html:634
+#: templates/whispers/create.html:660
 msgid "Copied!"
 msgstr "Nakopya na!"
 
@@ -1479,7 +1500,8 @@ msgstr "Hindi pinapayagan ang pag-access"
 msgid "Access denied"
 msgstr "Hindi pinapayagan ang pag-access"
 
-#: templates/whispers/forbidden.html:10 whispers/views.py:500
+#: templates/whispers/forbidden.html:10 whispers/views.py:519
+#: whispers/views.py:672
 msgid "You do not have access to this whisper."
 msgstr "Wala kang access sa whisper na ito."
 
@@ -1543,7 +1565,7 @@ msgstr ""
 msgid "This request expires at %(expires_at)s."
 msgstr "Mag-e-expire ang kahilingang ito sa %(expires_at)s."
 
-#: templates/whispers/pending.html:15
+#: templates/whispers/pending.html:15 templates/whispers/receives.html:34
 msgid "← Back to home"
 msgstr "← Bumalik sa pangunahing pahina"
 
@@ -1554,6 +1576,67 @@ msgstr "Access ng mambabasa"
 #: templates/whispers/receive_access.html:19
 msgid "Save access"
 msgstr "I-save ang access"
+
+#: templates/whispers/receive_history_drawer.html:7
+#: templates/whispers/receives.html:4 templates/whispers/receives.html:9
+#: whispers/deployment.py:329 whispers/deployment.py:345
+msgid "Saved receive requests"
+msgstr "Mga naka-save na kahilingan sa pagtanggap"
+
+#: templates/whispers/receive_history_drawer.html:8
+msgid "Open full list"
+msgstr "Buksan ang buong listahan"
+
+#: templates/whispers/receive_history_drawer.html:15
+#: templates/whispers/stats.html:32
+msgid "Receives"
+msgstr "Mga pagtanggap"
+
+#: templates/whispers/receive_history_toggle.html:6
+msgid "Keep my receive requests in this browser"
+msgstr "Itago ang aking mga kahilingan sa pagtanggap sa browser na ito"
+
+#: templates/whispers/receive_history_toggle.html:8
+msgid ""
+"Saves each view link and your label in this browser's local storage. Unless "
+"the request has a password, the view link contains its private key, so "
+"anyone with access to this browser profile can read the received whispers. "
+"Labels are never sent to the server."
+msgstr ""
+"Sine-save ang bawat link para sa pagtingin at ang iyong label sa local "
+"storage ng browser na ito. Maliban kung may password ang kahilingan, nasa "
+"link para sa pagtingin ang private key nito, kaya mababasa ng sinumang may "
+"access sa browser profile na ito ang mga natanggap na whisper. Hindi "
+"kailanman ipinapadala sa server ang mga label."
+
+#: templates/whispers/receives.html:10
+msgid ""
+"Receive requests saved in this browser. They are removed automatically when "
+"they expire or after their last allowed view."
+msgstr ""
+"Mga kahilingan sa pagtanggap na naka-save sa browser na ito. Awtomatikong "
+"inaalis ang mga ito kapag nag-expire o pagkatapos ng huling pinapayagang "
+"pagtingin."
+
+#: templates/whispers/receives.html:16
+msgid "Filter receive requests"
+msgstr "I-filter ang mga kahilingan sa pagtanggap"
+
+#: templates/whispers/receives.html:18
+msgid "All"
+msgstr "Lahat"
+
+#: templates/whispers/receives.html:20
+msgid "Pending"
+msgstr "Naghihintay"
+
+#: templates/whispers/receives.html:22
+msgid "Completed"
+msgstr "Tapos na"
+
+#: templates/whispers/receives.html:26
+msgid "Clear all"
+msgstr "I-clear lahat"
 
 #: templates/whispers/rich_editor.html:6
 msgid "Formatting"
@@ -1693,10 +1776,6 @@ msgstr "Mga naisumiteng whisper"
 #: templates/whispers/stats.html:31
 msgid "Sends"
 msgstr "Mga pagpapadala"
-
-#: templates/whispers/stats.html:32
-msgid "Receives"
-msgstr "Mga pagtanggap"
 
 #: templates/whispers/stats.html:33
 msgid "Successful reveals"
@@ -1949,20 +2028,20 @@ msgid "Decryption failed. The link may be incomplete or corrupted."
 msgstr ""
 "Hindi nagtagumpay ang pag-decrypt. Maaaring hindi kumpleto o sira ang link."
 
-#: whispers/api_tokens.py:39
+#: whispers/api_tokens.py:41
 msgid "Create whispers and submit to receive requests"
 msgstr "Gumawa ng mga whisper at magsumite sa mga receive request"
 
-#: whispers/api_tokens.py:40
+#: whispers/api_tokens.py:42
 msgid "Reveal whispers"
 msgstr "Ipakita ang mga whisper"
 
-#: whispers/api_tokens.py:41
+#: whispers/api_tokens.py:43
 msgid "Create receive requests and manage their reader access"
 msgstr ""
 "Gumawa ng mga receive request at pamahalaan ang access ng mga reader nito"
 
-#: whispers/api_tokens.py:91
+#: whispers/api_tokens.py:97
 msgid ""
 "The redirect address must be a loopback address such as http://127.0.0.1:"
 "<port>/callback or http://[::1]:<port>/callback."
@@ -1970,39 +2049,39 @@ msgstr ""
 "Dapat na loopback address ang redirect address, gaya ng http://127.0.0.1:"
 "<port>/callback o http://[::1]:<port>/callback."
 
-#: whispers/api_tokens.py:106
+#: whispers/api_tokens.py:112
 msgid "Unsupported response type."
 msgstr "Hindi suportado ang uri ng response."
 
-#: whispers/api_tokens.py:112
+#: whispers/api_tokens.py:118
 msgid "The client must use the S256 code challenge method."
 msgstr "Dapat gamitin ng client ang S256 na paraan ng code challenge."
 
-#: whispers/api_tokens.py:116
+#: whispers/api_tokens.py:122
 msgid "The code challenge is missing or invalid."
 msgstr "Nawawala o hindi wasto ang code challenge."
 
-#: whispers/api_tokens.py:119
+#: whispers/api_tokens.py:125
 msgid "The state parameter is missing or invalid."
 msgstr "Nawawala o hindi wasto ang state parameter."
 
-#: whispers/api_tokens.py:122
+#: whispers/api_tokens.py:128
 msgid "The client name is invalid."
 msgstr "Hindi wasto ang pangalan ng client."
 
-#: whispers/api_tokens.py:125
+#: whispers/api_tokens.py:131
 msgid "The client requested an unknown scope."
 msgstr "Humiling ang client ng hindi kilalang scope."
 
-#: whispers/api_tokens.py:163
+#: whispers/api_tokens.py:171
 msgid "The authorization code is invalid or expired."
 msgstr "Hindi wasto o expired na ang authorization code."
 
-#: whispers/api_tokens.py:167
+#: whispers/api_tokens.py:224
 msgid "The code verifier is missing or invalid."
 msgstr "Nawawala o hindi wasto ang code verifier."
 
-#: whispers/api_tokens.py:263
+#: whispers/api_tokens.py:284
 msgid "This token does not have the required scope."
 msgstr "Walang kinakailangang scope ang token na ito."
 
@@ -2062,6 +2141,7 @@ msgstr ""
 "mong mag-sign in para gumawa ng mga receive request."
 
 #: whispers/deployment.py:112 whispers/deployment.py:207
+#: whispers/deployment.py:330
 msgid "Optional"
 msgstr "Opsyonal"
 
@@ -2120,7 +2200,7 @@ msgstr "Limitadong access sa pagtanggap"
 
 #: whispers/deployment.py:172 whispers/deployment.py:233
 #: whispers/deployment.py:264 whispers/deployment.py:291
-#: whispers/deployment.py:318
+#: whispers/deployment.py:318 whispers/deployment.py:346
 msgid "Off"
 msgstr "Naka-off"
 
@@ -2246,24 +2326,43 @@ msgstr ""
 msgid "Whispers are written and shown as plain text."
 msgstr "Isinusulat at ipinapakita ang mga whisper bilang payak na teksto."
 
-#: whispers/deployment.py:328
+#: whispers/deployment.py:333
+msgid ""
+"You can choose to keep your receive requests, with their view links and "
+"labels, in this browser. Anyone with access to the browser profile can then "
+"open those whispers. Nothing extra is sent to the server."
+msgstr ""
+"Maaari mong piliing itago sa browser na ito ang iyong mga kahilingan sa "
+"pagtanggap, kasama ang mga link para sa pagtingin at mga label. Mabubuksan "
+"ng sinumang may access sa browser profile ang mga whisper na iyon. Walang "
+"karagdagang ipinapadala sa server."
+
+#: whispers/deployment.py:349
+msgid ""
+"Receive requests are not saved in your browser. Keep the view link somewhere "
+"safe yourself."
+msgstr ""
+"Hindi sine-save sa iyong browser ang mga kahilingan sa pagtanggap. Ikaw "
+"mismo ang magtago ng link para sa pagtingin sa ligtas na lugar."
+
+#: whispers/deployment.py:359
 msgid "File size limit"
 msgstr "Limitasyon sa laki ng file"
 
-#: whispers/deployment.py:331
+#: whispers/deployment.py:362
 msgid "Maximum total size of the files attached to a single whisper."
 msgstr ""
 "Pinakamalaking kabuuang laki ng mga file na nakalakip sa iisang whisper."
 
-#: whispers/deployment.py:340 whispers/deployment.py:354
+#: whispers/deployment.py:371 whispers/deployment.py:385
 msgid "Encrypted storage"
 msgstr "Naka-encrypt na imbakan"
 
-#: whispers/deployment.py:341
+#: whispers/deployment.py:372
 msgid "Saved to disk"
 msgstr "Naka-save sa disk"
 
-#: whispers/deployment.py:344
+#: whispers/deployment.py:375
 msgid ""
 "Encrypted whispers are stored in Redis with persistence enabled, so they "
 "survive server restarts until they expire."
@@ -2271,11 +2370,11 @@ msgstr ""
 "Iniimbak ang mga naka-encrypt na whisper sa Redis na may persistence, kaya "
 "nananatili ang mga ito kahit mag-restart ang server hanggang sa mag-expire."
 
-#: whispers/deployment.py:355
+#: whispers/deployment.py:386
 msgid "Memory only"
 msgstr "Sa memory lamang"
 
-#: whispers/deployment.py:358
+#: whispers/deployment.py:389
 msgid ""
 "Encrypted whispers live only in memory and are lost if the server restarts."
 msgstr ""
@@ -2334,26 +2433,26 @@ msgstr "Tinanggihan mo ang access."
 msgid "Send the API token to revoke in the Authorization header."
 msgstr "Ipadala sa Authorization header ang API token na babawiin."
 
-#: whispers/views.py:64
+#: whispers/views.py:66
 msgid "Whisper storage is temporarily unavailable. Please try again later."
 msgstr ""
 "Pansamantalang hindi available ang storage ng whisper. Pakisubukang muli "
 "mamaya."
 
-#: whispers/views.py:183 whispers/views.py:732 whispers/views.py:836
+#: whispers/views.py:189 whispers/views.py:815 whispers/views.py:920
 msgid "Enter the verified primary email of each additional reader."
 msgstr ""
 "Ilagay ang beripikadong pangunahing email ng bawat karagdagang mambabasa."
 
-#: whispers/views.py:715
+#: whispers/views.py:798
 msgid "Receive reader restrictions are not enabled."
 msgstr "Hindi naka-enable ang mga limitasyon sa mambabasa sa pagtanggap."
 
-#: whispers/views.py:719
+#: whispers/views.py:802
 msgid "Sign in to manage reader access."
 msgstr "Mag-sign in upang pamahalaan ang access ng mambabasa."
 
-#: whispers/views.py:723 whispers/views.py:827
+#: whispers/views.py:806 whispers/views.py:911
 msgid "Enable restricted access before adding readers."
 msgstr "I-enable ang limitadong access bago magdagdag ng mga mambabasa."
 

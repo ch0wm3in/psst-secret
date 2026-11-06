@@ -84,6 +84,24 @@
             <p class="text-xs text-gray-500">{% trans "You'll get two links: a <strong>submit link</strong> to share with the sender, and a <strong>view link</strong> for you to retrieve the whisper once it's been submitted." %}</p>
         </div>
 
+        {% if enable_receive_history %}
+        <!-- Opt-in local receive history (receive mode only) -->
+        <div id="receive-history-options" class="hidden space-y-3">
+            {% include "whispers/receive_history_toggle.html" %}
+            <div data-receive-history-when-enabled class="hidden">
+                <label for="receive-label" class="block text-sm font-medium text-gray-300 mb-1">
+                    {% trans "Label" %}
+                    <span class="text-gray-500">({% trans "optional" %})</span>
+                </label>
+                <input type="text" id="receive-label" maxlength="100" autocomplete="off"
+                    class="w-full rounded-lg bg-gray-800 border border-gray-700 text-gray-100 px-3 py-2 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    placeholder="{% trans 'e.g. AWS credentials from Bob' %}">
+                <p class="mt-1 text-xs text-gray-500">{% trans "Only stored in this browser to help you recognize the request." %}
+                    <a href="{% url 'whispers:receives' %}" class="text-brand-400 hover:text-brand-300 underline">{% trans "Manage saved receive requests" %}</a></p>
+            </div>
+        </div>
+        {% endif %}
+
         <!-- Options row -->
         <div class="flex flex-wrap gap-4 items-end">
             <!-- Expiry -->
@@ -325,6 +343,12 @@
             <div id="receive-burn-warning" class="hidden text-sm text-amber-400">
                 {% icon "exclamation-triangle" %} <span id="receive-burn-warning-text">{% trans "The whisper will be destroyed after you view it once." %}</span>
             </div>
+            {% if enable_receive_history %}
+            <div id="receive-history-saved" class="hidden text-sm text-brand-300">
+                {% icon "inbox-stack" %} {% trans "Saved in this browser." %}
+                <a href="{% url 'whispers:receives' %}" class="underline hover:text-brand-200">{% trans "Manage saved receive requests" %}</a>
+            </div>
+            {% endif %}
         </div>
         <button onclick="location.reload()"
             class="text-sm text-gray-400 hover:text-white transition underline">
@@ -611,6 +635,8 @@
     function toggleEmailLabels(mode) {
         const receiveAccess = document.getElementById('receive-access-options');
         if (receiveAccess) receiveAccess.classList.toggle('hidden', mode !== 'receive');
+        const receiveHistory = document.getElementById('receive-history-options');
+        if (receiveHistory) receiveHistory.classList.toggle('hidden', mode !== 'receive');
         const notifyLabelSend = document.getElementById('notify-email-label-send');
         const notifyLabelRecv = document.getElementById('notify-email-label-receive');
         const notifyHelpSend = document.getElementById('notify-help-send');

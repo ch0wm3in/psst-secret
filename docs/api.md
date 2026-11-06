@@ -11,6 +11,7 @@ described in the [encryption format](format.md).
 | `GET` | `/api/v1/whisper/submit/<request_id>` | Get a receive request's public key; check it against the submit link fingerprint |
 | `POST` | `/api/v1/whisper/submit/<request_id>` | Submit ciphertext to a receive-mode request |
 | `POST` | `/api/v1/whisper/<view_id>/reveal` | Reveal ciphertext with a valid `reveal_token` |
+| `GET` | `/api/v1/whisper/<view_id>/status` | [Check a receive request](#receive-request-status) without consuming a view |
 | `GET`, `PATCH` | `/api/v1/whisper/<view_id>/access` | Read or update [receive reader access](configuration.md#receive-reader-access) (creator only) |
 | `POST` | `/api/v1/cli/token` | Exchange a sign-in code for an [API token](#api-tokens) |
 | `POST` | `/api/v1/cli/revoke` | Revoke the API token sent with the request |
@@ -65,6 +66,32 @@ Both creation endpoints require `reveal_token_hash`; see
 `reveal_token` in a JSON or form body. The token is optional only for
 [legacy whispers](how-it-works.md#reveal-tokens) created before tokens existed. See
 [Reveal tokens](how-it-works.md#reveal-tokens) for the full behaviour.
+
+## Receive request status
+
+`POST /api/v1/whisper/request` returns `id`, `submit_url`, `view_url`, and `expires_at`.
+`GET /api/v1/whisper/<view_id>/status` then reports whether the request has been
+submitted, without returning ciphertext or counting as a view. It is available when
+[saved receive requests](configuration.md#saved-receive-requests) are enabled, and
+returns `404` otherwise.
+
+```json
+{
+  "status": "submitted",
+  "expires_at": "2026-11-07T14:39:50.077000Z",
+  "view_count": 0,
+  "max_views": 1,
+  "remaining_views": 1
+}
+```
+
+`status` is `pending` until something is submitted. Requests that expired, were burned,
+or never existed return `{"status": "gone"}` with `404` or `410`; send-mode whispers are
+reported as gone too. The endpoint applies the same sign-in and
+[reader access](#receive-reader-access) checks as revealing, needs the `whisper:read`
+scope for [API tokens](#scopes), and has its own rate limit
+(`API_THROTTLE_RATE_STATUS`). It needs only the view identifier, so it reveals nothing
+that opening the view link without its fragment does not.
 
 ## Receive reader access
 
@@ -140,7 +167,7 @@ rate-limited per IP.
 | Scope | Allows |
 |---|---|
 | `whisper:create` | `POST /api/v1/whisper`, and `GET`/`POST /api/v1/whisper/submit/<request_id>` |
-| `whisper:read` | `POST /api/v1/whisper/<view_id>/reveal` |
+| `whisper:read` | `POST /api/v1/whisper/<view_id>/reveal` and `GET /api/v1/whisper/<view_id>/status` |
 | `request:manage` | `POST /api/v1/whisper/request` and `/api/v1/whisper/<view_id>/access` |
 
 A token without the required scope gets `403`.

@@ -8,6 +8,7 @@ unless noted otherwise. Restart the app after changing them.
 - [Authentication](#authentication)
 - [API tokens](#api-tokens)
 - [Receive reader access](#receive-reader-access)
+- [Saved receive requests](#saved-receive-requests)
 - [Email notifications](#email-notifications)
 - [Formatted text](#formatted-text)
 - [Statistics](#statistics)
@@ -35,6 +36,7 @@ unless noted otherwise. Restart the app after changing them.
 | `API_THROTTLE_RATE_ANON` | Global anonymous API rate limit (DRF format). | `60/minute` |
 | `API_THROTTLE_RATE_CREATE` | Limit for the create and submit API endpoints. | `20/minute` |
 | `THROTTLE_RATE_VIEW` | Per-IP limit for the whisper view page. | `30/minute` |
+| `API_THROTTLE_RATE_STATUS` | Per-IP limit for the [receive request status](api.md#receive-request-status) endpoint used by [saved receive requests](#saved-receive-requests). | `120/minute` |
 | `API_THROTTLE_RATE_RECEIVE_ACCESS` | Per-account limit shared by authenticated receive creation and access management, including failed reader-email lookups. | `10/minute` |
 | `API_THROTTLE_RATE_TOKEN_EXCHANGE` | Per-IP limit for exchanging [API token](#api-tokens) sign-in codes. | `10/minute` |
 | `API_THROTTLE_RATE_TOKEN_USER` | Per-account limit for API requests authenticated with an API token. | `120/minute` |
@@ -101,6 +103,22 @@ requests.
 
 Creator and reader references are stored as metadata in the database and are never used
 in statistics.
+
+## Saved receive requests
+
+Lets users keep their receive requests in their own browser, so they do not have to
+store each view link themselves.
+
+| Variable | Description | Default |
+|---|---|---|
+| `PSST_ENABLE_RECEIVE_HISTORY` | Offer the opt-in **Keep my receive requests in this browser** option, the `/receives` page, the drawer, and the [status endpoint](api.md#receive-request-status). | `False` |
+
+Even when the setting is on, nothing is saved until a user turns the option on, on the
+create page or `/receives`. Each saved request holds the view link, the submit link, an
+optional label, and its expiry and status in the browser's `localStorage`. Labels never
+leave the browser. Turning the option off offers to delete everything; **Clear all**
+deletes all saved requests. See [How it works](how-it-works.md#saved-receive-requests)
+for the security trade-off.
 
 ## Email notifications
 

@@ -321,6 +321,37 @@ def deployment_features():
             )
         )
 
+    if getattr(settings, "PSST_ENABLE_RECEIVE_HISTORY", False):
+        features.append(
+            _feature(
+                "receive_history",
+                "outline/inbox-stack",
+                _("Saved receive requests"),
+                _("Optional"),
+                "neutral",
+                _(
+                    "You can choose to keep your receive requests, with their view "
+                    "links and labels, in this browser. Anyone with access to the "
+                    "browser profile can then open those whispers. Nothing extra is "
+                    "sent to the server."
+                ),
+            )
+        )
+    else:
+        features.append(
+            _feature(
+                "receive_history",
+                "outline/inbox-stack",
+                _("Saved receive requests"),
+                _("Off"),
+                "off",
+                _(
+                    "Receive requests are not saved in your browser. Keep the view "
+                    "link somewhere safe yourself."
+                ),
+            )
+        )
+
     features.append(
         _feature(
             "upload_limit",

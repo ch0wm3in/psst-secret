@@ -5,6 +5,7 @@ from io import StringIO
 from pathlib import Path
 
 from django.conf import settings
+from django.contrib.auth.models import User
 from django.core.cache import cache
 from django.core.management import call_command
 from django.test import TestCase, override_settings
@@ -222,9 +223,223 @@ class ApiV1LoginRequiredTests(TestCase):
             ("post", "/api/v1/whisper", False),
             ("post", "/api/v1/whisper/request", False),
             ("get", f"/api/v1/whisper/{missing}/access", False),
+            ("get", f"/api/v1/whisper/{missing}/status", True),
         ):
             with self.subTest(method=method, path=path):
                 response = getattr(self.client, method)(path)
                 # API clients get a JSON 401 instead of a redirect to the login page.
                 self.assertEqual(response.status_code == 401, not exempt)
                 self.assertNotEqual(response.status_code, 302)
+
+    @override_settings(
+        PSST_FORCE_AUTH_VIEW=True,
+        LOGIN_REQUIRED_EXEMPT_URLS=[
+            p for p in _DEFAULT_EXEMPT_URLS if p != r"whisper/.*"
+        ],
+    )
+    def test_status_follows_the_view_exemption(self):
+        response = self.client.get(f"/api/v1/whisper/{uuid.uuid4()}/status")
+        self.assertEqual(response.status_code, 401)
+
+
+@override_settings(
+    MIDDLEWARE=_BASE_MIDDLEWARE,
+    REST_FRAMEWORK=_TEST_REST_FRAMEWORK,
+    PSST_ENABLE_RECEIVE_HISTORY=True,
+    PSST_FORCE_AUTH_VIEW=False,
+)
+class WhisperStatusTests(TestCase):
+    def setUp(self):
+        cache.clear()
+        self.addCleanup(cache.clear)
+        self.patcher, self.redis = _patch_redis()
+        self.patcher.start()
+
+    def tearDown(self):
+        self.patcher.stop()
+        redis_store._client = None
+
+    def _post(self, path, payload):
+        return self.client.post(
+            path, data=json.dumps(payload), content_type="application/json"
+        )
+
+    def _request(self, **payload):
+        response = self._post(
+            "/api/v1/whisper/request",
+            {"public_key": "pk", "reveal_token_hash": _REVEAL_TOKEN_HASH, **payload},
+        )
+        self.assertEqual(response.status_code, 200)
+        return Whisper.objects.get(id=response.json()["id"])
+
+    def _submit(self, whisper):
+        response = self._post(
+            f"/api/v1/whisper/submit/{whisper.submit_token}",
+            {"ciphertext": "ct", "iv": "iv", "encapsulated_key": "ek"},
+        )
+        self.assertEqual(response.status_code, 200)
+
+    def _status(self, whisper_id, client=None):
+        return (client or self.client).get(f"/api/v1/whisper/{whisper_id}/status")
+
+    def _reveal(self, whisper_id):
+        return self._post(
+            f"/api/v1/whisper/{whisper_id}/reveal", {"reveal_token": _REVEAL_TOKEN}
+        )
+
+    def test_request_response_includes_expiry(self):
+        response = self._post(
+            "/api/v1/whisper/request",
+            {
+                "public_key": "pk",
+                "reveal_token_hash": _REVEAL_TOKEN_HASH,
+                "expiry": "1h",
+            },
+        )
+        whisper = Whisper.objects.get()
+        self.assertEqual(
+            response.json()["expires_at"],
+            whisper.expires_at.isoformat().replace("+00:00", "Z"),
+        )
+
+    @override_settings(PSST_ENABLE_RECEIVE_HISTORY=False)
+    def test_disabled_by_default(self):
+        whisper = self._request()
+        self.assertEqual(self._status(whisper.id).status_code, 404)
+
+    def test_pending_then_submitted_without_consuming_views(self):
+        whisper = self._request(max_views=1)
+        response = self._status(whisper.id)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.json(),
+            {
+                "status": "pending",
+                "expires_at": whisper.expires_at.isoformat().replace("+00:00", "Z"),
+                "view_count": 0,
+                "max_views": 1,
+                "remaining_views": 1,
+            },
+        )
+        self._submit(whisper)
+        stored = redis_store.get_crypto(whisper.id)
+        for _ in range(3):
+            response = self._status(whisper.id)
+            self.assertEqual(response.json()["status"], "submitted")
+            self.assertNotIn("ciphertext", response.content.decode())
+            self.assertNotIn("ek", response.json().values())
+        self.assertEqual(redis_store.get_view_count(whisper.id), 0)
+        self.assertEqual(redis_store.get_crypto(whisper.id), stored)
+        self.assertEqual(self._reveal(whisper.id).status_code, 200)
+
+    def test_reports_views_and_gone_after_final_reveal(self):
+        whisper = self._request(max_views=2)
+        self._submit(whisper)
+        self._reveal(whisper.id)
+        data = self._status(whisper.id).json()
+        self.assertEqual(
+            (data["view_count"], data["remaining_views"], data["max_views"]), (1, 1, 2)
+        )
+        self._reveal(whisper.id)
+        response = self._status(whisper.id)
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.json(), {"status": "gone"})
+
+    def test_unlimited_views_report_zero_remaining(self):
+        whisper = self._request(max_views=0)
+        self._submit(whisper)
+        self._reveal(whisper.id)
+        data = self._status(whisper.id).json()
+        self.assertEqual((data["view_count"], data["remaining_views"]), (1, 0))
+
+    def test_expired_and_evicted_requests_are_gone_and_cleaned_up(self):
+        expired = self._request()
+        Whisper.objects.filter(pk=expired.pk).update(
+            expires_at=timezone.now() - timedelta(seconds=1)
+        )
+        evicted = self._request()
+        redis_store.delete_crypto(evicted.id)
+        for whisper in (expired, evicted):
+            with self.subTest(whisper=whisper.pk):
+                response = self._status(whisper.id)
+                self.assertEqual(response.status_code, 410)
+                self.assertEqual(response.json(), {"status": "gone"})
+                self.assertFalse(Whisper.objects.filter(pk=whisper.pk).exists())
+                self.assertIsNone(redis_store.get_crypto(whisper.id))
+
+    def test_unknown_ids_and_send_whispers_are_gone(self):
+        response = self._post(
+            "/api/v1/whisper",
+            {"ciphertext": "ct", "iv": "iv", "reveal_token_hash": _REVEAL_TOKEN_HASH},
+        )
+        for whisper_id in (uuid.uuid4(), response.json()["id"]):
+            with self.subTest(whisper_id=whisper_id):
+                response = self._status(whisper_id)
+                self.assertEqual(response.status_code, 404)
+                self.assertEqual(response.json(), {"status": "gone"})
+
+    def test_submit_token_cannot_be_used_as_view_id(self):
+        whisper = self._request()
+        self.assertEqual(self._status(whisper.submit_token).status_code, 404)
+
+    def test_per_whisper_view_auth_is_required(self):
+        whisper = self._request(require_auth_view=True)
+        response = self._status(whisper.id)
+        self.assertEqual(response.status_code, 403)
+        self.assertNotIn("status", response.json())
+        self.client.force_login(User.objects.create_user("viewer"))
+        self.assertEqual(self._status(whisper.id).status_code, 200)
+
+    @override_settings(PSST_FORCE_AUTH_VIEW=True)
+    def test_forced_view_auth_is_required(self):
+        whisper = self._request()
+        self.assertEqual(self._status(whisper.id).status_code, 403)
+
+    def test_reader_access_is_enforced(self):
+        creator = User.objects.create_user("creator")
+        reader = User.objects.create_user("reader")
+        stranger = User.objects.create_user("stranger")
+        whisper = self._request()
+        Whisper.objects.filter(pk=whisper.pk).update(creator=creator, creator_only=True)
+        whisper.allowed_readers.add(reader)
+        self.assertEqual(self._status(whisper.id).status_code, 403)
+        for user, allowed in ((stranger, False), (creator, True), (reader, True)):
+            with self.subTest(user=user.username):
+                self.client.force_login(user)
+                response = self._status(whisper.id)
+                self.assertEqual(response.status_code, 200 if allowed else 403)
+                self.assertEqual("status" in response.json(), allowed)
+        self.assertTrue(Whisper.objects.filter(pk=whisper.pk).exists())
+
+    def test_status_is_read_only(self):
+        whisper = self._request()
+        for method in ("post", "put", "patch", "delete"):
+            with self.subTest(method=method):
+                response = getattr(self.client, method)(
+                    f"/api/v1/whisper/{whisper.id}/status"
+                )
+                self.assertEqual(response.status_code, 405)
+
+    @override_settings(
+        REST_FRAMEWORK={
+            **_TEST_REST_FRAMEWORK,
+            "DEFAULT_THROTTLE_RATES": {
+                **_TEST_REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"],
+                "whisper_status": "2/minute",
+            },
+        }
+    )
+    def test_status_has_its_own_rate_limit(self):
+        from whispers.views import WhisperStatusThrottle
+
+        whisper = self._request()
+        original = WhisperStatusThrottle.THROTTLE_RATES
+        WhisperStatusThrottle.THROTTLE_RATES = settings.REST_FRAMEWORK[
+            "DEFAULT_THROTTLE_RATES"
+        ]
+        self.addCleanup(setattr, WhisperStatusThrottle, "THROTTLE_RATES", original)
+        codes = [self._status(whisper.id).status_code for _ in range(3)]
+        self.assertEqual(codes, [200, 200, 429])
+        self.assertEqual(
+            self._reveal(whisper.id).status_code, 404, "reveal limit is separate"
+        )

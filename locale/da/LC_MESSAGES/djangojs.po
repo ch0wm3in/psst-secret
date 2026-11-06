@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-04 21:21+0000\n"
+"POT-Creation-Date: 2026-11-06 14:52+0000\n"
 "PO-Revision-Date: 2026-10-07 15:40+0000\n"
 "Last-Translator: \n"
 "Language-Team: Danish\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: static/js/crypto.js:130
+#: static/js/crypto.js:130 static/js/receive-history.js:559
 msgid "Remove"
 msgstr "Fjern"
 
@@ -43,16 +43,16 @@ msgstr ""
 "Forespørgslens nøgle matcher ikke linket. Linket kan være ufuldstændigt "
 "eller manipuleret."
 
-#: static/js/crypto.js:496 static/js/crypto.js:749
+#: static/js/crypto.js:496 static/js/crypto.js:765
 msgid "Please enter some content or select a file to encrypt."
 msgstr "Indtast noget indhold, eller vælg en fil, der skal krypteres."
 
-#: static/js/crypto.js:502 static/js/crypto.js:755
+#: static/js/crypto.js:502 static/js/crypto.js:771
 #, javascript-format
 msgid "Selected files exceed the maximum total size of %s."
 msgstr "De valgte filer overskrider den maksimale samlede størrelse på %s."
 
-#: static/js/crypto.js:508 static/js/crypto.js:761
+#: static/js/crypto.js:508 static/js/crypto.js:777
 msgid "Encrypting…"
 msgstr "Krypterer…"
 
@@ -61,7 +61,7 @@ msgid ""
 "Passphrase does not meet the strength requirements shown below the field."
 msgstr "Adgangskoden opfylder ikke kravene, der vises under feltet."
 
-#: static/js/crypto.js:568 static/js/crypto.js:692 static/js/crypto.js:798
+#: static/js/crypto.js:568 static/js/crypto.js:692 static/js/crypto.js:814
 #, javascript-format
 msgid "Server error (%s)"
 msgstr "Serverfejl (%s)"
@@ -75,7 +75,7 @@ msgstr "Denne whisper bliver slettet, når den er blevet vist én gang."
 msgid "This whisper will be destroyed after %s views."
 msgstr "Denne whisper bliver slettet efter %s visninger."
 
-#: static/js/crypto.js:597 static/js/crypto.js:724 static/js/crypto.js:806
+#: static/js/crypto.js:597 static/js/crypto.js:740 static/js/crypto.js:822
 #, javascript-format
 msgid "Error: %s"
 msgstr "Fejl: %s"
@@ -84,7 +84,7 @@ msgstr "Fejl: %s"
 msgid "Encrypt & Share"
 msgstr "Krypter og del"
 
-#: static/js/crypto.js:612
+#: static/js/crypto.js:612 static/js/receive-history.js:355
 msgid "Copied!"
 msgstr "Kopieret!"
 
@@ -96,28 +96,29 @@ msgstr "Kopiér"
 msgid "Creating…"
 msgstr "Opretter…"
 
-#: static/js/crypto.js:713
+#: static/js/crypto.js:729
 msgid "The whisper will be destroyed after you view it once."
 msgstr "Whisperen bliver slettet, efter du har set den én gang."
 
-#: static/js/crypto.js:715
+#: static/js/crypto.js:731
 #, javascript-format
 msgid "The whisper will be destroyed after %s views."
 msgstr "Whisperen bliver slettet efter %s visninger."
 
-#: static/js/crypto.js:728
+#: static/js/crypto.js:744
 msgid "Create Request"
 msgstr "Opret forespørgsel"
 
-#: static/js/crypto.js:766
+#: static/js/crypto.js:782
 msgid "This link uses an unsupported format version. Ask for a new link."
-msgstr "Linket bruger en formatversion, der ikke understøttes. Bed om et nyt link."
+msgstr ""
+"Linket bruger en formatversion, der ikke understøttes. Bed om et nyt link."
 
-#: static/js/crypto.js:769
+#: static/js/crypto.js:785
 msgid "No encryption key found in URL. The link may be incomplete."
 msgstr "Ingen krypteringsnøgle fundet i URL'en. Linket kan være ufuldstændigt."
 
-#: static/js/crypto.js:810
+#: static/js/crypto.js:826
 msgid "Encrypt & Submit"
 msgstr "Krypter og indsend"
 
@@ -133,6 +134,118 @@ msgstr "Kunne ikke opdatere adgang."
 #: static/js/receive-access.js:58
 msgid "Access updated."
 msgstr "Adgang opdateret."
+
+#: static/js/receive-history.js:280
+msgid "Waiting for sender"
+msgstr "Venter på afsender"
+
+#: static/js/receive-history.js:281
+msgid "Ready to view"
+msgstr "Klar til visning"
+
+#: static/js/receive-history.js:282
+msgid "Viewed"
+msgstr "Vist"
+
+#: static/js/receive-history.js:283
+msgid "Expired"
+msgstr "Udløbet"
+
+#: static/js/receive-history.js:284
+msgid "Burned"
+msgstr "Brændt"
+
+#: static/js/receive-history.js:324
+#, javascript-format
+msgid "Expires %s"
+msgstr "Udløber %s"
+
+#: static/js/receive-history.js:380
+#, javascript-format
+msgid ""
+"Also delete the %s saved receive request from this browser? Choose Cancel to "
+"keep it."
+msgid_plural ""
+"Also delete all %s saved receive requests from this browser? Choose Cancel "
+"to keep them."
+msgstr[0] ""
+"Slet også den %s gemte modtag-forespørgsel fra denne browser? Vælg Annullér "
+"for at beholde den."
+msgstr[1] ""
+"Slet også alle %s gemte modtag-forespørgsler fra denne browser? Vælg "
+"Annullér for at beholde dem."
+
+#: static/js/receive-history.js:441 static/js/receive-history.js:525
+msgid "No label"
+msgstr "Ingen etiket"
+
+#: static/js/receive-history.js:472
+msgid ""
+"Delete all saved receive requests from this browser? You will no longer be "
+"able to open them from here."
+msgstr ""
+"Slet alle gemte modtag-forespørgsler fra denne browser? Du kan derefter ikke "
+"længere åbne dem herfra."
+
+#: static/js/receive-history.js:498
+msgid "Label"
+msgstr "Etiket"
+
+#: static/js/receive-history.js:499
+msgid "e.g. AWS credentials from Bob"
+msgstr "f.eks. AWS-adgangsoplysninger fra Bob"
+
+#: static/js/receive-history.js:501
+msgid "Save"
+msgstr "Gem"
+
+#: static/js/receive-history.js:503
+msgid "Cancel"
+msgstr "Annullér"
+
+#: static/js/receive-history.js:531
+#, javascript-format
+msgid "Created %s"
+msgstr "Oprettet %s"
+
+#: static/js/receive-history.js:536
+#, javascript-format
+msgid "%s view remaining"
+msgid_plural "%s views remaining"
+msgstr[0] "%s visning tilbage"
+msgstr[1] "%s visninger tilbage"
+
+#: static/js/receive-history.js:540
+msgid "Unlimited views"
+msgstr "Ubegrænsede visninger"
+
+#: static/js/receive-history.js:543
+msgid "Password-protected"
+msgstr "Beskyttet med adgangskode"
+
+#: static/js/receive-history.js:551
+msgid "Submit link"
+msgstr "Indsend-link"
+
+#: static/js/receive-history.js:552
+msgid "Copy submit link"
+msgstr "Kopiér indsend-link"
+
+#: static/js/receive-history.js:557
+msgid "View whisper"
+msgstr "Vis whisper"
+
+#: static/js/receive-history.js:558
+msgid "Edit label"
+msgstr "Redigér etiket"
+
+#: static/js/receive-history.js:582
+msgid "No saved receive requests in this browser."
+msgstr "Ingen gemte modtag-forespørgsler i denne browser."
+
+#: static/js/receive-history.js:583
+msgid "No receive requests match this filter."
+msgstr "Ingen modtag-forespørgsler matcher dette filter."
 
 #: static/js/rich-text.js:155
 msgid "Whisper content"

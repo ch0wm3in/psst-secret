@@ -40,6 +40,8 @@ from .serializers import (
     SubmitRequestKeySerializer,
     SubmitWhisperResponseSerializer,
     SubmitWhisperSerializer,
+    WhisperGoneSerializer,
+    WhisperStatusSerializer,
 )
 from .stats import record_stats, stats_report
 
@@ -85,6 +87,10 @@ class WhisperCreateThrottle(AnonRateThrottle):
 
 class WhisperViewThrottle(AnonRateThrottle):
     scope = "whisper_view"
+
+
+class WhisperStatusThrottle(AnonRateThrottle):
+    scope = "whisper_status"
 
 
 class ReceiveAccessThrottle(UserRateThrottle):
@@ -259,6 +265,10 @@ def _reveal_auth_response(request, should_render):
     )
 
 
+def _receive_history_enabled():
+    return getattr(settings, "PSST_ENABLE_RECEIVE_HISTORY", False)
+
+
 @require_GET
 def create(request):
     """Render the creation page."""
@@ -267,6 +277,7 @@ def create(request):
         "whispers/create.html",
         {
             "enable_auth": getattr(settings, "ENABLE_AUTH", False),
+            "enable_receive_history": _receive_history_enabled(),
             "force_auth_view": getattr(settings, "PSST_FORCE_AUTH_VIEW", False),
             "force_auth_submit": getattr(settings, "PSST_FORCE_AUTH_SUBMIT", False),
             "enable_email": getattr(settings, "PSST_ENABLE_EMAIL", False),
@@ -304,6 +315,14 @@ def stats(request):
     return render(
         request, "whispers/stats.html", stats_report(request.GET.get("range", "1w"))
     )
+
+
+@require_GET
+def receive_history(request):
+    """Render the saved receive requests page; entries live only in the browser."""
+    if not _receive_history_enabled():
+        raise Http404
+    return render(request, "whispers/receives.html")
 
 
 class ApiInfoView(APIView):
@@ -616,6 +635,70 @@ class RevealWhisperAPIView(RevealWhisperView):
     allow_render = False
 
 
+def _gone(api_status):
+    return Response({"status": "gone"}, status=api_status)
+
+
+class WhisperStatusView(APIView):
+    """
+    Report whether a receive request is still waiting or has been submitted.
+
+    Never returns ciphertext and never counts as a view, so saved receive requests can
+    be checked as often as the rate limit allows.
+    """
+
+    permission_classes = [AllowAny, api_tokens.TokenScopePermission]
+    required_scope = "whisper:read"
+    throttle_classes = [WhisperStatusThrottle, api_tokens.ApiTokenUserThrottle]
+
+    @extend_schema(
+        responses={
+            200: WhisperStatusSerializer,
+            404: WhisperGoneSerializer,
+            410: WhisperGoneSerializer,
+        },
+    )
+    def get(self, request, whisper_id):
+        if not _receive_history_enabled():
+            raise Http404
+        whisper = Whisper.objects.filter(id=whisper_id, mode="receive").first()
+        if whisper is None:
+            return _gone(status.HTTP_404_NOT_FOUND)
+
+        if not _receive_reader_allowed(request.user, whisper):
+            if not request.user.is_authenticated:
+                return _reveal_auth_response(request, False)
+            return Response(
+                {"error": _("You do not have access to this whisper.")},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        if whisper.is_expired:
+            redis_store.delete_crypto(whisper_id)
+            whisper.delete()
+            return _gone(status.HTTP_410_GONE)
+
+        if _requires_auth_view(whisper) and not request.user.is_authenticated:
+            return _reveal_auth_response(request, False)
+
+        crypto = redis_store.get_crypto(whisper_id)
+        if crypto is None:
+            whisper.delete()
+            return _gone(status.HTTP_410_GONE)
+
+        count = redis_store.get_view_count(whisper_id)
+        remaining = max(whisper.max_views - count, 0) if whisper.max_views > 0 else 0
+        return Response(
+            {
+                "status": "submitted" if crypto.get("ciphertext") else "pending",
+                "expires_at": whisper.expires_at,
+                "view_count": count,
+                "max_views": whisper.max_views,
+                "remaining_views": remaining,
+            }
+        )
+
+
 @require_GET
 def submit_whisper(request, submit_token):
     """
@@ -777,6 +860,7 @@ class CreateRequestView(APIView):
                     f"/submit/{whisper.submit_token}"
                 ),
                 "view_url": request.build_absolute_uri(f"/whisper/{whisper.id}"),
+                "expires_at": whisper.expires_at,
             }
         )
 
