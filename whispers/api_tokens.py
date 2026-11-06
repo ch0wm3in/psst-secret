@@ -30,7 +30,8 @@ _RANDOM_LENGTH = 40  # about 238 bits
 
 CODE_TTL = timedelta(seconds=60)
 MANUAL_CODE_TTL = timedelta(minutes=5)
-# Used codes are kept this long after expiry so a replay can still revoke its token.
+# Codes are kept at least this long after expiry, and while their token exists, so a
+# replay can still revoke the token.
 USED_CODE_RETENTION = timedelta(hours=1)
 LAST_USED_RESOLUTION = timedelta(minutes=1)
 
@@ -84,7 +85,11 @@ class AuthorizationRequestError(ValueError):
 def validate_redirect_uri(redirect_uri, allow_manual=False):
     if allow_manual and redirect_uri == MANUAL_REDIRECT_URI:
         return redirect_uri
-    match = _LOOPBACK_REDIRECT_RE.match(redirect_uri or "")
+    redirect_uri = redirect_uri or ""
+    max_length = ApiAuthorizationCode._meta.get_field("redirect_uri").max_length
+    match = len(redirect_uri) <= max_length and _LOOPBACK_REDIRECT_RE.match(
+        redirect_uri
+    )
     if not match or int(match["port"]) > 65535:
         raise AuthorizationRequestError(
             _(
@@ -235,10 +240,11 @@ def authenticate_token(raw_token):
 def delete_expired():
     """Delete expired tokens and stale authorization codes. Returns the token count."""
     now = timezone.now()
-    ApiAuthorizationCode.objects.filter(
-        expires_at__lte=now - USED_CODE_RETENTION
-    ).delete()
+    # Deleting a token clears the link on its code, so codes go in the same run.
     count, _deleted = ApiToken.objects.filter(expires_at__lte=now).delete()
+    ApiAuthorizationCode.objects.filter(
+        expires_at__lte=now - USED_CODE_RETENTION, token__isnull=True
+    ).delete()
     return count
 
 
@@ -302,7 +308,3 @@ class TokenExchangeThrottle(SimpleRateThrottle):
             "scope": self.scope,
             "ident": self.get_ident(request),
         }
-
-
-# Registers the OpenAPI security scheme for BearerTokenAuthentication.
-from whispers import schema  # noqa: E402,F401

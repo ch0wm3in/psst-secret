@@ -220,6 +220,7 @@ class AuthorizeEndpointTests(ApiTokenTestCase):
             {"scope": "whisper:read admin"},
             {"response_type": "token"},
             {"client_name": "x" * 65},
+            {"redirect_uri": "http://127.0.0.1:8080/" + "a" * 234},
         ]
         for overrides in cases:
             with self.subTest(overrides=overrides):
@@ -605,6 +606,22 @@ class TokenRevocationTests(ApiTokenTestCase):
         )
         self.assertEqual(delete_expired(), 1)
         self.assertEqual(ApiToken.objects.count(), 1)
+        remaining = ApiAuthorizationCode.objects.get()
+        self.assertEqual(remaining.token, ApiToken.objects.get())
+
+    def test_replay_after_cleanup_still_revokes_the_token(self):
+        self.client.force_login(self.user)
+        response, verifier = self._authorize()
+        code = self._code(response)
+        token = self._exchange(code, verifier).json()["access_token"]
+        ApiAuthorizationCode.objects.update(
+            expires_at=timezone.now() - timedelta(days=1)
+        )
+        self.assertEqual(delete_expired(), 0)
+        self.assertEqual(self._exchange(code, verifier).status_code, 400)
+        self.assertFalse(ApiToken.objects.exists())
+        self.assertEqual(self._create_whisper(token).status_code, 401)
+        delete_expired()
         self.assertFalse(ApiAuthorizationCode.objects.exists())
 
 

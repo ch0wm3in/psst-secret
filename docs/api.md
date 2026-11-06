@@ -90,7 +90,7 @@ work, and MFA and Conditional Access apply as usual. The device authorization gr
 ### Sign-in flow
 
 1. The client starts a temporary HTTP listener on `http://127.0.0.1:<port>/callback` or
-   `http://[::1]:<port>/callback`. It generates a random `code_verifier` (43 to 128
+   `http://[::1]:<port>/callback` (up to 255 characters). It generates a random `code_verifier` (43 to 128
    characters from `A-Z a-z 0-9 - . _ ~`), its S256 `code_challenge` (the unpadded
    base64url SHA-256 of the verifier), and a random `state`.
 2. The client opens the browser at:
