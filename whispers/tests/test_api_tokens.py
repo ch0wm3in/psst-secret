@@ -4,6 +4,7 @@ import json
 import secrets
 import uuid
 from datetime import timedelta
+from unittest import mock
 from urllib.parse import parse_qs, urlencode, urlsplit
 
 from django.contrib.auth.models import User
@@ -12,7 +13,12 @@ from django.test import Client, TestCase, override_settings
 from django.utils import timezone
 
 from whispers import redis_store
-from whispers.api_tokens import AUTH_SCHEME, delete_expired, hash_secret
+from whispers.api_tokens import (
+    AUTH_SCHEME,
+    authenticate_token,
+    delete_expired,
+    hash_secret,
+)
 from whispers.models import ApiAuthorizationCode, ApiToken, Whisper
 from whispers.tests.test_whisper import (
     _BASE_MIDDLEWARE,
@@ -194,6 +200,22 @@ class AuthorizeEndpointTests(ApiTokenTestCase):
         self.assertIn("no-store", response["Cache-Control"])
         self.assertEqual(response["X-Frame-Options"], "DENY")
 
+    def test_blank_client_name_is_allowed(self):
+        self.client.force_login(self.user)
+        _verifier, challenge = _pkce()
+        for client_name in (None, "", "   "):
+            with self.subTest(client_name=client_name):
+                params = self._params(challenge, client_name=client_name)
+                page = self.client.get("/cli/authorize", params)
+                self.assertContains(page, "An unnamed client wants to use")
+                response, verifier = self._authorize(client_name=client_name)
+                self.assertEqual(response.status_code, 302)
+                exchange = self._exchange(self._code(response), verifier)
+                self.assertEqual(exchange.status_code, 200)
+        self.assertEqual(
+            set(ApiToken.objects.values_list("client_name", flat=True)), {""}
+        )
+
     def test_invalid_requests_show_an_error_page_and_never_redirect(self):
         self.client.force_login(self.user)
         _verifier, challenge = _pkce()
@@ -341,9 +363,22 @@ class TokenEndpointTests(ApiTokenTestCase):
         self.assertEqual(self._exchange(code, verifier).status_code, 400)
         self.assertFalse(ApiToken.objects.exists())
 
-    def test_invalid_verifier_format_is_rejected(self):
-        response, _verifier = self._authorize()
-        self.assertEqual(self._exchange(self._code(response), "short").status_code, 400)
+    def test_invalid_verifier_format_is_rejected_and_consumes_the_code(self):
+        response, verifier = self._authorize()
+        code = self._code(response)
+        exchange = self._exchange(code, "short")
+        self.assertEqual(exchange.status_code, 400)
+        self.assertIn("code verifier", exchange.content.decode())
+        self.assertEqual(self._exchange(code, verifier).status_code, 400)
+        self.assertFalse(ApiToken.objects.exists())
+
+    def test_reused_code_with_invalid_verifier_revokes_the_issued_token(self):
+        response, verifier = self._authorize()
+        code = self._code(response)
+        token = self._exchange(code, verifier).json()["access_token"]
+        self.assertEqual(self._exchange(code, "short").status_code, 400)
+        self.assertFalse(ApiToken.objects.exists())
+        self.assertEqual(self._create_whisper(token).status_code, 401)
 
     def test_redirect_uri_must_match_exactly(self):
         for redirect_uri in (
@@ -407,6 +442,24 @@ class TokenAuthenticationTests(ApiTokenTestCase):
         response = self._create_whisper(token)
         self.assertEqual(response.status_code, 200, response.content)
         self.assertIsNotNone(ApiToken.objects.get().last_used_at)
+
+    def test_last_used_update_is_skipped_after_a_concurrent_write(self):
+        raw_token = self._token()
+        stale = timezone.now() - timedelta(hours=1)
+        concurrent = timezone.now() - timedelta(seconds=5)
+        ApiToken.objects.update(last_used_at=stale)
+
+        def write_concurrently():
+            ApiToken.objects.update(last_used_at=concurrent)
+            return False
+
+        with mock.patch.object(
+            ApiToken, "is_expired", new_callable=mock.PropertyMock
+        ) as is_expired:
+            is_expired.side_effect = write_concurrently
+            token = authenticate_token(raw_token)
+        self.assertEqual(token.last_used_at, stale)
+        self.assertEqual(ApiToken.objects.get().last_used_at, concurrent)
 
     def test_session_requests_still_need_csrf(self):
         client = Client(enforce_csrf_checks=True)
