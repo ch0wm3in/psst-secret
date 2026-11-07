@@ -78,7 +78,7 @@ class ApiV1Tests(TestCase):
             f"/api/v1/whisper/{whisper_id}/reveal", {"reveal_token": _REVEAL_TOKEN}
         )
 
-    @override_settings(APP_VERSION="v9.8.7")
+    @override_settings(APP_VERSION="v9.8.7", PSST_ENABLE_API_TOKENS=False)
     def test_info_reports_versions(self):
         response = self.client.get("/api/v1/info")
         self.assertEqual(response.status_code, 200)
@@ -245,7 +245,6 @@ class ApiV1LoginRequiredTests(TestCase):
 @override_settings(
     MIDDLEWARE=_BASE_MIDDLEWARE,
     REST_FRAMEWORK=_TEST_REST_FRAMEWORK,
-    PSST_ENABLE_RECEIVE_HISTORY=True,
     PSST_FORCE_AUTH_VIEW=False,
 )
 class WhisperStatusTests(TestCase):
@@ -302,10 +301,16 @@ class WhisperStatusTests(TestCase):
             whisper.expires_at.isoformat().replace("+00:00", "Z"),
         )
 
-    @override_settings(PSST_ENABLE_RECEIVE_HISTORY=False)
-    def test_disabled_by_default(self):
+    def test_available_regardless_of_receive_history(self):
         whisper = self._request()
-        self.assertEqual(self._status(whisper.id).status_code, 404)
+        for enabled in (False, True):
+            with (
+                self.subTest(enabled=enabled),
+                self.settings(PSST_ENABLE_RECEIVE_HISTORY=enabled),
+            ):
+                response = self._status(whisper.id)
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(response.json()["status"], "pending")
 
     def test_pending_then_submitted_without_consuming_views(self):
         whisper = self._request(max_views=1)
