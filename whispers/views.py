@@ -383,7 +383,9 @@ class ApiInfoView(APIView):
                     "rich_text": getattr(settings, "PSST_ENABLE_RICH_TEXT", False),
                 },
                 "policies": {
-                    "view_requires_auth": getattr(settings, "PSST_FORCE_AUTH_VIEW", False)
+                    "view_requires_auth": getattr(
+                        settings, "PSST_FORCE_AUTH_VIEW", False
+                    )
                     or _login_required_for(f"api/v1/whisper/{_SAMPLE_ID}/reveal"),
                     "submit_requires_auth": getattr(
                         settings, "PSST_FORCE_AUTH_SUBMIT", False
