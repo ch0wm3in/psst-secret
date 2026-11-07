@@ -35,6 +35,10 @@ def _views_key(whisper_id):
     return f"whisper:views:{whisper_id}"
 
 
+def _submitted_key(whisper_id):
+    return f"whisper:submitted:{whisper_id}"
+
+
 def store_crypto(
     whisper_id,
     ttl_seconds,
@@ -72,6 +76,38 @@ def get_crypto(whisper_id):
     if raw is None:
         return None
     return json.loads(raw)
+
+
+def get_submission_status(whisper_id):
+    """Return ``"pending"``, ``"submitted"``, or ``None`` if the blob is gone.
+
+    Submitted requests are recognised by their marker key, so their ciphertext is
+    never transferred. Without a marker the blob is read, which is cheap while it is
+    still pending; a submitted blob without a marker (stored before markers existed
+    or written directly) gets one so later checks stay cheap.
+    """
+    client = get_client()
+    key = _key(whisper_id)
+    marker = _submitted_key(whisper_id)
+    with client.pipeline() as pipe:
+        pipe.exists(key)
+        pipe.exists(marker)
+        exists, marked = pipe.execute()
+    if not exists:
+        return None
+    if marked:
+        return "submitted"
+    with client.pipeline() as pipe:
+        pipe.get(key)
+        pipe.pttl(key)
+        raw, ttl = pipe.execute()
+    if raw is None:
+        return None
+    if not json.loads(raw).get("ciphertext"):
+        return "pending"
+    if ttl > 0:
+        client.set(marker, "1", px=ttl)
+    return "submitted"
 
 
 def update_crypto(whisper_id, **fields):
@@ -120,6 +156,7 @@ def submit_crypto_once(whisper_id, **fields):
                 data.update(fields)
                 pipe.multi()
                 pipe.set(key, json.dumps(data), keepttl=True)
+                pipe.set(_submitted_key(whisper_id), "1", px=ttl)
                 pipe.execute()
                 return "accepted"
             except redis.WatchError:
@@ -139,7 +176,7 @@ def get_and_delete_crypto(whisper_id):
                 if raw is None:
                     return None
                 pipe.multi()
-                pipe.delete(key)
+                pipe.delete(key, _submitted_key(whisper_id))
                 pipe.execute()
                 return json.loads(raw)
             except redis.WatchError:
@@ -148,9 +185,9 @@ def get_and_delete_crypto(whisper_id):
 
 def delete_crypto(whisper_id):
     """Remove the crypto blob from Redis (burn-after-read / manual cleanup)."""
-    client = get_client()
-    client.delete(_key(whisper_id))
-    client.delete(_views_key(whisper_id))
+    get_client().delete(
+        _key(whisper_id), _views_key(whisper_id), _submitted_key(whisper_id)
+    )
 
 
 def get_view_count(whisper_id):
@@ -208,7 +245,7 @@ def increment_and_reveal(whisper_id, max_views, reveal_token):
                 exhausted = max_views > 0 and count >= max_views
                 pipe.multi()
                 if exhausted:
-                    pipe.delete(key, counter_key)
+                    pipe.delete(key, counter_key, _submitted_key(whisper_id))
                 else:
                     pipe.set(counter_key, count, px=ttl)
                 pipe.execute()

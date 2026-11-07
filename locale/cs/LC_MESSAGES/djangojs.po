@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psst-secret\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-06 14:52+0000\n"
+"POT-Creation-Date: 2026-11-07 16:18+0000\n"
 "PO-Revision-Date: 2026-10-09 07:02+0000\n"
 "Last-Translator: \n"
 "Language-Team: Czech\n"
@@ -13,7 +13,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n == 1) ? 0 : (n >= 2 && n <= 4) ? 1 : 2;\n"
 
-#: static/js/crypto.js:130 static/js/receive-history.js:559
+#: static/js/crypto.js:130 static/js/receive-history.js:583
 msgid "Remove"
 msgstr "Odstranit"
 
@@ -78,7 +78,7 @@ msgstr "Chyba: %s"
 msgid "Encrypt & Share"
 msgstr "Zašifrovat a sdílet"
 
-#: static/js/crypto.js:612 static/js/receive-history.js:355
+#: static/js/crypto.js:612 static/js/receive-history.js:364
 msgid "Copied!"
 msgstr "Zkopírováno!"
 
@@ -128,32 +128,32 @@ msgstr "Přístup se nepodařilo aktualizovat."
 msgid "Access updated."
 msgstr "Přístup byl aktualizován."
 
-#: static/js/receive-history.js:280
+#: static/js/receive-history.js:289
 msgid "Waiting for sender"
 msgstr "Čeká na odesílatele"
 
-#: static/js/receive-history.js:281
+#: static/js/receive-history.js:290
 msgid "Ready to view"
 msgstr "Připraveno k zobrazení"
 
-#: static/js/receive-history.js:282
+#: static/js/receive-history.js:291
 msgid "Viewed"
 msgstr "Zobrazeno"
 
-#: static/js/receive-history.js:283
+#: static/js/receive-history.js:292
 msgid "Expired"
 msgstr "Vypršelo"
 
-#: static/js/receive-history.js:284
+#: static/js/receive-history.js:293
 msgid "Burned"
 msgstr "Smazáno"
 
-#: static/js/receive-history.js:324
+#: static/js/receive-history.js:333
 #, javascript-format
 msgid "Expires %s"
 msgstr "Vyprší %s"
 
-#: static/js/receive-history.js:380
+#: static/js/receive-history.js:386
 #, javascript-format
 msgid ""
 "Also delete the %s saved receive request from this browser? Choose Cancel to "
@@ -171,11 +171,11 @@ msgstr[2] ""
 "Smazat z tohoto prohlížeče také všech %s uložených žádostí o přijetí? Zvolte "
 "Zrušit, chcete-li je ponechat."
 
-#: static/js/receive-history.js:441 static/js/receive-history.js:525
+#: static/js/receive-history.js:447 static/js/receive-history.js:541
 msgid "No label"
 msgstr "Bez štítku"
 
-#: static/js/receive-history.js:472
+#: static/js/receive-history.js:480
 msgid ""
 "Delete all saved receive requests from this browser? You will no longer be "
 "able to open them from here."
@@ -183,28 +183,28 @@ msgstr ""
 "Smazat z tohoto prohlížeče všechny uložené žádosti o přijetí? Poté je odtud "
 "již nebude možné otevřít."
 
-#: static/js/receive-history.js:498
+#: static/js/receive-history.js:507
 msgid "Label"
 msgstr "Štítek"
 
-#: static/js/receive-history.js:499
+#: static/js/receive-history.js:508
 msgid "e.g. AWS credentials from Bob"
 msgstr "např. přihlašovací údaje AWS od Boba"
 
-#: static/js/receive-history.js:501
+#: static/js/receive-history.js:511
 msgid "Save"
 msgstr "Uložit"
 
-#: static/js/receive-history.js:503
+#: static/js/receive-history.js:514
 msgid "Cancel"
 msgstr "Zrušit"
 
-#: static/js/receive-history.js:531
+#: static/js/receive-history.js:547
 #, javascript-format
 msgid "Created %s"
 msgstr "Vytvořeno %s"
 
-#: static/js/receive-history.js:536
+#: static/js/receive-history.js:552
 #, javascript-format
 msgid "%s view remaining"
 msgid_plural "%s views remaining"
@@ -212,35 +212,35 @@ msgstr[0] "Zbývá %s zobrazení"
 msgstr[1] "Zbývají %s zobrazení"
 msgstr[2] "Zbývá %s zobrazení"
 
-#: static/js/receive-history.js:540
+#: static/js/receive-history.js:556
 msgid "Unlimited views"
 msgstr "Neomezený počet zobrazení"
 
-#: static/js/receive-history.js:543
+#: static/js/receive-history.js:559
 msgid "Password-protected"
 msgstr "Chráněno heslem"
 
-#: static/js/receive-history.js:551
+#: static/js/receive-history.js:567
 msgid "Submit link"
 msgstr "Odkaz pro odeslání"
 
-#: static/js/receive-history.js:552
+#: static/js/receive-history.js:569
 msgid "Copy submit link"
 msgstr "Kopírovat odkaz pro odeslání"
 
-#: static/js/receive-history.js:557
+#: static/js/receive-history.js:574
 msgid "View whisper"
 msgstr "Zobrazit whisper"
 
-#: static/js/receive-history.js:558
+#: static/js/receive-history.js:576
 msgid "Edit label"
 msgstr "Upravit štítek"
 
-#: static/js/receive-history.js:582
+#: static/js/receive-history.js:607
 msgid "No saved receive requests in this browser."
 msgstr "V tomto prohlížeči nejsou žádné uložené žádosti o přijetí."
 
-#: static/js/receive-history.js:583
+#: static/js/receive-history.js:608
 msgid "No receive requests match this filter."
 msgstr "Tomuto filtru neodpovídají žádné žádosti o přijetí."
 

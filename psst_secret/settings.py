@@ -183,6 +183,7 @@ SESSION_COOKIE_SAMESITE = "Lax"
 CSRF_COOKIE_SAMESITE = "Lax"
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_BROWSER_XSS_FILTER = True
+SESSION_COOKIE_AGE = env.int("SESSION_COOKIE_AGE", default=172800)  # 2 days
 # Never send a Referer cross-site; "no-referrer" would make browsers send Origin: null and break CSRF.
 SECURE_REFERRER_POLICY = "same-origin"
 
@@ -215,7 +216,7 @@ PSST_FORCE_RECEIVE_ACCESS = env.bool("PSST_FORCE_RECEIVE_ACCESS", default=False)
 # API tokens for the CLI and browser extension, issued through a loopback + PKCE sign-in.
 # Requires ENABLE_AUTH. See docs/api.md#api-tokens.
 PSST_ENABLE_API_TOKENS = env.bool("PSST_ENABLE_API_TOKENS", default=False)
-PSST_API_TOKEN_TTL = env.int("PSST_API_TOKEN_TTL", default=7 * 24 * 60 * 60)
+PSST_API_TOKEN_TTL = env.int("PSST_API_TOKEN_TTL", default=172800)  # 2 days
 PSST_ENABLE_API_TOKEN_MANUAL_CODE = env.bool(
     "PSST_ENABLE_API_TOKEN_MANUAL_CODE", default=False
 )

@@ -707,7 +707,7 @@ async function handleCreateRequest() {
         const history = window.PsstReceiveHistory;
         const savedNotice = document.getElementById('receive-history-saved');
         if (history && history.isEnabled() && savedNotice) {
-            const saved = history.add({
+            const saved = await history.add({
                 id: data.id,
                 viewUrl,
                 submitUrl,

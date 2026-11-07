@@ -7,7 +7,7 @@ the server only ever handles ciphertext, public keys, and metadata.
 
 | Store | What it holds | Persistence |
 |---|---|---|
-| **Redis** | Ciphertext, IV, PBKDF2 salt, receive-mode public key, key encapsulation, password-encrypted private key seed and its IV, reveal-token hash, view counter | In memory only by default (`--save "" --appendonly no`) |
+| **Redis** | Ciphertext, IV, PBKDF2 salt, receive-mode public key, key encapsulation, password-encrypted private key seed and its IV, reveal-token hash, view counter, receive-mode submitted flag (lets [status checks](api.md#receive-request-status) skip reading the ciphertext) | In memory only by default (`--save "" --appendonly no`) |
 | **PostgreSQL / SQLite** | Metadata: view identifier, separate submit token, timestamps, mode, view limit, IP restriction, auth flags, optional notification email, receive creator and approved readers. With [API tokens](api.md#api-tokens) enabled, also SHA-256 hashes of API tokens and sign-in codes with their user, client name, scopes, and times | On disk |
 
 With the default configuration, encrypted data never touches disk, and a Redis restart

@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psst-secret\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-06 14:52+0000\n"
+"POT-Creation-Date: 2026-11-07 16:18+0000\n"
 "PO-Revision-Date: 2026-10-09 07:50+0000\n"
 "Last-Translator: \n"
 "Language-Team: Swedish\n"
@@ -13,7 +13,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: static/js/crypto.js:130 static/js/receive-history.js:559
+#: static/js/crypto.js:130 static/js/receive-history.js:583
 msgid "Remove"
 msgstr "Ta bort"
 
@@ -80,7 +80,7 @@ msgstr "Fel: %s"
 msgid "Encrypt & Share"
 msgstr "Kryptera och dela"
 
-#: static/js/crypto.js:612 static/js/receive-history.js:355
+#: static/js/crypto.js:612 static/js/receive-history.js:364
 msgid "Copied!"
 msgstr "Kopierat!"
 
@@ -131,32 +131,32 @@ msgstr "Det gick inte att uppdatera åtkomsten."
 msgid "Access updated."
 msgstr "Åtkomsten har uppdaterats."
 
-#: static/js/receive-history.js:280
+#: static/js/receive-history.js:289
 msgid "Waiting for sender"
 msgstr "Väntar på avsändaren"
 
-#: static/js/receive-history.js:281
+#: static/js/receive-history.js:290
 msgid "Ready to view"
 msgstr "Redo att visas"
 
-#: static/js/receive-history.js:282
+#: static/js/receive-history.js:291
 msgid "Viewed"
 msgstr "Visad"
 
-#: static/js/receive-history.js:283
+#: static/js/receive-history.js:292
 msgid "Expired"
 msgstr "Utgången"
 
-#: static/js/receive-history.js:284
+#: static/js/receive-history.js:293
 msgid "Burned"
 msgstr "Raderad"
 
-#: static/js/receive-history.js:324
+#: static/js/receive-history.js:333
 #, javascript-format
 msgid "Expires %s"
 msgstr "Går ut %s"
 
-#: static/js/receive-history.js:380
+#: static/js/receive-history.js:386
 #, javascript-format
 msgid ""
 "Also delete the %s saved receive request from this browser? Choose Cancel to "
@@ -171,11 +171,11 @@ msgstr[1] ""
 "Ta också bort alla %s sparade mottagningsförfrågningar från den här "
 "webbläsaren? Välj Avbryt för att behålla dem."
 
-#: static/js/receive-history.js:441 static/js/receive-history.js:525
+#: static/js/receive-history.js:447 static/js/receive-history.js:541
 msgid "No label"
 msgstr "Ingen etikett"
 
-#: static/js/receive-history.js:472
+#: static/js/receive-history.js:480
 msgid ""
 "Delete all saved receive requests from this browser? You will no longer be "
 "able to open them from here."
@@ -183,63 +183,63 @@ msgstr ""
 "Ta bort alla sparade mottagningsförfrågningar från den här webbläsaren? Du "
 "kan då inte längre öppna dem härifrån."
 
-#: static/js/receive-history.js:498
+#: static/js/receive-history.js:507
 msgid "Label"
 msgstr "Etikett"
 
-#: static/js/receive-history.js:499
+#: static/js/receive-history.js:508
 msgid "e.g. AWS credentials from Bob"
 msgstr "t.ex. AWS-inloggningsuppgifter från Bob"
 
-#: static/js/receive-history.js:501
+#: static/js/receive-history.js:511
 msgid "Save"
 msgstr "Spara"
 
-#: static/js/receive-history.js:503
+#: static/js/receive-history.js:514
 msgid "Cancel"
 msgstr "Avbryt"
 
-#: static/js/receive-history.js:531
+#: static/js/receive-history.js:547
 #, javascript-format
 msgid "Created %s"
 msgstr "Skapad %s"
 
-#: static/js/receive-history.js:536
+#: static/js/receive-history.js:552
 #, javascript-format
 msgid "%s view remaining"
 msgid_plural "%s views remaining"
 msgstr[0] "%s visning kvar"
 msgstr[1] "%s visningar kvar"
 
-#: static/js/receive-history.js:540
+#: static/js/receive-history.js:556
 msgid "Unlimited views"
 msgstr "Obegränsat antal visningar"
 
-#: static/js/receive-history.js:543
+#: static/js/receive-history.js:559
 msgid "Password-protected"
 msgstr "Lösenordsskyddad"
 
-#: static/js/receive-history.js:551
+#: static/js/receive-history.js:567
 msgid "Submit link"
 msgstr "Inlämningslänk"
 
-#: static/js/receive-history.js:552
+#: static/js/receive-history.js:569
 msgid "Copy submit link"
 msgstr "Kopiera inlämningslänk"
 
-#: static/js/receive-history.js:557
+#: static/js/receive-history.js:574
 msgid "View whisper"
 msgstr "Visa whisper"
 
-#: static/js/receive-history.js:558
+#: static/js/receive-history.js:576
 msgid "Edit label"
 msgstr "Redigera etikett"
 
-#: static/js/receive-history.js:582
+#: static/js/receive-history.js:607
 msgid "No saved receive requests in this browser."
 msgstr "Inga sparade mottagningsförfrågningar i den här webbläsaren."
 
-#: static/js/receive-history.js:583
+#: static/js/receive-history.js:608
 msgid "No receive requests match this filter."
 msgstr "Inga mottagningsförfrågningar matchar filtret."
 

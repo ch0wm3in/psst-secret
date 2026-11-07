@@ -249,6 +249,31 @@ def test_label_draft_survives_background_refresh(page, app_url):
     assert _stored(page)["entries"][0]["label"] == LABEL
 
 
+@pytest.mark.parametrize("action", [VIEW, "Copy submit link", "Edit label"])
+def test_keyboard_focus_survives_background_refresh(page, app_url, action):
+    _create_saved(page, app_url)
+    page.goto(app_url + "/receives")
+    _card(page).evaluate("node => { node.dataset.stale = '' }")
+    button = _card(page).get_by_role("button", name=action)
+    button.focus()
+    page.evaluate("PsstReceiveHistory.refresh(true)")
+    expect(page.locator("[data-stale]")).to_have_count(0)
+    expect(button).to_be_focused()
+
+
+def test_saved_notice_requires_a_successful_write(page, app_url):
+    _opt_in(page, app_url)
+    page.evaluate("""() => {
+        Storage.prototype.setItem = () => {
+            throw new DOMException('Full', 'QuotaExceededError');
+        };
+    }""")
+    page.locator("#request-btn").click()
+    expect(page.locator("#receive-result")).to_be_visible()
+    expect(page.locator("#receive-history-saved")).to_be_hidden()
+    assert _stored(page)["entries"] == []
+
+
 def test_remove_and_clear_all(page, app_url):
     for label in ("First", "Second", "Third"):
         _create_saved(page, app_url, label=label)
@@ -365,6 +390,38 @@ def test_entries_sync_between_tabs(page, app_url, context):
     page.goto(app_url + "/receives")
     page.get_by_role("button", name="Remove").click()
     expect(other.locator("#receive-history-list > li")).to_have_count(0)
+
+
+def test_changes_wait_for_other_tabs_and_use_fresh_data(page, app_url, context):
+    _create_saved(page, app_url)
+    page.goto(app_url + "/receives")
+    other = context.new_page()
+    other.goto(app_url + "/receives")
+    other.evaluate("""() => new Promise(granted => navigator.locks.request(
+        'psst.receiveHistory',
+        () => { granted(); return new Promise(release => { window.releaseLock = release; }); }
+    ))""")
+    page.get_by_role("button", name="Remove").click()
+    page.wait_for_timeout(300)
+    assert len(_stored(page)["entries"]) == 1, "removal must wait for the lock"
+    added = other.evaluate(f"""() => {{
+        const key = {json.dumps(STORAGE_KEY)};
+        const data = JSON.parse(localStorage.getItem(key));
+        const id = crypto.randomUUID();
+        const old = data.entries[0];
+        data.entries.unshift({{
+            ...old,
+            id,
+            label: 'Added elsewhere',
+            viewUrl: old.viewUrl.replace(old.id, id),
+        }});
+        localStorage.setItem(key, JSON.stringify(data));
+        window.releaseLock();
+        return id;
+    }}""")
+    expect(_card(page)).to_have_count(1)
+    expect(_card(page)).to_contain_text("Added elsewhere")
+    assert [e["id"] for e in _stored(page)["entries"]] == [added]
 
 
 @pytest.mark.parametrize("language", ["da", "cs", "sv", "fil"])

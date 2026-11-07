@@ -61,6 +61,7 @@ Authentication uses [django-allauth](https://docs.allauth.org/) and is enabled w
 | `LOGIN_REQUIRED_EXEMPT_URLS` | Comma-separated regexes for paths that bypass the login requirement (no leading `/`). The view and submit pages and their `api/v1/` endpoints are added unless `PSST_FORCE_AUTH_VIEW` or `PSST_FORCE_AUTH_SUBMIT` is set. A pattern for an unversioned path also covers its `api/v1/` equivalent; for example, `api/whisper$` also exempts `api/v1/whisper`. `api/v1/info`, `api/v1/cli/token`, and `cli/authorize` are always exempt; the authorize page sends visitors to the login page itself. `/api/v1/` requests that need sign-in get a JSON `401` instead of a redirect. | `login/,accounts/.*,i18n/.*,jsi18n/,static/.*` |
 | `ACCOUNT_EMAIL_VERIFICATION` | allauth email verification: `mandatory`, `optional`, or `none`. | `none` |
 | `ACCOUNT_DEFAULT_HTTP_PROTOCOL` | Protocol allauth uses for absolute URLs in emails. | `https` (`http` in `DEBUG`) |
+| `SESSION_COOKIE_AGE` | The age of session cookies, in seconds. | `172800` (2 days) |
 
 ## API tokens
 
@@ -71,7 +72,7 @@ Requires `ENABLE_AUTH=True`.
 | Variable | Description | Default |
 |---|---|---|
 | `PSST_ENABLE_API_TOKENS` | Enable the `/cli/authorize` sign-in, the token endpoints, the **API tokens** page, and token authentication for `/api/v1/`. | `False` |
-| `PSST_API_TOKEN_TTL` | Token lifetime in seconds. A user disabled at the identity provider keeps access through existing tokens until they expire. | `604800` (7 days) |
+| `PSST_API_TOKEN_TTL` | Token lifetime in seconds. A user disabled at the identity provider keeps access through existing tokens until they expire. | `172800` (2 days) |
 | `PSST_ENABLE_API_TOKEN_MANUAL_CODE` | Allow the copy-paste code fallback for machines where the browser cannot reach the client's loopback listener. The sign-in can then finish on a different device. | `False` |
 
 ## Receive reader access

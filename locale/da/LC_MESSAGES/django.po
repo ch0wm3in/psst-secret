@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-06 14:57+0000\n"
+"POT-Creation-Date: 2026-11-07 16:58+0000\n"
 "PO-Revision-Date: 2026-04-17 15:26+0000\n"
 "Last-Translator: \n"
 "Language-Team: Danish\n"
@@ -130,16 +130,16 @@ msgstr "Sådan virker det"
 msgid ""
 "%(brand_name)s ensures that <strong class=\"text-white\">your whispers never "
 "exist in plaintext on our server</strong>. All encryption and decryption "
-"happens entirely in your browser using the <a href=\"https://developer."
-"mozilla.org/en-US/docs/Web/API/Web_Crypto_API\" class=\"text-brand-400 "
-"underline hover:text-brand-300\" target=\"_blank\" rel=\"noopener "
+"happens entirely in your browser using the <a href=\"https://"
+"developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API\" class=\"text-"
+"brand-400 underline hover:text-brand-300\" target=\"_blank\" rel=\"noopener "
 "noreferrer\">Web Crypto API</a>."
 msgstr ""
 "%(brand_name)s sikrer, at <strong class=\"text-white\">dine whispers aldrig "
 "findes i klartekst på vores server</strong>. Al kryptering og dekryptering "
-"foregår udelukkende i din browser ved hjælp af <a href=\"https://developer."
-"mozilla.org/en-US/docs/Web/API/Web_Crypto_API\" class=\"text-brand-400 "
-"underline hover:text-brand-300\" target=\"_blank\" rel=\"noopener "
+"foregår udelukkende i din browser ved hjælp af <a href=\"https://"
+"developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API\" class=\"text-"
+"brand-400 underline hover:text-brand-300\" target=\"_blank\" rel=\"noopener "
 "noreferrer\">Web Crypto API</a>."
 
 #: templates/whispers/about.html:28
@@ -534,11 +534,11 @@ msgstr "Redis (med persistens aktiveret)"
 msgid "Redis (in-memory only — never touches disk)"
 msgstr "Redis (kun i hukommelsen — skriver aldrig til disk)"
 
-#: templates/whispers/about.html:179 templates/whispers/about.html:199
+#: templates/whispers/about.html:179 templates/whispers/about.html:201
 msgid "Field"
 msgstr "Felt"
 
-#: templates/whispers/about.html:180 templates/whispers/about.html:200
+#: templates/whispers/about.html:180 templates/whispers/about.html:202
 msgid "Purpose"
 msgstr "Formål"
 
@@ -575,44 +575,58 @@ msgstr ""
 "(kun hvis adgangskodebeskyttet)"
 
 #: templates/whispers/about.html:190
+msgid ""
+"SHA-256 hash of the reveal token from your view link, checked before each "
+"reveal (the token itself is never stored)"
+msgstr "SHA-256-hash af visningstokenet fra dit visningslink, kontrolleres før hver visning (selve tokenet gemmes aldrig)"
+
+#: templates/whispers/about.html:191
 msgid "Reveal counter, used to enforce the view limit"
 msgstr "Visningstæller, der bruges til at håndhæve visningsgrænsen"
 
-#: templates/whispers/about.html:195
+#: templates/whispers/about.html:192
+msgid ""
+"Receive mode: flag set when something is submitted, so status checks never "
+"read the encrypted data"
+msgstr ""
+"Modtag-tilstand: flag, der sættes, når noget indsendes, så statustjek aldrig "
+"læser de krypterede data"
+
+#: templates/whispers/about.html:197
 msgid "PostgreSQL (metadata only)"
 msgstr "PostgreSQL (kun metadata)"
 
-#: templates/whispers/about.html:204
+#: templates/whispers/about.html:206
 msgid "Random identifier used in the view link"
 msgstr "Tilfældigt id, der bruges i visningslinket"
 
-#: templates/whispers/about.html:205
+#: templates/whispers/about.html:207
 msgid "Receive mode: separate random identifier used in the submit link"
 msgstr "Modtag-tilstand: separat tilfældigt id, der bruges i indsend-linket"
 
-#: templates/whispers/about.html:206
+#: templates/whispers/about.html:208
 msgid "When the whisper was created and when it will be auto-deleted"
 msgstr "Hvornår whisperen blev oprettet, og hvornår den slettes automatisk"
 
-#: templates/whispers/about.html:207
+#: templates/whispers/about.html:209
 msgid "Number of allowed reveals before destruction (1 = burn; 0 = unlimited)"
 msgstr ""
 "Antal tilladte visninger før sletning (1 = slet efter læsning; 0 = "
 "ubegrænset)"
 
-#: templates/whispers/about.html:208
+#: templates/whispers/about.html:210
 msgid "Send or receive"
 msgstr "Send eller modtag"
 
-#: templates/whispers/about.html:209
+#: templates/whispers/about.html:211
 msgid "IP/CIDR restriction"
 msgstr "IP/CIDR-begrænsning"
 
-#: templates/whispers/about.html:210
+#: templates/whispers/about.html:212
 msgid "Whether signing in is required to view or submit"
 msgstr "Om login er påkrævet for at se eller indsende"
 
-#: templates/whispers/about.html:212
+#: templates/whispers/about.html:214
 msgid ""
 "Receive mode: creator and approved reader account references (never included "
 "in statistics)"
@@ -620,11 +634,11 @@ msgstr ""
 "Modtagertilstand: henvisninger til opretterens og godkendte læseres konti "
 "(medtages aldrig i statistikken)"
 
-#: templates/whispers/about.html:214
+#: templates/whispers/about.html:216
 msgid "Email address to notify (only if you opt in)"
 msgstr "E-mailadresse, der skal notificeres (kun hvis du vælger det)"
 
-#: templates/whispers/about.html:219
+#: templates/whispers/about.html:221
 msgid ""
 "The server does <strong>not</strong> store: plaintext, encryption keys, "
 "private keys, or passwords. An email address is only stored if you opt in to "
@@ -635,7 +649,7 @@ msgstr ""
 "notifikationer til. Krypterede data gemmes i Redis med vedvarende "
 "datalagring."
 
-#: templates/whispers/about.html:221
+#: templates/whispers/about.html:223
 msgid ""
 "The server does <strong>not</strong> store: plaintext, encryption keys, "
 "private keys, or passwords. An email address is only stored if you opt in to "
@@ -647,19 +661,19 @@ msgstr ""
 "notifikationer til. Krypterede data findes kun i flygtig hukommelse og går "
 "tabt, hvis Redis genstarter."
 
-#: templates/whispers/about.html:228
+#: templates/whispers/about.html:230
 msgid "Tech Stack"
 msgstr "Teknologistak"
 
-#: templates/whispers/about.html:232
+#: templates/whispers/about.html:234
 msgid "Redis (persistent)"
 msgstr "Redis (vedvarende)"
 
-#: templates/whispers/about.html:234
+#: templates/whispers/about.html:236
 msgid "Redis (in-memory)"
 msgstr "Redis (i hukommelse)"
 
-#: templates/whispers/about.html:249
+#: templates/whispers/about.html:251
 msgid "Create a whisper"
 msgstr "Opret en whisper"
 
@@ -853,7 +867,7 @@ msgstr ""
 "Linket bruger en formatversion, der ikke understøttes. Bed om et nyt link."
 
 #: templates/whispers/confirm.html:37 templates/whispers/forbidden.html:10
-#: whispers/views.py:562
+#: whispers/views.py:570
 msgid ""
 "The reveal authorization is missing or invalid. Use the complete view link."
 msgstr ""
@@ -1148,7 +1162,7 @@ msgid "The person submitting a whisper to this request must be signed in."
 msgstr "Personen der sender en whisper skal være logget ind."
 
 #: templates/whispers/create.html:251 templates/whispers/receive_access.html:8
-#: whispers/views.py:905
+#: whispers/views.py:913
 msgid "Restricted receive access is required."
 msgstr "Begrænset læseadgang i modtagertilstand er påkrævet."
 
@@ -1464,8 +1478,8 @@ msgstr "Adgang nægtet"
 msgid "Access denied"
 msgstr "Adgang nægtet"
 
-#: templates/whispers/forbidden.html:10 whispers/views.py:519
-#: whispers/views.py:672
+#: templates/whispers/forbidden.html:10 whispers/views.py:527
+#: whispers/views.py:680
 msgid "You do not have access to this whisper."
 msgstr "Du har ikke adgang til denne whisper."
 
@@ -2379,19 +2393,19 @@ msgstr "Send det API-token, der skal tilbagekaldes, i Authorization-headeren."
 msgid "Whisper storage is temporarily unavailable. Please try again later."
 msgstr "Whisper-lageret er midlertidigt utilgængeligt. Prøv igen senere."
 
-#: whispers/views.py:189 whispers/views.py:815 whispers/views.py:920
+#: whispers/views.py:197 whispers/views.py:823 whispers/views.py:928
 msgid "Enter the verified primary email of each additional reader."
 msgstr "Angiv hver ekstra læsers bekræftede primære e-mailadresse."
 
-#: whispers/views.py:798
+#: whispers/views.py:806
 msgid "Receive reader restrictions are not enabled."
 msgstr "Begrænset læseadgang i modtagertilstand er ikke aktiveret."
 
-#: whispers/views.py:802
+#: whispers/views.py:810
 msgid "Sign in to manage reader access."
 msgstr "Log ind for at administrere læseadgang."
 
-#: whispers/views.py:806 whispers/views.py:911
+#: whispers/views.py:814 whispers/views.py:919
 msgid "Enable restricted access before adding readers."
 msgstr "Aktivér begrænset adgang, før du tilføjer læsere."
 
