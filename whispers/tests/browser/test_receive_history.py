@@ -298,6 +298,14 @@ def test_remove_and_clear_all(page, app_url):
     assert _stored(page) == {"version": 1, "enabled": True, "entries": []}
 
 
+def _wait_for_enabled(page, enabled):
+    """Toggle changes are saved asynchronously under a Web Lock."""
+    page.wait_for_function(
+        f"(JSON.parse(localStorage.getItem({json.dumps(STORAGE_KEY)})) || {{}})"
+        f".enabled === {json.dumps(enabled)}"
+    )
+
+
 def test_turning_off_can_keep_or_delete_entries(page, app_url):
     _create_saved(page, app_url)
     page.goto(app_url + "/receives")
@@ -305,12 +313,14 @@ def test_turning_off_can_keep_or_delete_entries(page, app_url):
     page.once("dialog", lambda dialog: dialog.dismiss())
     toggle.uncheck()
     expect(toggle).not_to_be_checked()
+    _wait_for_enabled(page, False)
     stored = _stored(page)
     assert stored["enabled"] is False and len(stored["entries"]) == 1
     page.goto(app_url)
     expect(page.locator("#receive-drawer")).to_be_hidden()
     page.goto(app_url + "/receives")
     toggle.check()
+    _wait_for_enabled(page, True)
     messages = []
 
     def accept(dialog):
@@ -320,6 +330,7 @@ def test_turning_off_can_keep_or_delete_entries(page, app_url):
     page.once("dialog", accept)
     toggle.uncheck()
     expect(toggle).not_to_be_checked()
+    page.wait_for_function("localStorage.length === 0")
     assert "delete" in messages[0]
     assert page.evaluate("[localStorage.length, sessionStorage.length]") == [0, 0]
 
