@@ -28,7 +28,9 @@ def test_login_required_invalid_credentials_and_logout(page, app_url, verified_u
     page.get_by_role("button", name="Sign in", exact=True).click()
     expect(page.locator("#whisper")).to_be_visible()
     page.get_by_title(user.username, exact=True).click()
-    page.get_by_role("button", name="Sign out", exact=True).click()
+    # Navigating away before the logout POST completes can abort it in WebKit.
+    with page.expect_navigation():
+        page.get_by_role("button", name="Sign out", exact=True).click()
     page.goto(app_url)
     expect(page.locator("#username")).to_be_visible()
 
