@@ -38,8 +38,9 @@ with `?render=1`. Neither is part of the documented schema.
 ## Server info
 
 `GET /api/v1/info` returns the server version, the API version, the format versions
-the server accepts for new whispers, and how clients can authenticate. It never
-requires sign-in, so clients can call it before they have a token.
+the server accepts for new whispers, how clients can authenticate, and which optional
+features, sign-in policies, and limits the deployment uses. It never requires sign-in,
+so clients can call it before they have a token.
 
 ```json
 {
@@ -51,13 +52,38 @@ requires sign-in, so clients can call it before they have a token.
     "loopback_pkce": true,
     "manual_code": false,
     "scopes": ["whisper:create", "whisper:read", "request:manage"]
+  },
+  "features": {
+    "email_notifications": true,
+    "receive_access": {"enabled": true, "default": false, "required": false},
+    "receive_history": false,
+    "rich_text": true
+  },
+  "policies": {"view_requires_auth": false, "submit_requires_auth": false},
+  "limits": {
+    "max_upload_bytes": 10000000,
+    "max_views": 100,
+    "expiry_options": ["5m", "1h", "1d", "1w", "1M"]
   }
 }
 ```
 
-`login_required` says whether creating whispers needs authentication. `loopback_pkce`
-and `manual_code` say which [API token](#api-tokens) sign-in methods are available;
-`scopes` is empty when API tokens are off.
+- **`auth`:** `login_required` says whether creating whispers needs authentication.
+  `loopback_pkce` and `manual_code` say which [API token](#api-tokens) sign-in methods
+  are available; `scopes` is empty when API tokens are off.
+- **`features`:** optional features from the [configuration](configuration.md).
+  `email_notifications` says whether `notify_email` sends email. `receive_access` says
+  whether requests accept [reader restrictions](#receive-reader-access), whether
+  `creator_only` defaults to on, and whether it is required. `receive_history` refers to
+  saved requests in the web app, and `rich_text` to Markdown rendering of text envelopes
+  with `"format": "markdown"`.
+- **`policies`:** whether every reveal or submission requires sign-in, regardless of the
+  per-whisper `require_auth_view` and `require_auth_submit` options.
+- **`limits`:** the largest accepted request body in bytes (ciphertext is base64, so
+  plaintext must be smaller), the highest `max_views`, and the accepted `expiry` values.
+
+Clients should hide or disable options the server does not offer. New fields may be
+added within API version 1, so ignore fields you do not recognize.
 
 ## Reveal tokens
 

@@ -40,6 +40,7 @@ Whenever user-facing strings are added or changed in templates, Python, or JavaS
 - Never log or store whisper content, keys, IDs, submit tokens, IP addresses, email addresses, or user identifiers in analytics or statistics.
 - Use atomic Redis operations, such as `WATCH`/`MULTI`/`EXEC` in `redis_store.py`, for state transitions such as reveals, burns, and submissions.
 - Respect `ENABLE_AUTH`, `LOGIN_REQUIRED_EXEMPT_URLS`, `PSST_FORCE_AUTH_VIEW`, and `PSST_FORCE_AUTH_SUBMIT`. New optional features should use an opt-in `PSST_ENABLE_*` setting that defaults to `False`.
+- Third-party clients discover what a deployment supports from `GET /api/v1/info` (`ApiInfoView`). When adding or changing an optional feature, a `PSST_FORCE_*` policy, or a limit that affects what clients can send or must do, report it there: update `ApiInfoView` and `ApiInfoSerializer`, regenerate `spec/openapi.yaml`, document it in `docs/api.md#server-info`, and test it in `whispers/tests/test_api_v1.py`. Only add fields (see the compatibility policy in `docs/format.md`), and expose only booleans, limits, and allowed values, never secrets, hostnames, or rate limits.
 
 ## Code and tests
 - Follow Black and isort with the Black profile, plus Flake8 using `setup.cfg` and a 110-character maximum line length.

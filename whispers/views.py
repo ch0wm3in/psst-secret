@@ -22,11 +22,20 @@ from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
 from rest_framework.views import APIView
 from rest_framework.views import exception_handler as drf_exception_handler
 
-from whispers.constants import API_VERSION, EXPIRY_DELTAS, SUPPORTED_FORMAT_VERSIONS
+from whispers.constants import (
+    API_VERSION,
+    EXPIRY_DELTAS,
+    MAX_VIEWS,
+    SUPPORTED_FORMAT_VERSIONS,
+)
 
 from . import api_tokens, redis_store
-from .deployment import _login_required_for, deployment_features
-from .email import send_whisper_created_email, send_whisper_submitted_email
+from .deployment import _SAMPLE_ID, _login_required_for, deployment_features
+from .email import (
+    _email_enabled,
+    send_whisper_created_email,
+    send_whisper_submitted_email,
+)
 from .models import Whisper
 from .serializers import (
     ApiInfoSerializer,
@@ -334,12 +343,16 @@ def receive_history(request):
 
 
 class ApiInfoView(APIView):
-    """Report the server version and the API and format versions it supports."""
+    """Report the server version, supported versions, and the deployment's optional features."""
 
     permission_classes = [AllowAny]
 
     @extend_schema(responses={200: ApiInfoSerializer})
     def get(self, request):
+        receive_access = _receive_access_enabled()
+        force_access = receive_access and getattr(
+            settings, "PSST_FORCE_RECEIVE_ACCESS", False
+        )
         return Response(
             {
                 "server_version": settings.APP_VERSION,
@@ -354,6 +367,33 @@ class ApiInfoView(APIView):
                         if api_tokens.api_tokens_enabled()
                         else []
                     ),
+                },
+                "features": {
+                    "email_notifications": bool(_email_enabled()),
+                    "receive_access": {
+                        "enabled": receive_access,
+                        "default": force_access
+                        or (
+                            receive_access
+                            and getattr(settings, "PSST_RECEIVE_ACCESS_DEFAULT", False)
+                        ),
+                        "required": force_access,
+                    },
+                    "receive_history": _receive_history_enabled(),
+                    "rich_text": getattr(settings, "PSST_ENABLE_RICH_TEXT", False),
+                },
+                "policies": {
+                    "view_requires_auth": getattr(settings, "PSST_FORCE_AUTH_VIEW", False)
+                    or _login_required_for(f"api/v1/whisper/{_SAMPLE_ID}/reveal"),
+                    "submit_requires_auth": getattr(
+                        settings, "PSST_FORCE_AUTH_SUBMIT", False
+                    )
+                    or _login_required_for(f"api/v1/whisper/submit/{_SAMPLE_ID}"),
+                },
+                "limits": {
+                    "max_upload_bytes": settings.DATA_UPLOAD_MAX_MEMORY_SIZE,
+                    "max_views": MAX_VIEWS,
+                    "expiry_options": list(EXPIRY_DELTAS),
                 },
             }
         )

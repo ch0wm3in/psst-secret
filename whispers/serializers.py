@@ -2,7 +2,7 @@ import ipaddress
 
 from rest_framework import serializers
 
-from .constants import EXPIRY_DELTAS, SUPPORTED_FORMAT_VERSIONS
+from .constants import EXPIRY_DELTAS, MAX_VIEWS, SUPPORTED_FORMAT_VERSIONS
 
 
 class CIDRField(serializers.CharField):
@@ -42,7 +42,7 @@ class CreateWhisperSerializer(VersionedPayloadSerializer, RevealProtectedSeriali
     max_views = serializers.IntegerField(
         default=1,
         min_value=0,
-        max_value=100,
+        max_value=MAX_VIEWS,
         help_text="Reveals before self-destruction. 1 = burn after read; 0 = unlimited.",
     )
     expiry = serializers.ChoiceField(
@@ -85,7 +85,7 @@ class CreateRequestSerializer(
     max_views = serializers.IntegerField(
         default=1,
         min_value=0,
-        max_value=100,
+        max_value=MAX_VIEWS,
         help_text="Reveals before self-destruction. 1 = burn after read; 0 = unlimited.",
     )
     expiry = serializers.ChoiceField(
@@ -158,6 +158,50 @@ class ApiInfoAuthSerializer(serializers.Serializer):
     )
 
 
+class ApiInfoReceiveAccessSerializer(serializers.Serializer):
+    enabled = serializers.BooleanField(
+        help_text="Whether requests accept creator_only and allowed_reader_emails."
+    )
+    default = serializers.BooleanField(
+        help_text="Whether creator_only defaults to true when omitted."
+    )
+    required = serializers.BooleanField(
+        help_text="Whether creator_only is always true and cannot be turned off."
+    )
+
+
+class ApiInfoFeaturesSerializer(serializers.Serializer):
+    email_notifications = serializers.BooleanField(
+        help_text="Whether notify_email is used to send notifications."
+    )
+    receive_access = ApiInfoReceiveAccessSerializer()
+    receive_history = serializers.BooleanField(
+        help_text="Whether the web app offers saved receive requests in the browser."
+    )
+    rich_text = serializers.BooleanField(
+        help_text='Whether text envelopes with "format": "markdown" are rendered as Markdown.'
+    )
+
+
+class ApiInfoPoliciesSerializer(serializers.Serializer):
+    view_requires_auth = serializers.BooleanField(
+        help_text="Whether every reveal requires sign-in, regardless of per-whisper options."
+    )
+    submit_requires_auth = serializers.BooleanField(
+        help_text="Whether every submission requires sign-in, regardless of per-request options."
+    )
+
+
+class ApiInfoLimitsSerializer(serializers.Serializer):
+    max_upload_bytes = serializers.IntegerField(
+        help_text="Maximum request body size, including ciphertext and base64 overhead."
+    )
+    max_views = serializers.IntegerField(help_text="Highest accepted max_views value.")
+    expiry_options = serializers.ListField(
+        child=serializers.CharField(), help_text="Accepted expiry values."
+    )
+
+
 class ApiInfoSerializer(serializers.Serializer):
     server_version = serializers.CharField()
     api_version = serializers.IntegerField()
@@ -166,6 +210,9 @@ class ApiInfoSerializer(serializers.Serializer):
         help_text="Format versions accepted for new whispers.",
     )
     auth = ApiInfoAuthSerializer()
+    features = ApiInfoFeaturesSerializer()
+    policies = ApiInfoPoliciesSerializer()
+    limits = ApiInfoLimitsSerializer()
 
 
 class TokenExchangeSerializer(serializers.Serializer):

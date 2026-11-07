@@ -46,7 +46,8 @@ paths:
   /api/v1/info:
     get:
       operationId: info_retrieve
-      description: Report the server version and the API and format versions it supports.
+      description: Report the server version, supported versions, and the deployment's
+        optional features.
       tags:
       - info
       security:
@@ -317,10 +318,19 @@ components:
           description: Format versions accepted for new whispers.
         auth:
           $ref: '#/components/schemas/ApiInfoAuth'
+        features:
+          $ref: '#/components/schemas/ApiInfoFeatures'
+        policies:
+          $ref: '#/components/schemas/ApiInfoPolicies'
+        limits:
+          $ref: '#/components/schemas/ApiInfoLimits'
       required:
       - api_version
       - auth
+      - features
       - format_versions
+      - limits
+      - policies
       - server_version
     ApiInfoAuth:
       type: object
@@ -345,6 +355,75 @@ components:
       - loopback_pkce
       - manual_code
       - scopes
+    ApiInfoFeatures:
+      type: object
+      properties:
+        email_notifications:
+          type: boolean
+          description: Whether notify_email is used to send notifications.
+        receive_access:
+          $ref: '#/components/schemas/ApiInfoReceiveAccess'
+        receive_history:
+          type: boolean
+          description: Whether the web app offers saved receive requests in the browser.
+        rich_text:
+          type: boolean
+          description: 'Whether text envelopes with "format": "markdown" are rendered
+            as Markdown.'
+      required:
+      - email_notifications
+      - receive_access
+      - receive_history
+      - rich_text
+    ApiInfoLimits:
+      type: object
+      properties:
+        max_upload_bytes:
+          type: integer
+          description: Maximum request body size, including ciphertext and base64
+            overhead.
+        max_views:
+          type: integer
+          description: Highest accepted max_views value.
+        expiry_options:
+          type: array
+          items:
+            type: string
+          description: Accepted expiry values.
+      required:
+      - expiry_options
+      - max_upload_bytes
+      - max_views
+    ApiInfoPolicies:
+      type: object
+      properties:
+        view_requires_auth:
+          type: boolean
+          description: Whether every reveal requires sign-in, regardless of per-whisper
+            options.
+        submit_requires_auth:
+          type: boolean
+          description: Whether every submission requires sign-in, regardless of per-request
+            options.
+      required:
+      - submit_requires_auth
+      - view_requires_auth
+    ApiInfoReceiveAccess:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+          description: Whether requests accept creator_only and allowed_reader_emails.
+        default:
+          type: boolean
+          description: Whether creator_only defaults to true when omitted.
+        required:
+          type: boolean
+          description: Whether creator_only is always true and cannot be turned off.
+      required:
+      - default
+      - enabled
+      - required
     CreateRequest:
       type: object
       properties:
