@@ -214,14 +214,23 @@
         return removeWhere(e => !(e.expiresAt > now));
     }
 
+    /** Views only decrease, so an older response must never restore consumed ones. */
+    function mergeRemaining(result, current) {
+        const remaining = result.max_views > 0 ? result.remaining_views : null;
+        if (Number.isInteger(remaining) && Number.isInteger(current.remainingViews)) {
+            return Math.min(remaining, current.remainingViews);
+        }
+        return remaining;
+    }
+
     /** Record a reveal of a saved request; forget it once no views remain. */
     function recordReveal(id, result) {
         if (!result) return Promise.resolve(false);
         if (result.max_views > 0 && result.remaining_views <= 0) return remove(id);
-        return update(id, () => ({
+        return update(id, current => ({
             status: 'revealed',
             maxViews: result.max_views,
-            remainingViews: result.max_views > 0 ? result.remaining_views : null,
+            remainingViews: mergeRemaining(result, current),
         }));
     }
 
@@ -239,33 +248,31 @@
             return;
         }
         if (response.status === 429) return 'throttled';
-        if (response.status === 404 || response.status === 410) {
-            await remove(entry.id);
-            return;
-        }
-        if (!response.ok) return;
         let data;
         try {
             data = await response.json();
         } catch (e) {
             return;
         }
+        // A plain 404 also means the status endpoint is disabled; keep the link then.
+        if (data && data.status === 'gone') {
+            await remove(entry.id);
+            return;
+        }
+        if (!response.ok) return;
         const expiresAt = Date.parse(data.expires_at);
         await update(entry.id, current => {
             let status = data.status === 'submitted' ? 'submitted' : 'pending';
+            // Submission is irreversible, so an older pending response must not undo it.
+            if (status === 'pending' && COMPLETED.includes(current.status)) status = current.status;
             if (status === 'submitted' && (current.status === 'revealed' || data.view_count > 0)) {
                 status = 'revealed';
-            }
-            let remainingViews = data.max_views > 0 ? data.remaining_views : null;
-            // Views only decrease, so a response sent before a reveal in another tab must not restore them.
-            if (Number.isInteger(remainingViews) && Number.isInteger(current.remainingViews)) {
-                remainingViews = Math.min(remainingViews, current.remainingViews);
             }
             return {
                 status,
                 expiresAt: Number.isFinite(expiresAt) ? expiresAt : current.expiresAt,
                 maxViews: data.max_views,
-                remainingViews,
+                remainingViews: mergeRemaining(data, current),
                 checkedAt: Date.now(),
             };
         });
@@ -377,11 +384,16 @@
 
     // ---- Opt-in toggles ----
 
+    // While a toggle change waits for the storage lock, re-renders must not undo the user's click.
+    let togglePending = false;
+
     function syncToggles() {
         const enabled = isEnabled();
-        document.querySelectorAll('[data-receive-history-toggle]').forEach(input => {
-            input.checked = enabled;
-        });
+        if (!togglePending) {
+            document.querySelectorAll('[data-receive-history-toggle]').forEach(input => {
+                input.checked = enabled;
+            });
+        }
         document.querySelectorAll('[data-receive-history-when-enabled]').forEach(node => {
             node.classList.toggle('hidden', !enabled);
         });
@@ -404,10 +416,15 @@
     function mountToggles() {
         document.querySelectorAll('[data-receive-history-toggle]').forEach(input => {
             input.addEventListener('change', async () => {
-                if (input.checked) {
-                    if (!(await enable())) input.checked = false;
-                } else {
-                    await confirmDisable();
+                togglePending = true;
+                try {
+                    if (input.checked) {
+                        if (!(await enable())) input.checked = false;
+                    } else {
+                        await confirmDisable();
+                    }
+                } finally {
+                    togglePending = false;
                 }
                 syncToggles();
             });

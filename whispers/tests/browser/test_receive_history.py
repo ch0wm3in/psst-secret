@@ -59,6 +59,13 @@ def _card(page):
     return page.locator("#receive-history-list > li")
 
 
+def _wait_for_reveal_record(page):
+    """recordReveal() writes asynchronously under a Web Lock."""
+    page.wait_for_function(
+        f"(localStorage.getItem({json.dumps(STORAGE_KEY)}) || '').includes('\"revealed\"')"
+    )
+
+
 @pytest.mark.browser_settings(PSST_ENABLE_RECEIVE_HISTORY=False)
 def test_disabled_instance_has_no_history_ui(page, app_url, create_whisper):
     create_whisper(kind="receive")
@@ -192,6 +199,7 @@ def test_multi_view_reveal_marks_entry_viewed(page, app_url):
     page.get_by_role("button", name="View whisper").click()
     page.locator("#reveal-btn").click()
     expect(page.locator("#decrypted-content")).to_have_text("Multi-view reply")
+    _wait_for_reveal_record(page)
     [entry] = _stored(page)["entries"]
     assert (entry["status"], entry["remainingViews"]) == ("revealed", 2)
     assert "Multi-view reply" not in json.dumps(entry)
@@ -442,6 +450,7 @@ def test_stale_status_does_not_restore_consumed_views(page, app_url):
     page.get_by_role("button", name="View whisper").click()
     page.locator("#reveal-btn").click()
     expect(page.locator("#decrypted-content")).to_have_text("Multi-view reply")
+    _wait_for_reveal_record(page)
     assert _stored(page)["entries"][0]["remainingViews"] == 2
 
     def stale(route):
@@ -513,6 +522,78 @@ def test_disabled_instance_still_deletes_expired_saved_links(page, app_url):
     )
     assert [e["id"] for e in _stored(page)["entries"]] == ["current"]
     expect(page.locator("#receive-drawer")).to_have_count(0)
+
+
+@pytest.mark.browser_settings(PSST_ENABLE_RECEIVE_HISTORY=False)
+def test_disabled_instance_deletes_saved_link_after_final_reveal(
+    page, app_url, create_whisper
+):
+    submit_url, view_url = create_whisper(kind="receive")
+    whisper_id = str(Whisper.objects.get().id)
+    page.evaluate(
+        f"""id => localStorage.setItem({json.dumps(STORAGE_KEY)}, JSON.stringify({{
+        version: 1,
+        enabled: true,
+        entries: [
+            {{id, viewUrl: 'x', expiresAt: Date.now() + 60000}},
+            {{id: 'other', viewUrl: 'y', expiresAt: Date.now() + 60000}},
+        ],
+    }}))""",
+        whisper_id,
+    )
+    _submit(page, submit_url)
+    page.goto(view_url)
+    page.locator("#reveal-btn").click()
+    expect(page.locator("#decrypted-content")).to_have_text("Saved receive reply")
+    page.wait_for_function(
+        f"!localStorage.getItem({json.dumps(STORAGE_KEY)}).includes({json.dumps(whisper_id)})"
+    )
+    assert [e["id"] for e in _stored(page)["entries"]] == ["other"]
+
+
+def test_stale_reveal_does_not_restore_consumed_views(page, app_url):
+    _create_saved(page, app_url, max_views=3)
+    whisper_id = str(Whisper.objects.get().id)
+    _set_entries(page, "entries[0].remainingViews = 1;")
+    page.evaluate(
+        "id => PsstReceiveHistory.recordReveal(id, {max_views: 3, remaining_views: 2})",
+        whisper_id,
+    )
+    [entry] = _stored(page)["entries"]
+    assert (entry["status"], entry["remainingViews"]) == ("revealed", 1)
+
+
+def test_stale_pending_status_does_not_undo_submission(page, app_url):
+    submit_url, _ = _create_saved(page, app_url)
+    _submit(page, submit_url)
+    page.goto(app_url + "/receives")
+    expect(_card(page)).to_have_attribute("data-status", "submitted")
+
+    def stale(route):
+        route.fulfill(json={**route.fetch().json(), "status": "pending"})
+
+    page.route("**/api/v1/whisper/*/status", stale)
+    page.evaluate("PsstReceiveHistory.refresh(true)")
+    assert _stored(page)["entries"][0]["status"] == "submitted"
+
+
+@pytest.mark.parametrize(
+    "status,body,kept",
+    [
+        (404, {"detail": "Not found."}, True),
+        (503, {"error": "Unavailable"}, True),
+        (404, {"status": "gone"}, False),
+        (410, {"status": "gone"}, False),
+    ],
+)
+def test_only_gone_status_removes_entry(page, app_url, status, body, kept):
+    _create_saved(page, app_url)
+    page.route(
+        "**/api/v1/whisper/*/status",
+        lambda route: route.fulfill(status=status, json=body),
+    )
+    page.evaluate("PsstReceiveHistory.refresh(true)")
+    assert len(_stored(page)["entries"]) == (1 if kept else 0)
 
 
 @pytest.mark.parametrize("language", ["da", "cs", "sv", "fil"])
