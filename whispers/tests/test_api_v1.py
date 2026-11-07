@@ -78,7 +78,17 @@ class ApiV1Tests(TestCase):
             f"/api/v1/whisper/{whisper_id}/reveal", {"reveal_token": _REVEAL_TOKEN}
         )
 
-    @override_settings(APP_VERSION="v9.8.7", PSST_ENABLE_API_TOKENS=False)
+    @override_settings(
+        APP_VERSION="v9.8.7",
+        PSST_ENABLE_API_TOKENS=False,
+        PSST_ENABLE_EMAIL=False,
+        PSST_ENABLE_RECEIVE_ACCESS=False,
+        PSST_ENABLE_RECEIVE_HISTORY=False,
+        PSST_ENABLE_RICH_TEXT=False,
+        PSST_FORCE_AUTH_VIEW=False,
+        PSST_FORCE_AUTH_SUBMIT=False,
+        DATA_UPLOAD_MAX_MEMORY_SIZE=10_000_000,
+    )
     def test_info_reports_versions(self):
         response = self.client.get("/api/v1/info")
         self.assertEqual(response.status_code, 200)
@@ -94,8 +104,69 @@ class ApiV1Tests(TestCase):
                     "manual_code": False,
                     "scopes": [],
                 },
+                "features": {
+                    "email_notifications": False,
+                    "receive_access": {
+                        "enabled": False,
+                        "default": False,
+                        "required": False,
+                    },
+                    "receive_history": False,
+                    "rich_text": False,
+                },
+                "policies": {
+                    "view_requires_auth": False,
+                    "submit_requires_auth": False,
+                },
+                "limits": {
+                    "max_upload_bytes": 10_000_000,
+                    "max_views": 100,
+                    "expiry_options": ["5m", "1h", "1d", "1w", "1M"],
+                },
             },
         )
+
+    @override_settings(
+        ENABLE_AUTH=True,
+        PSST_ENABLE_EMAIL=True,
+        PSST_ENABLE_RECEIVE_ACCESS=True,
+        PSST_RECEIVE_ACCESS_DEFAULT=False,
+        PSST_FORCE_RECEIVE_ACCESS=True,
+        PSST_ENABLE_RECEIVE_HISTORY=True,
+        PSST_ENABLE_RICH_TEXT=True,
+        PSST_FORCE_AUTH_VIEW=True,
+        PSST_FORCE_AUTH_SUBMIT=False,
+    )
+    def test_info_reports_enabled_features_and_policies(self):
+        data = self.client.get("/api/v1/info").json()
+        self.assertEqual(
+            data["features"],
+            {
+                "email_notifications": True,
+                "receive_access": {"enabled": True, "default": True, "required": True},
+                "receive_history": True,
+                "rich_text": True,
+            },
+        )
+        self.assertEqual(
+            data["policies"],
+            {"view_requires_auth": True, "submit_requires_auth": False},
+        )
+
+    @override_settings(
+        ENABLE_AUTH=True,
+        MIDDLEWARE=_LOGIN_MIDDLEWARE_STACK,
+        LOGIN_REQUIRED_EXEMPT_URLS=[r"api/v1/info$", r"whisper/.*"],
+        PSST_FORCE_AUTH_VIEW=False,
+        PSST_FORCE_AUTH_SUBMIT=False,
+    )
+    def test_info_policies_follow_login_exemptions(self):
+        data = self.client.get("/api/v1/info").json()
+        self.assertEqual(
+            data["policies"],
+            {"view_requires_auth": False, "submit_requires_auth": True},
+        )
+        self.assertTrue(data["auth"]["login_required"])
 
     def test_format_version_is_stored_and_returned_on_reveal(self):
         for path, payload, expected in (

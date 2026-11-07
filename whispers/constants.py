@@ -4,6 +4,7 @@ from datetime import timedelta
 FORMAT_VERSION = 1
 SUPPORTED_FORMAT_VERSIONS = (1,)
 API_VERSION = 1
+MAX_VIEWS = 100
 
 EXPIRY_DELTAS = {
     "5m": timedelta(minutes=5),
