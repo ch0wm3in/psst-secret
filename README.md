@@ -25,6 +25,7 @@ default, ciphertext is kept only in Redis memory and never touches disk.
   loopback redirect and PKCE, using any configured login method.
 - **White-labeling:** custom name, logo, favicon, and colors.
 - **Languages:** English, Danish, Czech, Swedish, and Filipino.
+- **CLI:** (https://github.com/ch0wm3in/psst-secret-cli)
 
 ## Quick start
 
