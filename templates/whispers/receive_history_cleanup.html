@@ -1,7 +1,20 @@
 <script>
-// Receive history is off on this instance, but links saved while it was on must still be deleted at expiry.
+// Receive history is off on this instance, but saved links must still be deleted once expired or burned.
 (function () {
     const key = 'psst.receiveHistory';
+    function burnedId() {
+        const match = window.location.pathname.match(/^\/whisper\/([0-9a-f-]{36})$/);
+        if (!match) return null;
+        if (document.querySelector('[data-whisper-gone]')) return match[1];
+        const pasteData = document.getElementById('paste-data');
+        try {
+            const result = pasteData && JSON.parse(pasteData.textContent);
+            return result && result.max_views > 0 && result.remaining_views <= 0 ? match[1] : null;
+        } catch (e) {
+            return null;
+        }
+    }
+    const burned = burnedId();
     function prune() {
         let store, data;
         try {
@@ -12,7 +25,7 @@
         }
         if (!data || data.version !== 1 || !Array.isArray(data.entries)) return;
         const now = Date.now();
-        const kept = data.entries.filter(entry => entry && entry.expiresAt > now);
+        const kept = data.entries.filter(entry => entry && entry.expiresAt > now && entry.id !== burned);
         if (kept.length === data.entries.length) return;
         data.entries = kept;
         try {
