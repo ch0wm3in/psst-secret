@@ -424,6 +424,97 @@ def test_changes_wait_for_other_tabs_and_use_fresh_data(page, app_url, context):
     assert [e["id"] for e in _stored(page)["entries"]] == [added]
 
 
+def _set_entries(page, patch):
+    """Apply a JS function body to the stored entries (bound to `entries`)."""
+    page.evaluate(f"""() => {{
+        const key = {json.dumps(STORAGE_KEY)};
+        const data = JSON.parse(localStorage.getItem(key));
+        const entries = data.entries;
+        {patch}
+        localStorage.setItem(key, JSON.stringify(data));
+    }}""")
+
+
+def test_stale_status_does_not_restore_consumed_views(page, app_url):
+    submit_url, _ = _create_saved(page, app_url, max_views=3)
+    _submit(page, submit_url, content="Multi-view reply")
+    page.goto(app_url + "/receives")
+    page.get_by_role("button", name="View whisper").click()
+    page.locator("#reveal-btn").click()
+    expect(page.locator("#decrypted-content")).to_have_text("Multi-view reply")
+    assert _stored(page)["entries"][0]["remainingViews"] == 2
+
+    def stale(route):
+        body = route.fetch().json()
+        route.fulfill(json={**body, "view_count": 0, "remaining_views": 3})
+
+    page.route("**/api/v1/whisper/*/status", stale)
+    page.evaluate("PsstReceiveHistory.refresh(true)")
+    [entry] = _stored(page)["entries"]
+    assert (entry["status"], entry["remainingViews"]) == ("revealed", 2)
+
+
+def test_status_checks_start_with_least_recently_checked(page, app_url):
+    for label in ("First", "Second", "Third"):
+        _create_saved(page, app_url, label=label)
+    _set_entries(
+        page,
+        "entries.forEach(e => { e.checkedAt = {First: 3000, Second: 1000, Third: 2000}[e.label]; });",
+    )
+    ids = {e["label"]: e["id"] for e in _stored(page)["entries"]}
+    checked = []
+
+    def throttle_second(route):
+        checked.append(route.request.url.split("/")[-2])
+        if len(checked) == 2:
+            route.fulfill(status=429, json={"error": "Too many requests"})
+        else:
+            route.continue_()
+
+    page.route("**/api/v1/whisper/*/status", throttle_second)
+    page.evaluate("PsstReceiveHistory.refresh(true)")
+    assert checked == [ids["Second"], ids["Third"]]
+    stored = {e["label"]: e["checkedAt"] for e in _stored(page)["entries"]}
+    assert stored["Second"] > 3000
+    assert (stored["Third"], stored["First"]) == (2000, 3000)
+
+
+@pytest.mark.parametrize("close", ["Enter", "Escape", "Cancel"])
+def test_closing_label_editor_returns_focus_to_card(page, app_url, close):
+    _create_saved(page, app_url)
+    page.goto(app_url + "/receives")
+    edit = page.get_by_role("button", name="Edit label")
+    edit.click()
+    expect(page.locator("[data-label-input]")).to_be_focused()
+    if close == "Cancel":
+        page.get_by_role("button", name="Cancel").click()
+    else:
+        page.keyboard.press(close)
+    expect(page.locator("[data-label-input]")).to_have_count(0)
+    expect(edit).to_be_focused()
+
+
+@pytest.mark.browser_settings(PSST_ENABLE_RECEIVE_HISTORY=False)
+def test_disabled_instance_still_deletes_expired_saved_links(page, app_url):
+    page.goto(app_url)
+    page.evaluate(
+        f"""() => localStorage.setItem({json.dumps(STORAGE_KEY)}, JSON.stringify({{
+        version: 1,
+        enabled: true,
+        entries: [
+            {{id: 'expired', viewUrl: 'http://x/whisper/1#key=secret', expiresAt: Date.now() - 1000}},
+            {{id: 'current', viewUrl: 'http://x/whisper/2#key=secret', expiresAt: Date.now() + 60000}},
+        ],
+    }}))"""
+    )
+    page.reload()
+    page.wait_for_function(
+        f"!localStorage.getItem({json.dumps(STORAGE_KEY)}).includes('expired')"
+    )
+    assert [e["id"] for e in _stored(page)["entries"]] == ["current"]
+    expect(page.locator("#receive-drawer")).to_have_count(0)
+
+
 @pytest.mark.parametrize("language", ["da", "cs", "sv", "fil"])
 def test_history_is_translated(page, app_url, language):
     _create_saved(page, app_url)
