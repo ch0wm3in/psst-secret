@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psst-secret\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-06 14:57+0000\n"
+"POT-Creation-Date: 2026-11-07 16:58+0000\n"
 "PO-Revision-Date: 2026-10-09 08:07+0000\n"
 "Last-Translator: \n"
 "Language-Team: Filipino\n"
@@ -127,9 +127,9 @@ msgstr "Paano ito gumagana"
 msgid ""
 "%(brand_name)s ensures that <strong class=\"text-white\">your whispers never "
 "exist in plaintext on our server</strong>. All encryption and decryption "
-"happens entirely in your browser using the <a href=\"https://developer."
-"mozilla.org/en-US/docs/Web/API/Web_Crypto_API\" class=\"text-brand-400 "
-"underline hover:text-brand-300\" target=\"_blank\" rel=\"noopener "
+"happens entirely in your browser using the <a href=\"https://"
+"developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API\" class=\"text-"
+"brand-400 underline hover:text-brand-300\" target=\"_blank\" rel=\"noopener "
 "noreferrer\">Web Crypto API</a>."
 msgstr ""
 "Tinitiyak ng %(brand_name)s na <strong class=\"text-white\">hindi kailanman "
@@ -350,14 +350,14 @@ msgstr ""
 "Iniimbak ang susi para sa pag-decrypt pagkatapos ng <code class='bg-gray-900 "
 "px-1.5 py-0.5 rounded text-brand-300'>#</code> sa URL, sa tinatawag na "
 "fragment. Inilalaan ng espesipikasyon ng URI (<a href='https://www.rfc-"
-"editor.org/rfc/rfc3986#section-3.5' class='text-brand-400 underline hover:"
-"text-brand-300' target='_blank' rel='noopener noreferrer'>RFC 3986 §3.5</a>) "
-"ang fragment para iproseso ng browser, at hindi ito isinasama sa request "
-"ayon sa espesipikasyon ng HTTP (<a href='https://www.rfc-editor.org/rfc/"
-"rfc9110#section-7.1' class='text-brand-400 underline hover:text-brand-300' "
-"target='_blank' rel='noopener noreferrer'>RFC 9110 §7.1</a>) — kaya <strong "
-"class='text-white'>hindi kailanman ipinapadala ang fragment ng URL sa "
-"server</strong>. Ibig sabihin nito:"
+"editor.org/rfc/rfc3986#section-3.5' class='text-brand-400 underline "
+"hover:text-brand-300' target='_blank' rel='noopener noreferrer'>RFC 3986 "
+"§3.5</a>) ang fragment para iproseso ng browser, at hindi ito isinasama sa "
+"request ayon sa espesipikasyon ng HTTP (<a href='https://www.rfc-editor.org/"
+"rfc/rfc9110#section-7.1' class='text-brand-400 underline hover:text-"
+"brand-300' target='_blank' rel='noopener noreferrer'>RFC 9110 §7.1</a>) — "
+"kaya <strong class='text-white'>hindi kailanman ipinapadala ang fragment ng "
+"URL sa server</strong>. Ibig sabihin nito:"
 
 #: templates/whispers/about.html:87
 msgid "The server never receives the decryption key"
@@ -551,11 +551,11 @@ msgstr "Redis (may pag-iimbak sa disk)"
 msgid "Redis (in-memory only — never touches disk)"
 msgstr "Redis (sa memory lamang — hindi kailanman isinusulat sa disk)"
 
-#: templates/whispers/about.html:179 templates/whispers/about.html:199
+#: templates/whispers/about.html:179 templates/whispers/about.html:201
 msgid "Field"
 msgstr "Field"
 
-#: templates/whispers/about.html:180 templates/whispers/about.html:200
+#: templates/whispers/about.html:180 templates/whispers/about.html:202
 msgid "Purpose"
 msgstr "Layunin"
 
@@ -594,48 +594,62 @@ msgstr ""
 "ang iyong password (kapag protektado lamang ng password)"
 
 #: templates/whispers/about.html:190
+msgid ""
+"SHA-256 hash of the reveal token from your view link, checked before each "
+"reveal (the token itself is never stored)"
+msgstr "SHA-256 hash ng reveal token mula sa iyong view link, sinusuri bago ang bawat pagbubunyag (hindi kailanman iniimbak ang token mismo)"
+
+#: templates/whispers/about.html:191
 msgid "Reveal counter, used to enforce the view limit"
 msgstr ""
 "Bilang ng pagtingin, na ginagamit upang ipatupad ang limitasyon sa pagtingin"
 
-#: templates/whispers/about.html:195
+#: templates/whispers/about.html:192
+msgid ""
+"Receive mode: flag set when something is submitted, so status checks never "
+"read the encrypted data"
+msgstr ""
+"Receive mode: flag na itinatakda kapag may naipadala, para hindi kailanman "
+"basahin ng mga pagsusuri ng status ang naka-encrypt na data"
+
+#: templates/whispers/about.html:197
 msgid "PostgreSQL (metadata only)"
 msgstr "PostgreSQL (metadata lamang)"
 
-#: templates/whispers/about.html:204
+#: templates/whispers/about.html:206
 msgid "Random identifier used in the view link"
 msgstr "Random na identifier na ginagamit sa link para sa pagtingin"
 
-#: templates/whispers/about.html:205
+#: templates/whispers/about.html:207
 msgid "Receive mode: separate random identifier used in the submit link"
 msgstr ""
 "Mode ng pagtanggap: hiwalay na random na identifier na ginagamit sa link "
 "para sa pagsusumite"
 
-#: templates/whispers/about.html:206
+#: templates/whispers/about.html:208
 msgid "When the whisper was created and when it will be auto-deleted"
 msgstr ""
 "Kung kailan nilikha ang whisper at kung kailan ito awtomatikong buburahin"
 
-#: templates/whispers/about.html:207
+#: templates/whispers/about.html:209
 msgid "Number of allowed reveals before destruction (1 = burn; 0 = unlimited)"
 msgstr ""
 "Bilang ng pinapayagang pagtingin bago burahin (1 = burahin pagkatapos "
 "basahin; 0 = walang limitasyon)"
 
-#: templates/whispers/about.html:208
+#: templates/whispers/about.html:210
 msgid "Send or receive"
 msgstr "Pagpapadala o pagtanggap"
 
-#: templates/whispers/about.html:209
+#: templates/whispers/about.html:211
 msgid "IP/CIDR restriction"
 msgstr "Limitasyon ayon sa IP/CIDR"
 
-#: templates/whispers/about.html:210
+#: templates/whispers/about.html:212
 msgid "Whether signing in is required to view or submit"
 msgstr "Kung kailangan ang pag-sign in upang tumingin o magsumite"
 
-#: templates/whispers/about.html:212
+#: templates/whispers/about.html:214
 msgid ""
 "Receive mode: creator and approved reader account references (never included "
 "in statistics)"
@@ -643,11 +657,11 @@ msgstr ""
 "Mode ng pagtanggap: mga sanggunian sa account ng lumikha at mga aprubadong "
 "mambabasa (hindi kailanman kasama sa mga estadistika)"
 
-#: templates/whispers/about.html:214
+#: templates/whispers/about.html:216
 msgid "Email address to notify (only if you opt in)"
 msgstr "Email address na aabisuhan (kung pinili mo lamang)"
 
-#: templates/whispers/about.html:219
+#: templates/whispers/about.html:221
 msgid ""
 "The server does <strong>not</strong> store: plaintext, encryption keys, "
 "private keys, or passwords. An email address is only stored if you opt in to "
@@ -658,7 +672,7 @@ msgstr ""
 "address kung pinili mong tumanggap ng mga abiso. Iniimbak ang naka-encrypt "
 "na datos sa Redis na may pag-iimbak sa disk."
 
-#: templates/whispers/about.html:221
+#: templates/whispers/about.html:223
 msgid ""
 "The server does <strong>not</strong> store: plaintext, encryption keys, "
 "private keys, or passwords. An email address is only stored if you opt in to "
@@ -670,19 +684,19 @@ msgstr ""
 "address kung pinili mong tumanggap ng mga abiso. Nasa pansamantalang memory "
 "lamang ang naka-encrypt na datos at nawawala ito kapag nag-restart ang Redis."
 
-#: templates/whispers/about.html:228
+#: templates/whispers/about.html:230
 msgid "Tech Stack"
 msgstr "Mga teknolohiyang ginagamit"
 
-#: templates/whispers/about.html:232
+#: templates/whispers/about.html:234
 msgid "Redis (persistent)"
 msgstr "Redis (may pag-iimbak sa disk)"
 
-#: templates/whispers/about.html:234
+#: templates/whispers/about.html:236
 msgid "Redis (in-memory)"
 msgstr "Redis (sa memory)"
 
-#: templates/whispers/about.html:249
+#: templates/whispers/about.html:251
 msgid "Create a whisper"
 msgstr "Lumikha ng whisper"
 
@@ -883,7 +897,7 @@ msgstr ""
 "bagong link."
 
 #: templates/whispers/confirm.html:37 templates/whispers/forbidden.html:10
-#: whispers/views.py:562
+#: whispers/views.py:570
 msgid ""
 "The reveal authorization is missing or invalid. Use the complete view link."
 msgstr ""
@@ -1180,7 +1194,7 @@ msgstr ""
 "Kailangang naka-sign in ang taong magsusumite ng whisper sa kahilingang ito."
 
 #: templates/whispers/create.html:251 templates/whispers/receive_access.html:8
-#: whispers/views.py:905
+#: whispers/views.py:913
 msgid "Restricted receive access is required."
 msgstr "Kinakailangan ang limitadong access sa pagtanggap."
 
@@ -1500,8 +1514,8 @@ msgstr "Hindi pinapayagan ang pag-access"
 msgid "Access denied"
 msgstr "Hindi pinapayagan ang pag-access"
 
-#: templates/whispers/forbidden.html:10 whispers/views.py:519
-#: whispers/views.py:672
+#: templates/whispers/forbidden.html:10 whispers/views.py:527
+#: whispers/views.py:680
 msgid "You do not have access to this whisper."
 msgstr "Wala kang access sa whisper na ito."
 
@@ -2439,20 +2453,20 @@ msgstr ""
 "Pansamantalang hindi available ang storage ng whisper. Pakisubukang muli "
 "mamaya."
 
-#: whispers/views.py:189 whispers/views.py:815 whispers/views.py:920
+#: whispers/views.py:197 whispers/views.py:823 whispers/views.py:928
 msgid "Enter the verified primary email of each additional reader."
 msgstr ""
 "Ilagay ang beripikadong pangunahing email ng bawat karagdagang mambabasa."
 
-#: whispers/views.py:798
+#: whispers/views.py:806
 msgid "Receive reader restrictions are not enabled."
 msgstr "Hindi naka-enable ang mga limitasyon sa mambabasa sa pagtanggap."
 
-#: whispers/views.py:802
+#: whispers/views.py:810
 msgid "Sign in to manage reader access."
 msgstr "Mag-sign in upang pamahalaan ang access ng mambabasa."
 
-#: whispers/views.py:806 whispers/views.py:911
+#: whispers/views.py:814 whispers/views.py:919
 msgid "Enable restricted access before adding readers."
 msgstr "I-enable ang limitadong access bago magdagdag ng mga mambabasa."
 

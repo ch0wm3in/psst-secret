@@ -14,6 +14,7 @@
     'use strict';
 
     const STORAGE_KEY = 'psst.receiveHistory';
+    const LOCK_NAME = 'psst.receiveHistory';
     const SCHEMA_VERSION = 1;
     const STATUS_INTERVAL_MS = 30000;
     const MIN_CHECK_GAP_MS = 15000;
@@ -82,9 +83,10 @@
         }
     }
 
+    /** Write data; return true only once the browser has accepted it. */
     function save(data) {
         const store = storage();
-        if (!store) return;
+        if (!store) return false;
         try {
             if (!data.enabled && data.entries.length === 0) {
                 store.removeItem(STORAGE_KEY);
@@ -92,14 +94,28 @@
                 store.setItem(STORAGE_KEY, JSON.stringify(data));
             }
         } catch (e) {
-            // Storage full or blocked: keep working without history.
+            // Storage full or blocked: report the failure to the caller.
+            return false;
         }
         notify();
+        return true;
     }
 
+    /**
+     * Apply fn to freshly loaded data and save it, holding a lock shared by every tab
+     * so one tab's stale copy can never undo another tab's change. Resolves to true
+     * when a change was persisted. fn returns false to skip saving.
+     */
     function modify(fn) {
-        const data = load();
-        if (fn(data) !== false) save(data);
+        const run = () => {
+            const data = load();
+            return fn(data) === false ? false : save(data);
+        };
+        const locks = navigator.locks;
+        if (locks && typeof locks.request === 'function') {
+            return locks.request(LOCK_NAME, run).catch(() => false);
+        }
+        return Promise.resolve(run());
     }
 
     function notify() {
@@ -120,15 +136,15 @@
         return entries().find(e => e.id === id) || null;
     }
 
-    function enable() {
+    async function enable() {
         if (!storage()) return false;
-        modify(data => { data.enabled = true; });
+        await modify(data => { data.enabled = true; });
         return isEnabled();
     }
 
     /** Turn the feature off; delete every entry when deleteEntries is true. */
     function disable(deleteEntries) {
-        modify(data => {
+        return modify(data => {
             data.enabled = false;
             if (deleteEntries) data.entries = [];
         });
@@ -138,6 +154,7 @@
         return typeof label === 'string' ? label.trim().slice(0, LABEL_MAX_LENGTH) : '';
     }
 
+    /** Save a new request; resolves to true only if it was persisted. */
     function add(details) {
         const expiresAt = Date.parse(details.expiresAt);
         const entry = {
@@ -153,67 +170,59 @@
             status: 'pending',
             checkedAt: 0,
         };
-        if (!validEntry(entry)) return false;
-        let added = false;
-        modify(data => {
+        if (!validEntry(entry)) return Promise.resolve(false);
+        return modify(data => {
             if (!data.enabled) return false;
             data.entries = data.entries.filter(e => e.id !== entry.id);
             data.entries.unshift(entry);
-            added = true;
         });
-        return added;
     }
 
-    function update(id, patch) {
-        modify(data => {
+    /** Patch an entry; fn receives the current entry and returns the patch or null. */
+    function update(id, fn) {
+        return modify(data => {
             const entry = data.entries.find(e => e.id === id);
-            if (!entry) return false;
+            const patch = entry && fn(entry);
+            if (!patch) return false;
             Object.assign(entry, patch);
         });
     }
 
     function setLabel(id, label) {
-        update(id, { label: cleanLabel(label) });
+        return update(id, () => ({ label: cleanLabel(label) }));
     }
 
-    function remove(id) {
-        modify(data => {
+    function removeWhere(predicate) {
+        return modify(data => {
             const before = data.entries.length;
-            data.entries = data.entries.filter(e => e.id !== id);
+            data.entries = data.entries.filter(e => !predicate(e));
             return data.entries.length !== before;
         });
     }
 
+    function remove(id) {
+        return removeWhere(e => e.id === id);
+    }
+
     function clear() {
-        modify(data => {
-            if (data.entries.length === 0) return false;
-            data.entries = [];
-        });
+        return removeWhere(() => true);
     }
 
     /** Delete entries past their expiry without asking the server. */
     function removeExpired() {
         const now = Date.now();
-        modify(data => {
-            const before = data.entries.length;
-            data.entries = data.entries.filter(e => e.expiresAt > now);
-            return data.entries.length !== before;
-        });
+        return removeWhere(e => !(e.expiresAt > now));
     }
 
     /** Record a reveal of a saved request; forget it once no views remain. */
     function recordReveal(id, result) {
-        const entry = find(id);
-        if (!entry || !result) return;
-        if (result.max_views > 0 && result.remaining_views <= 0) {
-            remove(id);
-            return;
-        }
-        update(id, {
+        if (!result) return Promise.resolve(false);
+        if (result.max_views > 0 && result.remaining_views <= 0) return remove(id);
+        return update(id, () => ({
             status: 'revealed',
             maxViews: result.max_views,
             remainingViews: result.max_views > 0 ? result.remaining_views : null,
-        });
+        }));
     }
 
     let refreshing = null;
@@ -229,7 +238,7 @@
             return;
         }
         if (response.status === 404 || response.status === 410) {
-            remove(entry.id);
+            await remove(entry.id);
             return;
         }
         if (!response.ok) return;
@@ -239,29 +248,29 @@
         } catch (e) {
             return;
         }
-        const current = find(entry.id);
-        if (!current) return;
         const expiresAt = Date.parse(data.expires_at);
-        let status = data.status === 'submitted' ? 'submitted' : 'pending';
-        if (status === 'submitted' && (current.status === 'revealed' || data.view_count > 0)) {
-            status = 'revealed';
-        }
-        update(entry.id, {
-            status,
-            expiresAt: Number.isFinite(expiresAt) ? expiresAt : current.expiresAt,
-            maxViews: data.max_views,
-            remainingViews: data.max_views > 0 ? data.remaining_views : null,
-            checkedAt: Date.now(),
+        await update(entry.id, current => {
+            let status = data.status === 'submitted' ? 'submitted' : 'pending';
+            if (status === 'submitted' && (current.status === 'revealed' || data.view_count > 0)) {
+                status = 'revealed';
+            }
+            return {
+                status,
+                expiresAt: Number.isFinite(expiresAt) ? expiresAt : current.expiresAt,
+                maxViews: data.max_views,
+                remainingViews: data.max_views > 0 ? data.remaining_views : null,
+                checkedAt: Date.now(),
+            };
         });
     }
 
     /** Remove expired entries and ask the server about the rest. */
     function refresh(force) {
-        removeExpired();
         if (refreshing) return refreshing;
-        const now = Date.now();
-        const due = entries().filter(e => force || now - (e.checkedAt || 0) >= MIN_CHECK_GAP_MS);
         refreshing = (async () => {
+            await removeExpired();
+            const now = Date.now();
+            const due = entries().filter(e => force || now - (e.checkedAt || 0) >= MIN_CHECK_GAP_MS);
             for (const entry of due) {
                 await checkStatus(entry);
             }
@@ -371,10 +380,7 @@
 
     function confirmDisable() {
         const count = entries().length;
-        if (count === 0) {
-            disable(true);
-            return;
-        }
+        if (count === 0) return disable(true);
         const question = interpolate(
             ngettext(
                 'Also delete the %s saved receive request from this browser? Choose Cancel to keep it.',
@@ -383,16 +389,16 @@
             ),
             [count]
         );
-        disable(window.confirm(question));
+        return disable(window.confirm(question));
     }
 
     function mountToggles() {
         document.querySelectorAll('[data-receive-history-toggle]').forEach(input => {
-            input.addEventListener('change', () => {
+            input.addEventListener('change', async () => {
                 if (input.checked) {
-                    if (!enable()) input.checked = false;
+                    if (!(await enable())) input.checked = false;
                 } else {
-                    confirmDisable();
+                    await confirmDisable();
                 }
                 syncToggles();
             });
@@ -501,9 +507,13 @@
             input.setAttribute('aria-label', gettext('Label'));
             input.placeholder = gettext('e.g. AWS credentials from Bob');
             input.dataset.labelInput = '';
+            input.dataset.action = 'label';
             const saveButton = el('button', 'px-3 py-1.5 rounded-lg bg-brand-600 hover:bg-brand-500 text-white text-sm font-semibold transition', gettext('Save'));
             saveButton.type = 'submit';
-            form.append(input, saveButton, button(gettext('Cancel'), secondary, () => { editing = null; render(); }));
+            saveButton.dataset.action = 'save-label';
+            const cancelButton = button(gettext('Cancel'), secondary, () => { editing = null; render(); });
+            cancelButton.dataset.action = 'cancel-label';
+            form.append(input, saveButton, cancelButton);
             form.addEventListener('submit', event => {
                 event.preventDefault();
                 editing = null;
@@ -555,20 +565,24 @@
             submitInput.readOnly = true;
             submitInput.value = entry.submitUrl;
             submitInput.setAttribute('aria-label', gettext('Submit link'));
+            submitInput.dataset.action = 'submit-link';
             const copyButton = button(gettext('Copy submit link'), secondary, () => copyText(entry.submitUrl, copyButton));
+            copyButton.dataset.action = 'copy-submit';
             submit.append(submitInput, copyButton);
 
             const actions = el('div', 'flex flex-wrap gap-2');
-            actions.append(
-                button(gettext('View whisper'), 'px-3 py-1.5 rounded-lg bg-brand-600 hover:bg-brand-500 text-white text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400', () => openWhisper(entry)),
-                button(gettext('Edit label'), secondary, () => {
-                    editing = entry.id;
-                    draft = entry.label;
-                    focusEditor = true;
-                    render();
-                }),
-                button(gettext('Remove'), 'px-3 py-1.5 rounded-lg bg-gray-900 border border-red-800 text-red-300 hover:bg-red-900/40 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500', () => remove(entry.id))
-            );
+            const viewBtn = button(gettext('View whisper'), 'px-3 py-1.5 rounded-lg bg-brand-600 hover:bg-brand-500 text-white text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400', () => openWhisper(entry));
+            viewBtn.dataset.action = 'view';
+            const editBtn = button(gettext('Edit label'), secondary, () => {
+                editing = entry.id;
+                draft = entry.label;
+                focusEditor = true;
+                render();
+            });
+            editBtn.dataset.action = 'edit';
+            const removeBtn = button(gettext('Remove'), 'px-3 py-1.5 rounded-lg bg-gray-900 border border-red-800 text-red-300 hover:bg-red-900/40 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500', () => remove(entry.id));
+            removeBtn.dataset.action = 'remove';
+            actions.append(viewBtn, editBtn, removeBtn);
 
             item.append(header, meta, submit);
             if (editing === entry.id) item.append(labelEditor(entry));
@@ -593,14 +607,19 @@
                 ? gettext('No saved receive requests in this browser.')
                 : gettext('No receive requests match this filter.');
             const active = document.activeElement;
-            const caret = active && active.matches && active.matches('[data-label-input]')
-                ? [active.selectionStart, active.selectionEnd]
-                : null;
+            const activeItem = active && list.contains(active) ? active.closest('[data-entry-id]') : null;
+            const focus = activeItem && active.dataset.action ? {
+                id: activeItem.dataset.entryId,
+                action: active.dataset.action,
+                caret: active.tagName === 'INPUT' ? [active.selectionStart, active.selectionEnd] : null,
+            } : null;
             list.replaceChildren(...shown.map(card));
-            const input = caret && list.querySelector('[data-label-input]');
-            if (input) {
-                input.focus();
-                input.setSelectionRange(caret[0], caret[1]);
+            // Rebuilt cards would otherwise drop keyboard focus on every status refresh.
+            const item = focus && Array.from(list.children).find(node => node.dataset.entryId === focus.id);
+            const target = item && item.querySelector('[data-action="' + focus.action + '"]');
+            if (target) {
+                target.focus();
+                if (focus.caret) target.setSelectionRange(focus.caret[0], focus.caret[1]);
             }
         }
 

@@ -352,6 +352,41 @@ class WhisperStatusTests(TestCase):
         data = self._status(whisper.id).json()
         self.assertEqual((data["view_count"], data["remaining_views"]), (1, 0))
 
+    def test_submitted_status_does_not_read_the_payload(self):
+        whisper = self._request()
+        self._submit(whisper)
+        marker = redis_store._submitted_key(whisper.id)
+        self.assertGreater(self.redis.pttl(marker), 0)
+        self.assertAlmostEqual(
+            self.redis.pttl(marker),
+            self.redis.pttl(redis_store._key(whisper.id)),
+            delta=1000,
+        )
+        # Any read of the payload would fail to parse it.
+        self.redis.set(redis_store._key(whisper.id), "not json", keepttl=True)
+        self.assertEqual(self._status(whisper.id).json()["status"], "submitted")
+
+    def test_submission_without_marker_is_reported_and_marked(self):
+        whisper = self._request()
+        redis_store.update_crypto(whisper.id, ciphertext="ct", iv="iv")
+        marker = redis_store._submitted_key(whisper.id)
+        self.assertFalse(self.redis.exists(marker))
+        self.assertEqual(self._status(whisper.id).json()["status"], "submitted")
+        self.assertGreater(self.redis.pttl(marker), 0)
+
+    def test_marker_is_removed_with_the_whisper(self):
+        burned = self._request(max_views=1)
+        self._submit(burned)
+        self._reveal(burned.id)
+        deleted = self._request()
+        self._submit(deleted)
+        redis_store.delete_crypto(deleted.id)
+        for whisper in (burned, deleted):
+            with self.subTest(whisper=whisper.pk):
+                self.assertFalse(
+                    self.redis.exists(redis_store._submitted_key(whisper.id))
+                )
+
     def test_expired_and_evicted_requests_are_gone_and_cleaned_up(self):
         expired = self._request()
         Whisper.objects.filter(pk=expired.pk).update(
@@ -443,3 +478,26 @@ class WhisperStatusTests(TestCase):
         self.assertEqual(
             self._reveal(whisper.id).status_code, 404, "reveal limit is separate"
         )
+
+    @override_settings(
+        REST_FRAMEWORK={
+            **_TEST_REST_FRAMEWORK,
+            "DEFAULT_THROTTLE_RATES": {
+                **_TEST_REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"],
+                "whisper_status": "2/minute",
+            },
+        }
+    )
+    def test_status_rate_limit_applies_to_authenticated_users(self):
+        from whispers.views import WhisperStatusThrottle
+
+        whisper = self._request()
+        self.client.force_login(User.objects.create_user("status-reader"))
+
+        original = WhisperStatusThrottle.THROTTLE_RATES
+        WhisperStatusThrottle.THROTTLE_RATES = settings.REST_FRAMEWORK[
+            "DEFAULT_THROTTLE_RATES"
+        ]
+        self.addCleanup(setattr, WhisperStatusThrottle, "THROTTLE_RATES", original)
+        codes = [self._status(whisper.id).status_code for _ in range(3)]
+        self.assertEqual(codes, [200, 200, 429])

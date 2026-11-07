@@ -90,7 +90,15 @@ class WhisperViewThrottle(AnonRateThrottle):
 
 
 class WhisperStatusThrottle(AnonRateThrottle):
+    """Per-IP limit for every caller; AnonRateThrottle alone skips signed-in users."""
+
     scope = "whisper_status"
+
+    def get_cache_key(self, request, view):
+        return self.cache_format % {
+            "scope": self.scope,
+            "ident": self.get_ident(request),
+        }
 
 
 class ReceiveAccessThrottle(UserRateThrottle):
@@ -681,8 +689,8 @@ class WhisperStatusView(APIView):
         if _requires_auth_view(whisper) and not request.user.is_authenticated:
             return _reveal_auth_response(request, False)
 
-        crypto = redis_store.get_crypto(whisper_id)
-        if crypto is None:
+        crypto_status = redis_store.get_submission_status(whisper_id)
+        if crypto_status is None:
             whisper.delete()
             return _gone(status.HTTP_410_GONE)
 
@@ -690,7 +698,7 @@ class WhisperStatusView(APIView):
         remaining = max(whisper.max_views - count, 0) if whisper.max_views > 0 else 0
         return Response(
             {
-                "status": "submitted" if crypto.get("ciphertext") else "pending",
+                "status": crypto_status,
                 "expires_at": whisper.expires_at,
                 "view_count": count,
                 "max_views": whisper.max_views,
