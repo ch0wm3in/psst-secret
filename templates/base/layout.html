@@ -102,5 +102,5 @@
     </footer>
 </div>
 {% settings_value "PSST_ENABLE_RECEIVE_HISTORY" as receive_history_enabled %}
-{% if receive_history_enabled %}{% include "whispers/receive_history_drawer.html" %}{% endif %}
+{% if receive_history_enabled %}{% include "whispers/receive_history_drawer.html" %}{% else %}{% include "whispers/receive_history_cleanup.html" %}{% endif %}
 {% endblock %}

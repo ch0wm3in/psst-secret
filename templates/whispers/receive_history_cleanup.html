@@ -1,0 +1,38 @@
+<script>
+// Receive history is off on this instance, but links saved while it was on must still be deleted at expiry.
+(function () {
+    const key = 'psst.receiveHistory';
+    function prune() {
+        let store, data;
+        try {
+            store = window.localStorage;
+            data = JSON.parse(store.getItem(key));
+        } catch (e) {
+            return;
+        }
+        if (!data || data.version !== 1 || !Array.isArray(data.entries)) return;
+        const now = Date.now();
+        const kept = data.entries.filter(entry => entry && entry.expiresAt > now);
+        if (kept.length === data.entries.length) return;
+        data.entries = kept;
+        try {
+            if (!data.enabled && kept.length === 0) {
+                store.removeItem(key);
+            } else {
+                store.setItem(key, JSON.stringify(data));
+            }
+        } catch (e) {
+            // Storage blocked; retry on the next run.
+        }
+    }
+    function run() {
+        if (navigator.locks && typeof navigator.locks.request === 'function') {
+            navigator.locks.request(key, prune).catch(() => {});
+        } else {
+            prune();
+        }
+    }
+    run();
+    setInterval(run, 60000);
+})();
+</script>

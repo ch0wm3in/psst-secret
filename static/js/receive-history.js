@@ -227,6 +227,7 @@
 
     let refreshing = null;
 
+    /** Ask the server about one entry; resolves to 'throttled' on HTTP 429. */
     async function checkStatus(entry) {
         let response;
         try {
@@ -237,6 +238,7 @@
         } catch (e) {
             return;
         }
+        if (response.status === 429) return 'throttled';
         if (response.status === 404 || response.status === 410) {
             await remove(entry.id);
             return;
@@ -254,25 +256,32 @@
             if (status === 'submitted' && (current.status === 'revealed' || data.view_count > 0)) {
                 status = 'revealed';
             }
+            let remainingViews = data.max_views > 0 ? data.remaining_views : null;
+            // Views only decrease, so a response sent before a reveal in another tab must not restore them.
+            if (Number.isInteger(remainingViews) && Number.isInteger(current.remainingViews)) {
+                remainingViews = Math.min(remainingViews, current.remainingViews);
+            }
             return {
                 status,
                 expiresAt: Number.isFinite(expiresAt) ? expiresAt : current.expiresAt,
                 maxViews: data.max_views,
-                remainingViews: data.max_views > 0 ? data.remaining_views : null,
+                remainingViews,
                 checkedAt: Date.now(),
             };
         });
     }
 
-    /** Remove expired entries and ask the server about the rest. */
+    /** Remove expired entries and ask the server about the rest, least recently checked first. */
     function refresh(force) {
         if (refreshing) return refreshing;
         refreshing = (async () => {
             await removeExpired();
             const now = Date.now();
-            const due = entries().filter(e => force || now - (e.checkedAt || 0) >= MIN_CHECK_GAP_MS);
+            const due = entries()
+                .filter(e => force || now - (e.checkedAt || 0) >= MIN_CHECK_GAP_MS)
+                .sort((a, b) => (a.checkedAt || 0) - (b.checkedAt || 0));
             for (const entry of due) {
-                await checkStatus(entry);
+                if (await checkStatus(entry) === 'throttled') break;
             }
         })().finally(() => { refreshing = null; });
         return refreshing;
@@ -468,6 +477,7 @@
         let editing = null;
         let draft = '';
         let focusEditor = false;
+        let returnFocus = null;
 
         filters.forEach(button => {
             button.addEventListener('click', () => {
@@ -497,6 +507,12 @@
 
         const secondary = 'px-3 py-1.5 rounded-lg bg-gray-700 hover:bg-gray-600 text-white text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400';
 
+        function closeEditor(id) {
+            editing = null;
+            returnFocus = id;
+            render();
+        }
+
         function labelEditor(entry) {
             const form = el('form', 'flex flex-wrap gap-2');
             const input = el('input', 'flex-1 min-w-0 rounded-lg bg-gray-900 border border-gray-600 text-gray-100 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500');
@@ -511,19 +527,17 @@
             const saveButton = el('button', 'px-3 py-1.5 rounded-lg bg-brand-600 hover:bg-brand-500 text-white text-sm font-semibold transition', gettext('Save'));
             saveButton.type = 'submit';
             saveButton.dataset.action = 'save-label';
-            const cancelButton = button(gettext('Cancel'), secondary, () => { editing = null; render(); });
+            const cancelButton = button(gettext('Cancel'), secondary, () => closeEditor(entry.id));
             cancelButton.dataset.action = 'cancel-label';
             form.append(input, saveButton, cancelButton);
             form.addEventListener('submit', event => {
                 event.preventDefault();
                 editing = null;
-                setLabel(entry.id, input.value);
+                returnFocus = entry.id;
+                setLabel(entry.id, input.value).finally(render);
             });
             form.addEventListener('keydown', event => {
-                if (event.key === 'Escape') {
-                    editing = null;
-                    render();
-                }
+                if (event.key === 'Escape') closeEditor(entry.id);
             });
             if (focusEditor) {
                 focusEditor = false;
@@ -614,12 +628,22 @@
                 caret: active.tagName === 'INPUT' ? [active.selectionStart, active.selectionEnd] : null,
             } : null;
             list.replaceChildren(...shown.map(card));
+            const cardFor = id => Array.from(list.children).find(node => node.dataset.entryId === id);
+            if (returnFocus) {
+                // The closed label editor took focus with it; hand it back to the card.
+                const editButton = cardFor(returnFocus)?.querySelector('[data-action="edit"]');
+                returnFocus = null;
+                if (editButton) {
+                    editButton.focus();
+                    return;
+                }
+            }
             // Rebuilt cards would otherwise drop keyboard focus on every status refresh.
-            const item = focus && Array.from(list.children).find(node => node.dataset.entryId === focus.id);
+            const item = focus && cardFor(focus.id);
             const target = item && item.querySelector('[data-action="' + focus.action + '"]');
             if (target) {
                 target.focus();
-                if (focus.caret) target.setSelectionRange(focus.caret[0], focus.caret[1]);
+                if (focus.caret && target.tagName === 'INPUT') target.setSelectionRange(focus.caret[0], focus.caret[1]);
             }
         }
 
