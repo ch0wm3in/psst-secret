@@ -254,7 +254,7 @@
         } catch (e) {
             return;
         }
-        // A plain 404 also means the status endpoint is disabled; keep the link then.
+        // Only an explicit "gone" deletes the link; other errors, such as a proxy 404, keep it.
         if (data && data.status === 'gone') {
             await remove(entry.id);
             return;

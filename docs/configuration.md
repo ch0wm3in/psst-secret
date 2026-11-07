@@ -112,7 +112,7 @@ store each view link themselves.
 
 | Variable | Description | Default |
 |---|---|---|
-| `PSST_ENABLE_RECEIVE_HISTORY` | Offer the opt-in **Keep my receive requests in this browser** option, the `/receives` page, the drawer, and the [status endpoint](api.md#receive-request-status). | `False` |
+| `PSST_ENABLE_RECEIVE_HISTORY` | Offer the opt-in **Keep my receive requests in this browser** option, the `/receives` page, and the drawer. | `False` |
 
 Even when the setting is on, nothing is saved until a user turns the option on, on the
 create page or `/receives`. Each saved request holds the view link, the submit link, an

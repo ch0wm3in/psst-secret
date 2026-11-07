@@ -667,8 +667,6 @@ class WhisperStatusView(APIView):
         },
     )
     def get(self, request, whisper_id):
-        if not _receive_history_enabled():
-            raise Http404
         whisper = Whisper.objects.filter(id=whisper_id, mode="receive").first()
         if whisper is None:
             return _gone(status.HTTP_404_NOT_FOUND)

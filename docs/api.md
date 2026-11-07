@@ -71,9 +71,7 @@ Both creation endpoints require `reveal_token_hash`; see
 
 `POST /api/v1/whisper/request` returns `id`, `submit_url`, `view_url`, and `expires_at`.
 `GET /api/v1/whisper/<view_id>/status` then reports whether the request has been
-submitted, without returning ciphertext or counting as a view. It is available when
-[saved receive requests](configuration.md#saved-receive-requests) are enabled, and
-returns `404` otherwise.
+submitted, without returning ciphertext or counting as a view.
 
 ```json
 {
