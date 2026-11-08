@@ -362,6 +362,7 @@ class ApiInfoView(APIView):
                     "login_required": _login_required_for("api/v1/whisper"),
                     "loopback_pkce": api_tokens.api_tokens_enabled(),
                     "manual_code": api_tokens.manual_code_enabled(),
+                    "extension_redirect": api_tokens.extension_redirect_enabled(),
                     "scopes": (
                         list(api_tokens.SCOPES)
                         if api_tokens.api_tokens_enabled()

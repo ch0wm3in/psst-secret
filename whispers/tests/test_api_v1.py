@@ -102,6 +102,7 @@ class ApiV1Tests(TestCase):
                     "login_required": False,
                     "loopback_pkce": False,
                     "manual_code": False,
+                    "extension_redirect": False,
                     "scopes": [],
                 },
                 "features": {

@@ -133,7 +133,8 @@ Cleanup happens in four layers:
   any Redis lookup or view counting. They add to client-side encryption, not replace it.
 - Whisper pages are served with no-cache headers so browsers and proxies do not store them.
 - [API tokens](api.md#api-tokens) are issued only after the user approves the client in a
-  signed-in browser session, are redirected only to loopback addresses, and require
+  signed-in browser session, are redirected only to loopback addresses or to
+  [browser extension addresses](api.md#browser-extensions) the server lists, and require
   PKCE. Tokens carry only the scopes the user approved and never give access to
   decryption keys, which stay in link fragments.
 - The app refuses to start with `DEBUG=False` and the default `SECRET_KEY`.

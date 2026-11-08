@@ -119,6 +119,7 @@ def cli_authorize(request):
                 "redirect_host": (
                     None if data["manual"] else data["redirect_uri"].split("/")[2]
                 ),
+                "redirect_extension": data["redirect_uri"].startswith("https://"),
             },
         )
         response["Cache-Control"] = "no-store"

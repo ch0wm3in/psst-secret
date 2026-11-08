@@ -47,6 +47,10 @@ class WhispersConfig(AppConfig):
     def ready(self):
         # schema registers the OpenAPI security scheme for API tokens.
         from whispers import checks, schema  # noqa: F401
+        from whispers.api_tokens import extension_redirect_uris
+
+        # Refuse to start rather than allow redirects to arbitrary hosts.
+        extension_redirect_uris()
 
         t = threading.Thread(target=_cleanup_loop, daemon=True)
         t.start()

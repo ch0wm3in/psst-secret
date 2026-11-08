@@ -153,6 +153,12 @@ class ApiInfoAuthSerializer(serializers.Serializer):
     manual_code = serializers.BooleanField(
         help_text="Whether the copy-paste code fallback is available for the sign-in."
     )
+    extension_redirect = serializers.BooleanField(
+        help_text=(
+            "Whether the sign-in accepts browser extension redirect URIs. Only the "
+            "extensions the server allows can sign in."
+        )
+    )
     scopes = serializers.ListField(
         child=serializers.CharField(), help_text="Scopes an API token can be granted."
     )

@@ -1,4 +1,4 @@
-"""API tokens for non-browser clients, issued through a loopback redirect + PKCE sign-in.
+"""API tokens for non-browser clients, issued through a redirect + PKCE sign-in.
 
 See docs/api.md#api-tokens. Tokens and authorization codes are random, prefixed so secret
 scanners can find them, and stored only as SHA-256 hashes.
@@ -13,6 +13,7 @@ import string
 from datetime import timedelta
 
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
@@ -48,6 +49,11 @@ _LOOPBACK_REDIRECT_RE = re.compile(
     r"\Ahttp://(?P<host>127\.0\.0\.1|\[::1\]):(?P<port>[1-9][0-9]{0,4})"
     r"(?P<path>/[A-Za-z0-9._~/-]*)?\Z"
 )
+# Hosts that browsers intercept for identity.launchWebAuthFlow instead of loading them.
+_EXTENSION_REDIRECT_RE = re.compile(
+    r"\Ahttps://(?:[a-p]{32}\.chromiumapp\.org|[0-9a-f]{40}\.extensions\.allizom\.org)"
+    r"/[A-Za-z0-9._~/-]*\Z"
+)
 _CODE_CHALLENGE_RE = re.compile(r"\A[A-Za-z0-9_-]{43}\Z")
 _CODE_VERIFIER_RE = re.compile(r"\A[A-Za-z0-9._~-]{43,128}\Z")
 _STATE_RE = re.compile(r"\A[\x21-\x7e]{1,256}\Z")
@@ -64,6 +70,28 @@ def manual_code_enabled():
     return api_tokens_enabled() and getattr(
         settings, "PSST_ENABLE_API_TOKEN_MANUAL_CODE", False
     )
+
+
+def extension_redirect_uris():
+    """Return the allowed extension redirect URIs, or raise ImproperlyConfigured."""
+    uris = getattr(settings, "PSST_API_TOKEN_EXTENSION_REDIRECT_URIS", [])
+    max_length = ApiAuthorizationCode._meta.get_field("redirect_uri").max_length
+    for uri in uris:
+        if (
+            not isinstance(uri, str)
+            or len(uri) > max_length
+            or not _EXTENSION_REDIRECT_RE.match(uri)
+        ):
+            raise ImproperlyConfigured(
+                f"PSST_API_TOKEN_EXTENSION_REDIRECT_URIS entry {uri!r} must look like "
+                "https://<extension id>.chromiumapp.org/<path> or "
+                "https://<hash>.extensions.allizom.org/<path>."
+            )
+    return frozenset(uris)
+
+
+def extension_redirect_enabled():
+    return api_tokens_enabled() and bool(extension_redirect_uris())
 
 
 def hash_secret(value):
@@ -87,6 +115,8 @@ def validate_redirect_uri(redirect_uri, allow_manual=False):
     if allow_manual and redirect_uri == MANUAL_REDIRECT_URI:
         return redirect_uri
     redirect_uri = redirect_uri or ""
+    if redirect_uri in extension_redirect_uris():
+        return redirect_uri
     max_length = ApiAuthorizationCode._meta.get_field("redirect_uri").max_length
     match = len(redirect_uri) <= max_length and _LOOPBACK_REDIRECT_RE.match(
         redirect_uri
@@ -95,7 +125,8 @@ def validate_redirect_uri(redirect_uri, allow_manual=False):
         raise AuthorizationRequestError(
             _(
                 "The redirect address must be a loopback address such as "
-                "http://127.0.0.1:<port>/callback or http://[::1]:<port>/callback."
+                "http://127.0.0.1:<port>/callback or http://[::1]:<port>/callback, "
+                "or a browser extension address that this server allows."
             )
         )
     return redirect_uri

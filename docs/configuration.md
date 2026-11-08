@@ -74,6 +74,7 @@ Requires `ENABLE_AUTH=True`.
 | `PSST_ENABLE_API_TOKENS` | Enable the `/cli/authorize` sign-in, the token endpoints, the **API tokens** page, and token authentication for `/api/v1/`. | `False` |
 | `PSST_API_TOKEN_TTL` | Token lifetime in seconds. A user disabled at the identity provider keeps access through existing tokens until they expire. | `172800` (2 days) |
 | `PSST_ENABLE_API_TOKEN_MANUAL_CODE` | Allow the copy-paste code fallback for machines where the browser cannot reach the client's loopback listener. The sign-in can then finish on a different device. | `False` |
+| `PSST_API_TOKEN_EXTENSION_REDIRECT_URIS` | Comma-separated redirect URIs of [browser extensions](api.md#browser-extensions) allowed to sign in, matched exactly. Each must be `https://<extension id>.chromiumapp.org/<path>` or `https://<hash>.extensions.allizom.org/<path>`; the server refuses to start with any other entry. The extension's settings page shows its URI. | empty |
 
 ## Receive reader access
 

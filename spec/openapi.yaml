@@ -345,12 +345,17 @@ components:
         manual_code:
           type: boolean
           description: Whether the copy-paste code fallback is available for the sign-in.
+        extension_redirect:
+          type: boolean
+          description: Whether the sign-in accepts browser extension redirect URIs.
+            Only the extensions the server allows can sign in.
         scopes:
           type: array
           items:
             type: string
           description: Scopes an API token can be granted.
       required:
+      - extension_redirect
       - login_required
       - loopback_pkce
       - manual_code
