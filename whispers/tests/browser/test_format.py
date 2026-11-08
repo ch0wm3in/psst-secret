@@ -14,9 +14,15 @@ pytestmark = pytest.mark.browser
 
 VECTORS = Path(settings.BASE_DIR) / "spec" / "vectors" / "v1"
 
-# Runs crypto.js against the shared vectors. Random values are replaced with the
-# vector inputs so encryption must reproduce the expected ciphertext exactly.
+# Runs the bundled @psst-secret/crypto package against the shared vectors in a real
+# browser. Random values are replaced with the vector inputs so encryption must
+# reproduce the expected ciphertext exactly. packages/crypto runs them in Node too.
 _RUN_VECTORS = """async ({ mode, cases }) => {
+    const {
+        base64ToBuf, decryptContent, encryptContent, generateRequestKeyPair,
+        generateRevealAuthorization, openFromSender, revealFragment, sealForRecipient,
+        submitFragment, unwrapPrivateKey, wrapPrivateKey,
+    } = PsstCrypto;
     const bytes = b64 => new Uint8Array(base64ToBuf(b64));
     const hexBytes = hex => new Uint8Array(hex.match(/../g).map(h => parseInt(h, 16)));
     async function withRandom(queue, fn) {
@@ -96,7 +102,7 @@ def _vectors(mode):
 
 
 @pytest.mark.parametrize("mode", ["send", "password", "receive"])
-def test_crypto_js_matches_format_vectors(page, app_url, mode):
+def test_bundled_crypto_matches_format_vectors(page, app_url, mode):
     cases = _vectors(mode)
     page.goto(app_url)
     results = page.evaluate(_RUN_VECTORS, {"mode": mode, "cases": cases})
@@ -232,3 +238,15 @@ def test_unknown_request_version_is_not_submitted(page, create_whisper, legacy_l
     expect(page.locator("#error")).to_contain_text("unsupported format version")
     stored = redis_store.get_crypto(whisper.id)
     assert (stored["v"], stored["ciphertext"]) == (2, "")
+
+
+def test_mismatched_fingerprint_is_not_submitted(page, create_whisper):
+    submit_url, _ = create_whisper(kind="receive")
+    base = submit_url.split("#", 1)[0]
+    # A well-formed fingerprint of a different key, as in a tampered link.
+    other = _vectors("receive")[0]["fingerprint"]
+    page.goto(base + "#" + urlencode({"v": 1, "fp": other}))
+    page.locator("#whisper").fill("Must not be submitted")
+    page.locator("#submit-btn").click()
+    expect(page.locator("#error")).to_contain_text("does not match the link")
+    assert not redis_store.get_crypto(Whisper.objects.get().id)["ciphertext"]

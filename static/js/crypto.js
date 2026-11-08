@@ -1,35 +1,32 @@
 /**
- * psst-secret — Client-side encryption/decryption using Web Crypto API (AES-256-GCM).
+ * psst-secret — web UI for creating, submitting, and revealing whispers.
+ *
+ * The format itself (encryption, key derivation, link fragments, reveal tokens)
+ * lives in the @psst-secret/crypto package in packages/crypto, which implements
+ * docs/format.md. esbuild bundles both into theme/static/js/crypto.min.js.
  *
  * The encryption key NEVER leaves the browser. It is stored only in the URL
  * fragment (#key=...&reveal=...), which is not sent to the server per the HTTP spec.
  * The independent reveal token is sent only in the reveal POST.
- *
- * Encrypted payload format (JSON before encryption):
- *   Text:  { type: "text", content: "..." }
- *   Files: { type: "files", files: [{ filename, mimetype, data: "<base64>" }, ...] }
- *   Legacy (single file, still decoded for backward compatibility):
- *          { type: "file", filename: "...", mimetype: "...", data: "<base64>" }
- *
- * docs/format.md is the normative specification of the format implemented here.
  */
-
-/** Format version written by this client. */
-const FORMAT_VERSION = 1;
-/** Version 0 is the unmarked legacy format, which is still read but never written. */
-const READABLE_FORMAT_VERSIONS = [0, 1];
-/** Fragment of legacy links that carry only a bare base64 key or fingerprint. */
-const LEGACY_FRAGMENT = /^[A-Za-z0-9+/]+={0,2}$/;
-
-/** Parse a `v` value from a fragment or payload. Missing means legacy version 0. */
-function parseFormatVersion(value) {
-    if (value === null || value === undefined) return 0;
-    return /^[0-9]+$/.test(String(value)) ? Number(value) : NaN;
-}
-
-function isReadableFormat(version) {
-    return READABLE_FORMAT_VERSIONS.includes(version);
-}
+import * as PsstCrypto from '@psst-secret/crypto';
+import {
+    FORMAT_VERSION,
+    filesEnvelope,
+    generateKey,
+    generateRequestKeyPair,
+    generateRevealAuthorization,
+    encryptContent,
+    isReadableFormat,
+    parseFormatVersion,
+    parseRevealFragment,
+    parseSubmitFragment,
+    revealFragment,
+    sealForRecipient,
+    submitFragment,
+    textEnvelope,
+    wrapPrivateKey,
+} from '@psst-secret/crypto';
 
 // ---- Multi-file selection state (shared between create.html and submit.html) ----
 
@@ -164,49 +161,9 @@ function onFileSelected() {
 async function buildFilesEnvelope() {
     const files = [];
     for (const file of selectedFiles) {
-        const arrayBuf = await readFileAsArrayBuffer(file);
-        files.push({
-            filename: file.name,
-            mimetype: file.type || 'application/octet-stream',
-            data: bufToBase64(arrayBuf),
-        });
+        files.push({ filename: file.name, mimetype: file.type, data: await readFileAsArrayBuffer(file) });
     }
-    return JSON.stringify({ type: 'files', files });
-}
-
-/**
- * Sanitize a filename from an untrusted source.
- * Strips path separators and null bytes, limits length, applies a fallback.
- */
-function sanitizeFilename(name) {
-    if (typeof name !== 'string' || !name) return 'download';
-    // Strip path components and null bytes
-    let clean = name.replace(/[/\\]/g, '_').replace(/\0/g, '');
-    // Collapse leading dots to prevent hidden files
-    clean = clean.replace(/^\.+/, '');
-    // Limit length (255 is common filesystem max)
-    if (clean.length > 200) clean = clean.substring(0, 200);
-    return clean || 'download';
-}
-
-/**
- * Convert an ArrayBuffer to a Base64 string.
- */
-function bufToBase64(buf) {
-    const bytes = new Uint8Array(buf);
-    let binary = '';
-    for (const b of bytes) binary += String.fromCharCode(b);
-    return btoa(binary);
-}
-
-/**
- * Convert a Base64 string to an ArrayBuffer.
- */
-function base64ToBuf(b64) {
-    const binary = atob(b64);
-    const bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-    return bytes.buffer;
+    return filesEnvelope(files);
 }
 
 /**
@@ -221,240 +178,12 @@ function readFileAsArrayBuffer(file) {
     });
 }
 
-/**
- * Generate a random AES-256-GCM key and return it as a Base64 string.
- */
-async function generateKey() {
-    const key = await crypto.subtle.generateKey(
-        { name: 'AES-GCM', length: 256 },
-        true,
-        ['encrypt', 'decrypt']
-    );
-    const raw = await crypto.subtle.exportKey('raw', key);
-    return bufToBase64(raw);
-}
-
-function toHex(bytes) {
-    return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
-}
-
-/** SHA-256 hex digest of the ASCII reveal token, as stored by the server. */
-async function revealTokenHash(token) {
-    return toHex(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(token))));
-}
-
-async function generateRevealAuthorization() {
-    const token = toHex(crypto.getRandomValues(new Uint8Array(32)));
-    return { token, tokenHash: await revealTokenHash(token) };
-}
-
-function revealFragment(key, token) {
-    const params = new URLSearchParams({ v: FORMAT_VERSION, reveal: token });
-    if (key) params.set('key', key);
-    return '#' + params.toString();
-}
-
 function readRevealFragment(allowLegacy = false) {
-    const raw = window.location.hash.substring(1);
-    if (allowLegacy && LEGACY_FRAGMENT.test(raw)) {
-        return { version: 0, key: raw, token: '' };
-    }
-    const params = new URLSearchParams(raw);
-    return {
-        version: parseFormatVersion(params.get('v')),
-        key: params.get('key') || '',
-        token: params.get('reveal') || '',
-    };
+    return parseRevealFragment(window.location.hash, allowLegacy);
 }
 
-function submitFragment(fingerprint) {
-    return '#' + new URLSearchParams({ v: FORMAT_VERSION, fp: fingerprint }).toString();
-}
-
-/** Read a submit link fragment. Legacy links carry only the bare fingerprint. */
 function readSubmitFragment() {
-    const raw = window.location.hash.substring(1);
-    if (LEGACY_FRAGMENT.test(raw)) {
-        return { version: 0, fingerprint: raw };
-    }
-    const params = new URLSearchParams(raw);
-    return { version: parseFormatVersion(params.get('v')), fingerprint: params.get('fp') || '' };
-}
-
-/**
- * Import a Base64-encoded raw key into a CryptoKey object.
- */
-async function importKey(keyB64) {
-    const raw = base64ToBuf(keyB64);
-    return crypto.subtle.importKey(
-        'raw', raw, { name: 'AES-GCM' }, false, ['encrypt', 'decrypt']
-    );
-}
-
-/**
- * Derive an AES-256-GCM key from a password + salt using PBKDF2.
- * Returns { key (CryptoKey), saltB64 }.
- */
-async function deriveKey(password, saltB64) {
-    const enc = new TextEncoder();
-    const salt = saltB64 ? base64ToBuf(saltB64) : crypto.getRandomValues(new Uint8Array(16));
-    const keyMaterial = await crypto.subtle.importKey(
-        'raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']
-    );
-    const key = await crypto.subtle.deriveKey(
-        { name: 'PBKDF2', salt, iterations: 600000, hash: 'SHA-256' },
-        keyMaterial,
-        { name: 'AES-GCM', length: 256 },
-        false,
-        ['encrypt', 'decrypt']
-    );
-    return { key, saltB64: saltB64 || bufToBase64(salt) };
-}
-
-/**
- * Encrypt plaintext string. Returns { ciphertext, iv } as Base64 strings.
- * If password is provided, derives key via PBKDF2 and also returns salt.
- */
-async function encryptContent(plaintext, keyB64, password) {
-    let key, saltB64 = '';
-    if (password) {
-        const derived = await deriveKey(password);
-        key = derived.key;
-        saltB64 = derived.saltB64;
-    } else {
-        key = await importKey(keyB64);
-    }
-    const iv = crypto.getRandomValues(new Uint8Array(12));
-    const encoded = new TextEncoder().encode(plaintext);
-
-    const encrypted = await crypto.subtle.encrypt(
-        { name: 'AES-GCM', iv },
-        key,
-        encoded
-    );
-
-    return {
-        ciphertext: bufToBase64(encrypted),
-        iv: bufToBase64(iv),
-        salt: saltB64,
-    };
-}
-
-/**
- * Decrypt Base64-encoded ciphertext with Base64-encoded IV and key.
- * If saltB64 is provided, derives key from password via PBKDF2.
- * Returns the plaintext string.
- */
-async function decryptContent(ciphertextB64, ivB64, keyB64, password, saltB64) {
-    let key;
-    if (password && saltB64) {
-        const derived = await deriveKey(password, saltB64);
-        key = derived.key;
-    } else {
-        key = await importKey(keyB64);
-    }
-    const iv = base64ToBuf(ivB64);
-    const ciphertext = base64ToBuf(ciphertextB64);
-
-    const decrypted = await crypto.subtle.decrypt(
-        { name: 'AES-GCM', iv },
-        key,
-        ciphertext
-    );
-
-    return new TextDecoder().decode(decrypted);
-}
-
-// ---- Receive mode: X-Wing (ML-KEM-768 + X25519) + HKDF-SHA256 + AES-256-GCM ----
-// The public key is stored server-side; the submit link carries only its SHA-256
-// fingerprint, so the server cannot swap it. The view link carries the key seed.
-
-function pqKem() {
-    if (!window.PsstPQ) throw new Error(gettext('Post-quantum crypto module failed to load.'));
-    return window.PsstPQ.kem;
-}
-
-async function sha256B64(bytes) {
-    return bufToBase64(await crypto.subtle.digest('SHA-256', bytes));
-}
-
-async function hkdfAesKey(sharedSecret, usage) {
-    const ikm = await crypto.subtle.importKey('raw', sharedSecret, 'HKDF', false, ['deriveKey']);
-    return crypto.subtle.deriveKey(
-        {
-            name: 'HKDF',
-            hash: 'SHA-256',
-            salt: new Uint8Array(32),
-            info: new TextEncoder().encode('psst-receive-v2'),
-        },
-        ikm,
-        { name: 'AES-GCM', length: 256 },
-        false,
-        [usage]
-    );
-}
-
-/** Generate the request key pair. Returns { seedB64, publicKeyB64, fingerprintB64 }. */
-async function generateRequestKeyPair() {
-    const kem = pqKem();
-    const seed = crypto.getRandomValues(new Uint8Array(kem.lengths.seed));
-    const { publicKey } = kem.keygen(seed);
-    return {
-        seedB64: bufToBase64(seed),
-        publicKeyB64: bufToBase64(publicKey),
-        fingerprintB64: await sha256B64(publicKey),
-    };
-}
-
-/** Encrypt plaintext to the request's public key after checking it against the link fingerprint. */
-async function sealForRecipient(plaintext, publicKeyB64, fingerprintB64) {
-    const kem = pqKem();
-    const publicKey = new Uint8Array(base64ToBuf(publicKeyB64));
-    if (await sha256B64(publicKey) !== fingerprintB64) {
-        throw new Error(gettext('The request key does not match the link. The link may be incomplete or tampered with.'));
-    }
-    const { cipherText, sharedSecret } = kem.encapsulate(publicKey);
-    const key = await hkdfAesKey(sharedSecret, 'encrypt');
-    const iv = crypto.getRandomValues(new Uint8Array(12));
-    const ct = await crypto.subtle.encrypt(
-        { name: 'AES-GCM', iv }, key, new TextEncoder().encode(plaintext)
-    );
-    return {
-        ciphertext: bufToBase64(ct),
-        iv: bufToBase64(iv),
-        encapsulated_key: bufToBase64(cipherText),
-    };
-}
-
-/** Decrypt a receive-mode payload with the request's key seed. */
-async function openFromSender(data, seedB64) {
-    const kem = pqKem();
-    const { secretKey } = kem.keygen(new Uint8Array(base64ToBuf(seedB64)));
-    const sharedSecret = kem.decapsulate(
-        new Uint8Array(base64ToBuf(data.encapsulated_key)), secretKey
-    );
-    const key = await hkdfAesKey(sharedSecret, 'decrypt');
-    const pt = await crypto.subtle.decrypt(
-        { name: 'AES-GCM', iv: base64ToBuf(data.iv) }, key, base64ToBuf(data.ciphertext)
-    );
-    return new TextDecoder().decode(pt);
-}
-
-/** Encrypt the request private key with a password. Returns { wrappedKey, wrappedKeyIv, salt }. */
-async function wrapPrivateKey(privB64, password) {
-    const { key, saltB64 } = await deriveKey(password);
-    const iv = crypto.getRandomValues(new Uint8Array(12));
-    const wrapped = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, base64ToBuf(privB64));
-    return { wrappedKey: bufToBase64(wrapped), wrappedKeyIv: bufToBase64(iv), salt: saltB64 };
-}
-
-/** Decrypt a password-wrapped request private key. Throws on wrong password. */
-async function unwrapPrivateKey(wrappedKeyB64, wrappedKeyIvB64, password, saltB64) {
-    const { key } = await deriveKey(password, saltB64);
-    const raw = await crypto.subtle.decrypt(
-        { name: 'AES-GCM', iv: base64ToBuf(wrappedKeyIvB64) }, key, base64ToBuf(wrappedKeyB64)
-    );
-    return bufToBase64(raw);
+    return parseSubmitFragment(window.location.hash);
 }
 
 /**
@@ -528,11 +257,7 @@ async function handleCreate() {
         if (isFileMode) {
             payload = await buildFilesEnvelope();
         } else {
-            payload = JSON.stringify({
-                type: 'text',
-                content: plaintext,
-                ...(whisperEl.dataset.format ? { format: whisperEl.dataset.format } : {}),
-            });
+            payload = textEnvelope(plaintext, whisperEl.dataset.format);
         }
 
         // 1. Generate a random key (never sent to server)
@@ -790,14 +515,18 @@ async function handleSubmit() {
         if (isFileMode) {
             payload = await buildFilesEnvelope();
         } else {
-            payload = JSON.stringify({
-                type: 'text',
-                content: plaintext,
-                ...(whisperEl.dataset.format ? { format: whisperEl.dataset.format } : {}),
-            });
+            payload = textEnvelope(plaintext, whisperEl.dataset.format);
         }
 
-        const sealed = await sealForRecipient(payload, requestData.public_key, fragment.fingerprint);
+        let sealed;
+        try {
+            sealed = await sealForRecipient(payload, requestData.public_key, fragment.fingerprint);
+        } catch (e) {
+            if (e.code === 'fingerprint_mismatch') {
+                throw new Error(gettext('The request key does not match the link. The link may be incomplete or tampered with.'));
+            }
+            throw e;
+        }
 
         // Submit to server
         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
@@ -826,3 +555,17 @@ async function handleSubmit() {
         setButtonLabel(btn, gettext('Encrypt & Submit'));
     }
 }
+
+// Templates call these from inline handlers and scripts.
+Object.assign(window, {
+    PsstCrypto,
+    addFiles,
+    copyUrl,
+    formatSize,
+    handleCreate,
+    handleCreateRequest,
+    handleSubmit,
+    onFileSelected,
+    readRevealFragment,
+    readSubmitFragment,
+});

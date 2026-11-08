@@ -42,7 +42,7 @@
         const fragment = readRevealFragment(legacy);
         const error = document.getElementById('reveal-error');
         const passwordProtected = {{ password_protected|yesno:"true,false" }};
-        if (!isReadableFormat(fragment.version)) {
+        if (!PsstCrypto.isReadableFormat(fragment.version)) {
             error.textContent = '{{ unsupported_format_error|escapejs }}';
             error.classList.remove('hidden');
             return false;

@@ -104,7 +104,6 @@
 <template id="download-icon">{% icon "arrow-down-tray" %}</template>
 
 {% load static %}
-<script src="{% static 'js/pqc.min.js' %}"></script>
 {% settings_value "PSST_ENABLE_RICH_TEXT" as rich_text %}
 {% if rich_text %}
 <script src="{% static 'js/tiptap.min.js' %}"></script>
@@ -189,7 +188,7 @@
 
     function showFiles(files) {
         decryptedFiles = files.map(f => ({
-            filename: sanitizeFilename(f.filename),
+            filename: PsstCrypto.sanitizeFilename(f.filename),
             mimetype: f.mimetype || 'application/octet-stream',
             data: f.data,
         }));
@@ -275,13 +274,13 @@
     async function decryptPayload(keyB64, password) {
         if (pasteData.encapsulated_key) {
             const privB64 = password
-                ? await unwrapPrivateKey(pasteData.wrapped_key, pasteData.wrapped_key_iv, password, pasteData.salt)
+                ? await PsstCrypto.unwrapPrivateKey(pasteData.wrapped_key, pasteData.wrapped_key_iv, password, pasteData.salt)
                 : keyB64;
-            return openFromSender(pasteData, privB64);
+            return PsstCrypto.openFromSender(pasteData, privB64);
         }
         return password
-            ? decryptContent(pasteData.ciphertext, pasteData.iv, null, password, pasteData.salt)
-            : decryptContent(pasteData.ciphertext, pasteData.iv, keyB64);
+            ? PsstCrypto.decryptContent(pasteData.ciphertext, pasteData.iv, null, password, pasteData.salt)
+            : PsstCrypto.decryptContent(pasteData.ciphertext, pasteData.iv, keyB64);
     }
 
     async function decryptWithPassword() {
@@ -313,7 +312,7 @@
         const isPasswordProtected = !!pasteData.salt;
 
         (async () => {
-            if (!isReadableFormat(fragment.version) || !isReadableFormat(parseFormatVersion(pasteData.v))) {
+            if (!PsstCrypto.isReadableFormat(fragment.version) || !PsstCrypto.isReadableFormat(PsstCrypto.parseFormatVersion(pasteData.v))) {
                 showError("{% trans "This link uses an unsupported format version. Ask for a new link." %}");
                 return;
             }

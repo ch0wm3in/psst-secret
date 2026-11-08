@@ -1,0 +1,41 @@
+{
+  "name": "@psst-secret/crypto",
+  "version": "1.0.0",
+  "description": "Encryption format, link fragments, and reveal tokens for psst-secret whispers",
+  "keywords": [
+    "psst-secret",
+    "encryption",
+    "aes-gcm",
+    "ml-kem",
+    "x-wing"
+  ],
+  "homepage": "https://github.com/ch0wm3in/psst-secret/blob/main/docs/format.md",
+  "bugs": "https://github.com/ch0wm3in/psst-secret/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ch0wm3in/psst-secret.git",
+    "directory": "packages/crypto"
+  },
+  "license": "GPL-3.0-only",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "default": "./src/index.js"
+    }
+  },
+  "types": "./src/index.d.ts",
+  "files": [
+    "src"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@noble/post-quantum": "0.7.1"
+  }
+}
