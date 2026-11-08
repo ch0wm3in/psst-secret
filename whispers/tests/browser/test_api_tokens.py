@@ -143,6 +143,39 @@ def test_denied_sign_in_reports_access_denied(page, app_url, verified_user, loop
     assert received == {"error": ["access_denied"], "state": ["browser-state"]}
 
 
+_EXTENSION_REDIRECT_URI = (
+    "https://" + "abcdefghijklmnop" * 2 + ".chromiumapp.org/callback"
+)
+
+
+@pytest.mark.browser_settings(
+    ENABLE_AUTH=True,
+    ENABLE_LOCAL_LOGIN=True,
+    PSST_ENABLE_API_TOKENS=True,
+    PSST_API_TOKEN_EXTENSION_REDIRECT_URIS=[_EXTENSION_REDIRECT_URI],
+)
+def test_extension_sign_in_issues_token(page, app_url, verified_user):
+    verifier = _start_sign_in(page, app_url, _EXTENSION_REDIRECT_URI, verified_user())
+    expect(page.locator("[data-cli-authorize]")).to_contain_text("a browser extension")
+    # The browser would intercept this for launchWebAuthFlow; here the host doesn't resolve.
+    with page.expect_request(
+        lambda request: request.url.startswith(_EXTENSION_REDIRECT_URI + "?")
+    ) as callback:
+        page.get_by_role("button", name="Approve", exact=True).click()
+    received = parse_qs(urlsplit(callback.value.url).query)
+    assert received["state"] == ["browser-state"]
+
+    exchange = {
+        "code": received["code"][0],
+        "code_verifier": verifier,
+        "redirect_uri": _EXTENSION_REDIRECT_URI,
+    }
+    status, body = _api(app_url + "/api/v1/cli/token", exchange)
+    assert status == 200
+    whisper = {"ciphertext": "ct", "iv": "iv", "reveal_token_hash": _REVEAL_TOKEN_HASH}
+    assert _api(app_url + "/api/v1/whisper", whisper, body["access_token"])[0] == 200
+
+
 def test_non_loopback_redirect_shows_error_without_redirecting(
     page, app_url, verified_user
 ):

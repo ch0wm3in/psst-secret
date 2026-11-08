@@ -9,6 +9,7 @@ from urllib.parse import parse_qs, urlencode, urlsplit
 
 from django.contrib.auth.models import User
 from django.core.cache import cache
+from django.core.exceptions import ImproperlyConfigured
 from django.test import Client, TestCase, override_settings
 from django.utils import timezone
 
@@ -17,6 +18,7 @@ from whispers.api_tokens import (
     AUTH_SCHEME,
     authenticate_token,
     delete_expired,
+    extension_redirect_uris,
     hash_secret,
 )
 from whispers.models import ApiAuthorizationCode, ApiToken, Whisper
@@ -36,6 +38,10 @@ _MIDDLEWARE = [m for m in _BASE_MIDDLEWARE if m != _TOKEN_MIDDLEWARE] + [
     _LOGIN_MIDDLEWARE,
 ]
 _REDIRECT_URI = "http://127.0.0.1:53682/callback"
+_CHROME_REDIRECT_URI = "https://" + "abcdefghijklmnop" * 2 + ".chromiumapp.org/callback"
+_FIREFOX_REDIRECT_URI = (
+    "https://" + "0123456789abcdef0123" * 2 + ".extensions.allizom.org/"
+)
 _PASSWORD = "Local-login-password-42!"
 
 
@@ -50,6 +56,7 @@ def _pkce():
     PSST_ENABLE_API_TOKENS=True,
     PSST_ENABLE_API_TOKEN_MANUAL_CODE=False,
     PSST_API_TOKEN_TTL=3600,
+    PSST_API_TOKEN_EXTENSION_REDIRECT_URIS=[],
     PSST_FORCE_AUTH_VIEW=False,
     PSST_FORCE_AUTH_SUBMIT=False,
     PSST_ENABLE_RECEIVE_ACCESS=False,
@@ -314,6 +321,104 @@ class AuthorizeEndpointTests(ApiTokenTestCase):
         self.assertEqual(response.status_code, 302)
         self.assertTrue(response["Location"].startswith("/login/?next="))
         self.assertFalse(ApiAuthorizationCode.objects.exists())
+
+
+@override_settings(
+    PSST_API_TOKEN_EXTENSION_REDIRECT_URIS=[
+        _CHROME_REDIRECT_URI,
+        _FIREFOX_REDIRECT_URI,
+    ]
+)
+class ExtensionRedirectTests(ApiTokenTestCase):
+    def test_allowed_extension_redirect_round_trip(self):
+        self.client.force_login(self.user)
+        for redirect_uri in (_CHROME_REDIRECT_URI, _FIREFOX_REDIRECT_URI):
+            with self.subTest(redirect_uri=redirect_uri):
+                response, verifier = self._authorize(redirect_uri=redirect_uri)
+                self.assertEqual(response.status_code, 302)
+                self.assertTrue(response["Location"].startswith(redirect_uri + "?"))
+                exchange = self._exchange(self._code(response), verifier, redirect_uri)
+                self.assertEqual(exchange.status_code, 200)
+                token = exchange.json()["access_token"]
+                self.assertEqual(self._create_whisper(token).status_code, 200)
+
+    def test_approval_page_names_the_extension_host(self):
+        self.client.force_login(self.user)
+        _verifier, challenge = _pkce()
+        response = self.client.get(
+            "/cli/authorize", self._params(challenge, redirect_uri=_CHROME_REDIRECT_URI)
+        )
+        self.assertContains(response, urlsplit(_CHROME_REDIRECT_URI).netloc)
+        self.assertContains(response, "(a browser extension)")
+        self.assertNotContains(response, "(a program on this device)")
+
+    def test_unlisted_extension_redirects_are_rejected(self):
+        self.client.force_login(self.user)
+        for redirect_uri in (
+            "https://" + "p" * 32 + ".chromiumapp.org/callback",
+            _CHROME_REDIRECT_URI + "/other",
+            _CHROME_REDIRECT_URI.replace("/callback", "/"),
+            _CHROME_REDIRECT_URI + "?x=1",
+            _CHROME_REDIRECT_URI.replace("https://", "http://"),
+            _FIREFOX_REDIRECT_URI + "callback",
+        ):
+            with self.subTest(redirect_uri=redirect_uri):
+                response, _verifier = self._authorize(redirect_uri=redirect_uri)
+                self.assertEqual(response.status_code, 400)
+                self.assertNotIn("Location", response)
+        with self.settings(PSST_API_TOKEN_EXTENSION_REDIRECT_URIS=[]):
+            response, _verifier = self._authorize(redirect_uri=_CHROME_REDIRECT_URI)
+            self.assertEqual(response.status_code, 400)
+        self.assertFalse(ApiAuthorizationCode.objects.exists())
+
+    def test_exchange_with_a_different_redirect_uri_is_rejected(self):
+        self.client.force_login(self.user)
+        for other in (_FIREFOX_REDIRECT_URI, _REDIRECT_URI):
+            with self.subTest(other=other):
+                response, verifier = self._authorize(redirect_uri=_CHROME_REDIRECT_URI)
+                exchange = self._exchange(self._code(response), verifier, other)
+                self.assertEqual(exchange.status_code, 400)
+        self.assertFalse(ApiToken.objects.exists())
+
+    def test_invalid_setting_entries_are_refused(self):
+        self.assertEqual(
+            extension_redirect_uris(),
+            {_CHROME_REDIRECT_URI, _FIREFOX_REDIRECT_URI},
+        )
+        for entry in (
+            "https://evil.example/callback",
+            "https://evil.example/.chromiumapp.org/callback",
+            "https://" + "a" * 32 + ".chromiumapp.org.evil.example/callback",
+            "https://" + "z" * 32 + ".chromiumapp.org/callback",
+            "https://" + "a" * 31 + ".chromiumapp.org/callback",
+            "https://" + "g" * 40 + ".extensions.allizom.org/",
+            "https://" + "a" * 32 + ".chromiumapp.org",
+            "https://*.chromiumapp.org/callback",
+            "http://" + "a" * 32 + ".chromiumapp.org/callback",
+            _CHROME_REDIRECT_URI + "?next=https://evil.example",
+            _CHROME_REDIRECT_URI + "#fragment",
+            "https://" + "a" * 32 + ".chromiumapp.org/" + "a" * 250,
+            _REDIRECT_URI,
+        ):
+            with (
+                self.subTest(entry=entry),
+                self.settings(
+                    PSST_API_TOKEN_EXTENSION_REDIRECT_URIS=[_CHROME_REDIRECT_URI, entry]
+                ),
+            ):
+                with self.assertRaises(ImproperlyConfigured):
+                    extension_redirect_uris()
+
+    def test_info_advertises_extension_redirect(self):
+        info = Client().get("/api/v1/info").json()["auth"]
+        self.assertTrue(info["extension_redirect"])
+        for overrides in (
+            {"PSST_API_TOKEN_EXTENSION_REDIRECT_URIS": []},
+            {"PSST_ENABLE_API_TOKENS": False},
+        ):
+            with self.subTest(overrides=overrides), self.settings(**overrides):
+                info = Client().get("/api/v1/info").json()["auth"]
+                self.assertFalse(info["extension_redirect"])
 
 
 class TokenEndpointTests(ApiTokenTestCase):
@@ -596,6 +701,7 @@ class TokenAuthenticationTests(ApiTokenTestCase):
                 "login_required": True,
                 "loopback_pkce": True,
                 "manual_code": False,
+                "extension_redirect": False,
                 "scopes": ["whisper:create", "whisper:read", "request:manage"],
             },
         )

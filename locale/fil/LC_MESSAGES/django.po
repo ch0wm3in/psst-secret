@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psst-secret\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-08 20:09+0000\n"
+"POT-Creation-Date: 2026-11-08 21:41+0000\n"
 "PO-Revision-Date: 2026-10-09 08:07+0000\n"
 "Last-Translator: \n"
 "Language-Team: Filipino\n"
@@ -791,6 +791,10 @@ msgid "Sign-in returns to"
 msgstr "Babalik ang pag-sign in sa"
 
 #: templates/whispers/cli_authorize.html:36
+msgid "(a browser extension)"
+msgstr "(isang browser extension)"
+
+#: templates/whispers/cli_authorize.html:36
 msgid "(a program on this device)"
 msgstr "(isang program sa device na ito)"
 
@@ -899,7 +903,7 @@ msgstr ""
 "bagong link."
 
 #: templates/whispers/confirm.html:37 templates/whispers/forbidden.html:10
-#: whispers/views.py:612
+#: whispers/views.py:613
 msgid ""
 "The reveal authorization is missing or invalid. Use the complete view link."
 msgstr ""
@@ -1196,7 +1200,7 @@ msgstr ""
 "Kailangang naka-sign in ang taong magsusumite ng whisper sa kahilingang ito."
 
 #: templates/whispers/create.html:251 templates/whispers/receive_access.html:8
-#: whispers/views.py:953
+#: whispers/views.py:954
 msgid "Restricted receive access is required."
 msgstr "Kinakailangan ang limitadong access sa pagtanggap."
 
@@ -1516,8 +1520,8 @@ msgstr "Hindi pinapayagan ang pag-access"
 msgid "Access denied"
 msgstr "Hindi pinapayagan ang pag-access"
 
-#: templates/whispers/forbidden.html:10 whispers/views.py:569
-#: whispers/views.py:720
+#: templates/whispers/forbidden.html:10 whispers/views.py:570
+#: whispers/views.py:721
 msgid "You do not have access to this whisper."
 msgstr "Wala kang access sa whisper na ito."
 
@@ -2044,60 +2048,62 @@ msgid "Decryption failed. The link may be incomplete or corrupted."
 msgstr ""
 "Hindi nagtagumpay ang pag-decrypt. Maaaring hindi kumpleto o sira ang link."
 
-#: whispers/api_tokens.py:41
+#: whispers/api_tokens.py:42
 msgid "Create whispers and submit to receive requests"
 msgstr "Gumawa ng mga whisper at magsumite sa mga receive request"
 
-#: whispers/api_tokens.py:42
+#: whispers/api_tokens.py:43
 msgid "Reveal whispers"
 msgstr "Ipakita ang mga whisper"
 
-#: whispers/api_tokens.py:43
+#: whispers/api_tokens.py:44
 msgid "Create receive requests and manage their reader access"
 msgstr ""
 "Gumawa ng mga receive request at pamahalaan ang access ng mga reader nito"
 
-#: whispers/api_tokens.py:97
+#: whispers/api_tokens.py:127
 msgid ""
 "The redirect address must be a loopback address such as http://127.0.0.1:"
-"<port>/callback or http://[::1]:<port>/callback."
+"<port>/callback or http://[::1]:<port>/callback, or a browser extension "
+"address that this server allows."
 msgstr ""
 "Dapat na loopback address ang redirect address, gaya ng http://127.0.0.1:"
-"<port>/callback o http://[::1]:<port>/callback."
+"<port>/callback o http://[::1]:<port>/callback, o isang browser extension "
+"address na pinapayagan ng server na ito."
 
-#: whispers/api_tokens.py:112
+#: whispers/api_tokens.py:143
 msgid "Unsupported response type."
 msgstr "Hindi suportado ang uri ng response."
 
-#: whispers/api_tokens.py:118
+#: whispers/api_tokens.py:149
 msgid "The client must use the S256 code challenge method."
 msgstr "Dapat gamitin ng client ang S256 na paraan ng code challenge."
 
-#: whispers/api_tokens.py:122
+#: whispers/api_tokens.py:153
 msgid "The code challenge is missing or invalid."
 msgstr "Nawawala o hindi wasto ang code challenge."
 
-#: whispers/api_tokens.py:125
+#: whispers/api_tokens.py:156
 msgid "The state parameter is missing or invalid."
 msgstr "Nawawala o hindi wasto ang state parameter."
 
-#: whispers/api_tokens.py:128
+#: whispers/api_tokens.py:159
 msgid "The client name is invalid."
 msgstr "Hindi wasto ang pangalan ng client."
 
-#: whispers/api_tokens.py:131
+#: whispers/api_tokens.py:162
 msgid "The client requested an unknown scope."
 msgstr "Humiling ang client ng hindi kilalang scope."
 
-#: whispers/api_tokens.py:171
+#: whispers/api_tokens.py:202
 msgid "The authorization code is invalid or expired."
 msgstr "Hindi wasto o expired na ang authorization code."
 
-#: whispers/api_tokens.py:224
+#: whispers/api_tokens.py:255
 msgid "The code verifier is missing or invalid."
 msgstr "Nawawala o hindi wasto ang code verifier."
 
-#: whispers/api_tokens.py:284
+#: whispers/api_tokens.py:315
 msgid "This token does not have the required scope."
 msgstr "Walang kinakailangang scope ang token na ito."
 
@@ -2441,11 +2447,11 @@ msgstr "5 minuto"
 msgid "1 hour"
 msgstr "1 oras"
 
-#: whispers/token_views.py:130
+#: whispers/token_views.py:131
 msgid "You denied access."
 msgstr "Tinanggihan mo ang access."
 
-#: whispers/token_views.py:227
+#: whispers/token_views.py:228
 msgid "Send the API token to revoke in the Authorization header."
 msgstr "Ipadala sa Authorization header ang API token na babawiin."
 
@@ -2455,20 +2461,20 @@ msgstr ""
 "Pansamantalang hindi available ang storage ng whisper. Pakisubukang muli "
 "mamaya."
 
-#: whispers/views.py:206 whispers/views.py:863 whispers/views.py:968
+#: whispers/views.py:206 whispers/views.py:864 whispers/views.py:969
 msgid "Enter the verified primary email of each additional reader."
 msgstr ""
 "Ilagay ang beripikadong pangunahing email ng bawat karagdagang mambabasa."
 
-#: whispers/views.py:846
+#: whispers/views.py:847
 msgid "Receive reader restrictions are not enabled."
 msgstr "Hindi naka-enable ang mga limitasyon sa mambabasa sa pagtanggap."
 
-#: whispers/views.py:850
+#: whispers/views.py:851
 msgid "Sign in to manage reader access."
 msgstr "Mag-sign in upang pamahalaan ang access ng mambabasa."
 
-#: whispers/views.py:854 whispers/views.py:959
+#: whispers/views.py:855 whispers/views.py:960
 msgid "Enable restricted access before adding readers."
 msgstr "I-enable ang limitadong access bago magdagdag ng mga mambabasa."
 

@@ -51,6 +51,7 @@ so clients can call it before they have a token.
     "login_required": true,
     "loopback_pkce": true,
     "manual_code": false,
+    "extension_redirect": false,
     "scopes": ["whisper:create", "whisper:read", "request:manage"]
   },
   "features": {
@@ -70,7 +71,9 @@ so clients can call it before they have a token.
 
 - **`auth`:** `login_required` says whether creating whispers needs authentication.
   `loopback_pkce` and `manual_code` say which [API token](#api-tokens) sign-in methods
-  are available; `scopes` is empty when API tokens are off.
+  are available, and `extension_redirect` whether
+  [browser extensions](#browser-extensions) can sign in; `scopes` is empty when API
+  tokens are off.
 - **`features`:** optional features from the [configuration](configuration.md).
   `email_notifications` says whether `notify_email` sends email. `receive_access` says
   whether requests accept [reader restrictions](#receive-reader-access), whether
@@ -177,14 +180,33 @@ work, and MFA and Conditional Access apply as usual. The device authorization gr
 
 The authorize endpoint accepts only `http://127.0.0.1:<port>/<path>` and
 `http://[::1]:<port>/<path>` redirect URIs, with any port and a path made of letters,
-digits, `-`, `.`, `_`, `~`, and `/`. `localhost`, other hosts, query strings, and
-fragments are rejected. It requires `state` and the `S256` challenge method, and rejects
-`plain`. When a request is invalid, it shows an error page and never redirects.
+digits, `-`, `.`, `_`, `~`, and `/`, plus the exact
+[extension redirect URIs](#browser-extensions) the server allows. `localhost`, other
+hosts, query strings, and fragments are rejected. It requires `state` and the `S256`
+challenge method, and rejects `plain`. When a request is invalid, it shows an error page
+and never redirects.
 
 Codes are random, single-use, stored as hashes, and bound to the user, the code
 challenge, and the exact `redirect_uri`. A failed exchange also uses up the code.
 Presenting a used code again revokes the token issued from it. Token exchange is
 rate-limited per IP.
+
+### Browser extensions
+
+Browser extensions cannot listen on a loopback port. They use the same flow with
+`identity.launchWebAuthFlow`, and the browser intercepts the redirect to its reserved
+domain instead of loading it:
+
+| Browser | Redirect URI (`identity.getRedirectURL('callback')`) |
+|---|---|
+| Chrome, Edge | `https://<extension id>.chromiumapp.org/callback` |
+| Firefox | `https://<hash>.extensions.allizom.org/callback` |
+
+The server accepts these only when they are listed exactly in
+[`PSST_API_TOKEN_EXTENSION_REDIRECT_URIS`](configuration.md#api-tokens); there are no
+wildcards. The approval page shows the extension's host. Clients can check
+`auth.extension_redirect` in [`/api/v1/info`](#server-info) before opening the sign-in
+window.
 
 ### Scopes
 

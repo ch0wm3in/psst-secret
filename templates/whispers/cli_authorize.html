@@ -33,7 +33,7 @@
         <div>
             <p class="text-gray-400">{% trans "Sign-in returns to" %}</p>
             {% if redirect_host %}
-            <p class="text-white"><code data-redirect-host>{{ redirect_host }}</code> <span class="text-gray-400">{% trans "(a program on this device)" %}</span></p>
+            <p class="text-white"><code data-redirect-host>{{ redirect_host }}</code> <span class="text-gray-400">{% if redirect_extension %}{% trans "(a browser extension)" %}{% else %}{% trans "(a program on this device)" %}{% endif %}</span></p>
             {% else %}
             <p class="text-white">{% trans "A code shown on the next page, which you paste into the program" %}</p>
             {% endif %}

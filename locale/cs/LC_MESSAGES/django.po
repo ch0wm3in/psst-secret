@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psst-secret\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-08 20:09+0000\n"
+"POT-Creation-Date: 2026-11-08 21:41+0000\n"
 "PO-Revision-Date: 2026-10-09 07:02+0000\n"
 "Last-Translator: \n"
 "Language-Team: Czech\n"
@@ -761,6 +761,10 @@ msgid "Sign-in returns to"
 msgstr "Přihlášení se vrátí na"
 
 #: templates/whispers/cli_authorize.html:36
+msgid "(a browser extension)"
+msgstr "(rozšíření prohlížeče)"
+
+#: templates/whispers/cli_authorize.html:36
 msgid "(a program on this device)"
 msgstr "(program na tomto zařízení)"
 
@@ -865,7 +869,7 @@ msgid "This link uses an unsupported format version. Ask for a new link."
 msgstr "Odkaz používá nepodporovanou verzi formátu. Požádejte o nový odkaz."
 
 #: templates/whispers/confirm.html:37 templates/whispers/forbidden.html:10
-#: whispers/views.py:612
+#: whispers/views.py:613
 msgid ""
 "The reveal authorization is missing or invalid. Use the complete view link."
 msgstr ""
@@ -1160,7 +1164,7 @@ msgid "The person submitting a whisper to this request must be signed in."
 msgstr "Osoba odesílající whisper v rámci této žádosti musí být přihlášena."
 
 #: templates/whispers/create.html:251 templates/whispers/receive_access.html:8
-#: whispers/views.py:953
+#: whispers/views.py:954
 msgid "Restricted receive access is required."
 msgstr "Omezený přístup v režimu přijímání je vyžadován."
 
@@ -1473,8 +1477,8 @@ msgstr "Přístup odepřen"
 msgid "Access denied"
 msgstr "Přístup odepřen"
 
-#: templates/whispers/forbidden.html:10 whispers/views.py:569
-#: whispers/views.py:720
+#: templates/whispers/forbidden.html:10 whispers/views.py:570
+#: whispers/views.py:721
 msgid "You do not have access to this whisper."
 msgstr "K tomuto whisperu nemáte přístup."
 
@@ -1986,59 +1990,61 @@ msgstr ""
 msgid "Decryption failed. The link may be incomplete or corrupted."
 msgstr "Dešifrování selhalo. Odkaz může být neúplný nebo poškozený."
 
-#: whispers/api_tokens.py:41
+#: whispers/api_tokens.py:42
 msgid "Create whispers and submit to receive requests"
 msgstr "Vytvářet whispery a odesílat do žádostí o přijetí"
 
-#: whispers/api_tokens.py:42
+#: whispers/api_tokens.py:43
 msgid "Reveal whispers"
 msgstr "Zobrazovat whispery"
 
-#: whispers/api_tokens.py:43
+#: whispers/api_tokens.py:44
 msgid "Create receive requests and manage their reader access"
 msgstr "Vytvářet žádosti o přijetí a spravovat přístup jejich čtenářů"
 
-#: whispers/api_tokens.py:97
+#: whispers/api_tokens.py:127
 msgid ""
 "The redirect address must be a loopback address such as http://127.0.0.1:"
-"<port>/callback or http://[::1]:<port>/callback."
+"<port>/callback or http://[::1]:<port>/callback, or a browser extension "
+"address that this server allows."
 msgstr ""
 "Adresa přesměrování musí být adresa loopback, například http://127.0.0.1:"
-"<port>/callback nebo http://[::1]:<port>/callback."
+"<port>/callback nebo http://[::1]:<port>/callback, nebo adresa rozšíření "
+"prohlížeče, kterou tento server povoluje."
 
-#: whispers/api_tokens.py:112
+#: whispers/api_tokens.py:143
 msgid "Unsupported response type."
 msgstr "Nepodporovaný typ odpovědi."
 
-#: whispers/api_tokens.py:118
+#: whispers/api_tokens.py:149
 msgid "The client must use the S256 code challenge method."
 msgstr "Klient musí použít metodu code challenge S256."
 
-#: whispers/api_tokens.py:122
+#: whispers/api_tokens.py:153
 msgid "The code challenge is missing or invalid."
 msgstr "Code challenge chybí nebo je neplatná."
 
-#: whispers/api_tokens.py:125
+#: whispers/api_tokens.py:156
 msgid "The state parameter is missing or invalid."
 msgstr "Parametr state chybí nebo je neplatný."
 
-#: whispers/api_tokens.py:128
+#: whispers/api_tokens.py:159
 msgid "The client name is invalid."
 msgstr "Název klienta je neplatný."
 
-#: whispers/api_tokens.py:131
+#: whispers/api_tokens.py:162
 msgid "The client requested an unknown scope."
 msgstr "Klient požádal o neznámý scope."
 
-#: whispers/api_tokens.py:171
+#: whispers/api_tokens.py:202
 msgid "The authorization code is invalid or expired."
 msgstr "Autorizační kód je neplatný nebo vypršel."
 
-#: whispers/api_tokens.py:224
+#: whispers/api_tokens.py:255
 msgid "The code verifier is missing or invalid."
 msgstr "Code verifier chybí nebo je neplatný."
 
-#: whispers/api_tokens.py:284
+#: whispers/api_tokens.py:315
 msgid "This token does not have the required scope."
 msgstr "Tento token nemá požadovaný scope."
 
@@ -2369,11 +2375,11 @@ msgstr "5 minut"
 msgid "1 hour"
 msgstr "1 hodina"
 
-#: whispers/token_views.py:130
+#: whispers/token_views.py:131
 msgid "You denied access."
 msgstr "Odepřeli jste přístup."
 
-#: whispers/token_views.py:227
+#: whispers/token_views.py:228
 msgid "Send the API token to revoke in the Authorization header."
 msgstr "Pošlete API token, který chcete odvolat, v hlavičce Authorization."
 
@@ -2381,19 +2387,19 @@ msgstr "Pošlete API token, který chcete odvolat, v hlavičce Authorization."
 msgid "Whisper storage is temporarily unavailable. Please try again later."
 msgstr "Úložiště whisperů je dočasně nedostupné. Zkuste to prosím později."
 
-#: whispers/views.py:206 whispers/views.py:863 whispers/views.py:968
+#: whispers/views.py:206 whispers/views.py:864 whispers/views.py:969
 msgid "Enter the verified primary email of each additional reader."
 msgstr "Zadejte ověřenou hlavní e-mailovou adresu každého dalšího čtenáře."
 
-#: whispers/views.py:846
+#: whispers/views.py:847
 msgid "Receive reader restrictions are not enabled."
 msgstr "Omezení čtenářů v režimu přijímání nejsou povolena."
 
-#: whispers/views.py:850
+#: whispers/views.py:851
 msgid "Sign in to manage reader access."
 msgstr "Pro správu přístupu čtenářů se přihlaste."
 
-#: whispers/views.py:854 whispers/views.py:959
+#: whispers/views.py:855 whispers/views.py:960
 msgid "Enable restricted access before adding readers."
 msgstr "Před přidáním čtenářů zapněte omezený přístup."
 

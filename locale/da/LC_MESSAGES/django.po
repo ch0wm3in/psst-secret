@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-08 20:09+0000\n"
+"POT-Creation-Date: 2026-11-08 21:41+0000\n"
 "PO-Revision-Date: 2026-04-17 15:26+0000\n"
 "Last-Translator: \n"
 "Language-Team: Danish\n"
@@ -765,6 +765,10 @@ msgid "Sign-in returns to"
 msgstr "Login vender tilbage til"
 
 #: templates/whispers/cli_authorize.html:36
+msgid "(a browser extension)"
+msgstr "(en browserudvidelse)"
+
+#: templates/whispers/cli_authorize.html:36
 msgid "(a program on this device)"
 msgstr "(et program på denne enhed)"
 
@@ -869,7 +873,7 @@ msgstr ""
 "Linket bruger en formatversion, der ikke understøttes. Bed om et nyt link."
 
 #: templates/whispers/confirm.html:37 templates/whispers/forbidden.html:10
-#: whispers/views.py:612
+#: whispers/views.py:613
 msgid ""
 "The reveal authorization is missing or invalid. Use the complete view link."
 msgstr ""
@@ -1164,7 +1168,7 @@ msgid "The person submitting a whisper to this request must be signed in."
 msgstr "Personen der sender en whisper skal være logget ind."
 
 #: templates/whispers/create.html:251 templates/whispers/receive_access.html:8
-#: whispers/views.py:953
+#: whispers/views.py:954
 msgid "Restricted receive access is required."
 msgstr "Begrænset læseadgang i modtagertilstand er påkrævet."
 
@@ -1480,8 +1484,8 @@ msgstr "Adgang nægtet"
 msgid "Access denied"
 msgstr "Adgang nægtet"
 
-#: templates/whispers/forbidden.html:10 whispers/views.py:569
-#: whispers/views.py:720
+#: templates/whispers/forbidden.html:10 whispers/views.py:570
+#: whispers/views.py:721
 msgid "You do not have access to this whisper."
 msgstr "Du har ikke adgang til denne whisper."
 
@@ -1999,59 +2003,61 @@ msgid "Decryption failed. The link may be incomplete or corrupted."
 msgstr ""
 "Dekryptering mislykkedes. Linket kan være ufuldstændigt eller beskadiget."
 
-#: whispers/api_tokens.py:41
+#: whispers/api_tokens.py:42
 msgid "Create whispers and submit to receive requests"
 msgstr "Oprette whispers og indsende til modtageranmodninger"
 
-#: whispers/api_tokens.py:42
+#: whispers/api_tokens.py:43
 msgid "Reveal whispers"
 msgstr "Vise whispers"
 
-#: whispers/api_tokens.py:43
+#: whispers/api_tokens.py:44
 msgid "Create receive requests and manage their reader access"
 msgstr "Oprette modtageranmodninger og styre deres læseadgang"
 
-#: whispers/api_tokens.py:97
+#: whispers/api_tokens.py:127
 msgid ""
 "The redirect address must be a loopback address such as http://127.0.0.1:"
-"<port>/callback or http://[::1]:<port>/callback."
+"<port>/callback or http://[::1]:<port>/callback, or a browser extension "
+"address that this server allows."
 msgstr ""
 "Omdirigeringsadressen skal være en loopback-adresse som http://127.0.0.1:"
-"<port>/callback eller http://[::1]:<port>/callback."
+"<port>/callback eller http://[::1]:<port>/callback, eller en "
+"browserudvidelsesadresse, som denne server tillader."
 
-#: whispers/api_tokens.py:112
+#: whispers/api_tokens.py:143
 msgid "Unsupported response type."
 msgstr "Svartypen understøttes ikke."
 
-#: whispers/api_tokens.py:118
+#: whispers/api_tokens.py:149
 msgid "The client must use the S256 code challenge method."
 msgstr "Klienten skal bruge S256-metoden til code challenge."
 
-#: whispers/api_tokens.py:122
+#: whispers/api_tokens.py:153
 msgid "The code challenge is missing or invalid."
 msgstr "Code challenge mangler eller er ugyldig."
 
-#: whispers/api_tokens.py:125
+#: whispers/api_tokens.py:156
 msgid "The state parameter is missing or invalid."
 msgstr "State-parameteren mangler eller er ugyldig."
 
-#: whispers/api_tokens.py:128
+#: whispers/api_tokens.py:159
 msgid "The client name is invalid."
 msgstr "Klientnavnet er ugyldigt."
 
-#: whispers/api_tokens.py:131
+#: whispers/api_tokens.py:162
 msgid "The client requested an unknown scope."
 msgstr "Klienten anmodede om et ukendt scope."
 
-#: whispers/api_tokens.py:171
+#: whispers/api_tokens.py:202
 msgid "The authorization code is invalid or expired."
 msgstr "Autorisationskoden er ugyldig eller udløbet."
 
-#: whispers/api_tokens.py:224
+#: whispers/api_tokens.py:255
 msgid "The code verifier is missing or invalid."
 msgstr "Code verifier mangler eller er ugyldig."
 
-#: whispers/api_tokens.py:284
+#: whispers/api_tokens.py:315
 msgid "This token does not have the required scope."
 msgstr "Dette token har ikke det krævede scope."
 
@@ -2383,11 +2389,11 @@ msgstr "5 minutter"
 msgid "1 hour"
 msgstr "1 time"
 
-#: whispers/token_views.py:130
+#: whispers/token_views.py:131
 msgid "You denied access."
 msgstr "Du afviste adgang."
 
-#: whispers/token_views.py:227
+#: whispers/token_views.py:228
 msgid "Send the API token to revoke in the Authorization header."
 msgstr "Send det API-token, der skal tilbagekaldes, i Authorization-headeren."
 
@@ -2395,19 +2401,19 @@ msgstr "Send det API-token, der skal tilbagekaldes, i Authorization-headeren."
 msgid "Whisper storage is temporarily unavailable. Please try again later."
 msgstr "Whisper-lageret er midlertidigt utilgængeligt. Prøv igen senere."
 
-#: whispers/views.py:206 whispers/views.py:863 whispers/views.py:968
+#: whispers/views.py:206 whispers/views.py:864 whispers/views.py:969
 msgid "Enter the verified primary email of each additional reader."
 msgstr "Angiv hver ekstra læsers bekræftede primære e-mailadresse."
 
-#: whispers/views.py:846
+#: whispers/views.py:847
 msgid "Receive reader restrictions are not enabled."
 msgstr "Begrænset læseadgang i modtagertilstand er ikke aktiveret."
 
-#: whispers/views.py:850
+#: whispers/views.py:851
 msgid "Sign in to manage reader access."
 msgstr "Log ind for at administrere læseadgang."
 
-#: whispers/views.py:854 whispers/views.py:959
+#: whispers/views.py:855 whispers/views.py:960
 msgid "Enable restricted access before adding readers."
 msgstr "Aktivér begrænset adgang, før du tilføjer læsere."
 

@@ -220,6 +220,12 @@ PSST_API_TOKEN_TTL = env.int("PSST_API_TOKEN_TTL", default=172800)  # 2 days
 PSST_ENABLE_API_TOKEN_MANUAL_CODE = env.bool(
     "PSST_ENABLE_API_TOKEN_MANUAL_CODE", default=False
 )
+# Exact chromiumapp.org / extensions.allizom.org redirect URIs of allowed browser extensions.
+PSST_API_TOKEN_EXTENSION_REDIRECT_URIS = [
+    uri.strip()
+    for uri in env.list("PSST_API_TOKEN_EXTENSION_REDIRECT_URIS", default=[])
+    if uri.strip()
+]
 
 # Lets users opt in to keeping their receive requests in their own browser's localStorage.
 # See docs/configuration.md#saved-receive-requests.
