@@ -188,11 +188,12 @@ npm test --prefix packages/crypto            # format vectors and unit tests
 ```
 
 The major version is the format version, so a format version 2 is released as `2.0.0`.
-To release, bump `version` in `packages/crypto/package.json`, run
-`npm install --prefix theme/static_src` to refresh its lockfile, merge, and push a tag
-named `npm-crypto-v<version>`, such as `npm-crypto-v1.0.1`. The
-[publish workflow](../.github/workflows/npm-crypto.yml) checks that the tag matches the
-version, runs the tests, and publishes through npm
+The release tag sets the version; `version` in `packages/crypto/package.json` stays at
+the `1.0.0-dev` placeholder and is never bumped. To release, push a tag named
+`npm-crypto-v<version>`, such as `npm-crypto-v1.0.1`, on `main`. The
+[publish workflow](../.github/workflows/npm-crypto.yml) stamps that version into
+`package.json`, runs the tests, which fail if the major version does not match the
+format version, and publishes through npm
 [trusted publishing](https://docs.npmjs.com/trusted-publishers), so no npm token is
 stored in GitHub. The `v*` tags remain for Docker releases.
 
@@ -200,9 +201,11 @@ npm only accepts a trusted publisher for a package that already exists, so the f
 version is published by hand from a maintainer account in the `psst-secret` npm org:
 
 ```bash
-cp LICENSE packages/crypto/
-npm publish --access public ./packages/crypto
-rm packages/crypto/LICENSE
+cd packages/crypto
+cp ../../LICENSE .
+npm version 1.0.0 --no-git-tag-version
+npm publish --access public
+rm LICENSE && git checkout package.json package-lock.json
 ```
 
 Then, on npmjs.com, open the package's **Settings → Trusted publishing**, choose GitHub

@@ -29,20 +29,17 @@ jobs:
           node-version: "24"
           registry-url: "https://registry.npmjs.org"
 
-      - name: Check that the tag matches the package version
+      # The tag is the source of the version; package.json only holds a placeholder.
+      # `npm version` rejects tags that are not valid semver.
+      - name: Set the package version from the tag
         env:
           TAG: ${{ github.ref_name }}
-        run: |
-          version=$(node -p "require('./package.json').version")
-          if [ "$TAG" != "npm-crypto-v$version" ]; then
-            echo "::error::Tag $TAG does not match package version $version"
-            exit 1
-          fi
+        run: npm version "${TAG#npm-crypto-v}" --no-git-tag-version --allow-same-version
 
       - name: Install dependencies
         run: npm ci
 
-      # Also checks that the major version matches the format version.
+      # Also checks that the tag's major version matches the format version.
       - name: Run format vector tests
         run: npm test
 
