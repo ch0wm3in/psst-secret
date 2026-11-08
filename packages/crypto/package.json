@@ -1,6 +1,6 @@
 {
   "name": "@psst-secret/crypto",
-  "version": "1.0.0",
+  "version": "1.0.0-dev",
   "description": "Encryption format, link fragments, and reveal tokens for psst-secret whispers",
   "keywords": [
     "psst-secret",
