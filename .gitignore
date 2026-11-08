@@ -187,3 +187,4 @@ redis-data/
 theme/static/
 
 .vscode/
+packages/crypto/node_modules/

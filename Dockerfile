@@ -1,6 +1,7 @@
 FROM node:24-slim AS frontend
 
 WORKDIR /app/theme/static_src
+COPY packages/crypto/ /app/packages/crypto/
 COPY theme/static_src/package*.json ./
 RUN npm ci
 COPY theme/static_src ./

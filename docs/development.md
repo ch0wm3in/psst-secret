@@ -29,10 +29,15 @@ Tailwind, Alpine.js, noble-post-quantum, Tiptap, Heroicons, and esbuild are lock
 `theme/static_src/`. The build also minifies `static/js/` into `theme/static/js/`. Edit
 the source files, never the generated assets. Nothing is loaded from a CDN at runtime.
 
+`static/js/crypto.js` holds the page logic and imports the format from the
+[`@psst-secret/crypto`](#crypto-package) package in `packages/crypto/`. esbuild bundles
+both, including noble-post-quantum, into `crypto.min.js`. Templates call package
+functions through `window.PsstCrypto`.
+
 | Command | Use |
 |---|---|
 | `python manage.py tailwind start` | Watch CSS while editing templates (builds JavaScript once at startup) |
-| `npm --prefix theme/static_src run build:custom` | Rebuild after editing a script in `static/js/` |
+| `npm --prefix theme/static_src run build:custom` | Rebuild after editing a script in `static/js/` or `packages/crypto/` |
 | `npm --prefix theme/static_src run build:icons` | Rebuild the icon sprite after adding an icon |
 | `python manage.py tailwind build` | Rebuild all frontend assets (run before `collectstatic`) |
 
@@ -77,7 +82,8 @@ whispers/                Main app
 ├── management/          Management commands (e.g. cleanup_expired)
 ├── templatetags/        Template tags (icon, settings_value, to_json, …)
 └── tests/               Django and Playwright tests
-static/js/               Client-side cryptography, secret generator, and helpers
+static/js/               Client-side page logic, secret generator, and helpers
+packages/crypto/         @psst-secret/crypto, the encryption format as an npm package
 spec/                    OpenAPI schema and encryption format test vectors
 templates/               Django templates (Tailwind CSS)
 locale/                  Danish, Czech, Swedish, and Filipino translations
@@ -146,8 +152,8 @@ pytest whispers/tests/browser --browser-tests -n 4 --browser chromium --browser 
 - Browser tests do not cover real SSO providers, email delivery, or production proxy
   setups.
 
-CI runs the Django tests and the Chromium and WebKit browser tests as separate parallel
-jobs.
+CI runs the Django tests, the `@psst-secret/crypto` package tests, and the Chromium and
+WebKit browser tests as separate parallel jobs.
 
 ## Format specification and API schema
 
@@ -159,9 +165,47 @@ when changing them.
   `spec/openapi.yaml`. The Django tests fail when it is out of date.
 - **Test vectors.** `spec/vectors/v1/` is generated from fixed inputs. Regenerate it
   only when adding cases; existing outputs must not change within a format version.
-  `whispers/tests/browser/test_format.py` checks `crypto.js` against the vectors.
+  `packages/crypto` tests the package against them in Node.js, and
+  `whispers/tests/browser/test_format.py` tests the bundled web UI.
 
 ```bash
 python manage.py spectacular --file spec/openapi.yaml
 node spec/vectors/generate.mjs               # needs npm ci --prefix theme/static_src
 ```
+
+### Crypto package
+
+`packages/crypto/` is published to npm as `@psst-secret/crypto`. It must stay free of
+DOM and UI code; translated messages and page logic belong in `static/js/crypto.js`.
+`theme/static_src` links it with a `file:` dependency, so edits are picked up by the
+next frontend build. Its dependencies resolve from `theme/static_src/node_modules`, so
+pin `@noble/post-quantum` to the same version in both `package.json` files; the build
+fails if they differ.
+
+```bash
+npm ci --prefix packages/crypto
+npm test --prefix packages/crypto            # format vectors and unit tests
+```
+
+The major version is the format version, so a format version 2 is released as `2.0.0`.
+To release, bump `version` in `packages/crypto/package.json`, run
+`npm install --prefix theme/static_src` to refresh its lockfile, merge, and push a tag
+named `npm-crypto-v<version>`, such as `npm-crypto-v1.0.1`. The
+[publish workflow](../.github/workflows/npm-crypto.yml) checks that the tag matches the
+version, runs the tests, and publishes through npm
+[trusted publishing](https://docs.npmjs.com/trusted-publishers), so no npm token is
+stored in GitHub. The `v*` tags remain for Docker releases.
+
+npm only accepts a trusted publisher for a package that already exists, so the first
+version is published by hand from a maintainer account in the `psst-secret` npm org:
+
+```bash
+cp LICENSE packages/crypto/
+npm publish --access public ./packages/crypto
+rm packages/crypto/LICENSE
+```
+
+Then, on npmjs.com, open the package's **Settings → Trusted publishing**, choose GitHub
+Actions with owner `ch0wm3in`, repository `psst-secret`, and workflow `npm-crypto.yml`,
+and allow `npm publish`. Afterwards, set **Publishing access** to require two-factor
+authentication and disallow tokens.

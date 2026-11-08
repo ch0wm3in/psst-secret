@@ -359,9 +359,9 @@ def test_legacy_text_envelopes(page, app_url, payload):
     page.goto(app_url)
     encrypted = page.evaluate(
         """async plaintext => {
-        const key = await generateKey();
-        const authorization = await generateRevealAuthorization();
-        const encrypted = await encryptContent(plaintext, key);
+        const key = await PsstCrypto.generateKey();
+        const authorization = await PsstCrypto.generateRevealAuthorization();
+        const encrypted = await PsstCrypto.encryptContent(plaintext, key);
         const response = await fetch('/api/v1/whisper', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
@@ -370,7 +370,7 @@ def test_legacy_text_envelopes(page, app_url, payload):
             })
         });
         const data = await response.json();
-        return data.url + revealFragment(key, authorization.token);
+        return data.url + PsstCrypto.revealFragment(key, authorization.token);
     }""",
         payload,
     )
